@@ -1,5 +1,8 @@
-box: java
+box: maven
 
 build:
   steps:
-    - xenoterracide/maven@0.3.16
+    - script:
+        name: Run Maven
+        code: |
+          mvn package
