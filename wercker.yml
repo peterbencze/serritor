@@ -1,0 +1,5 @@
+box: java
+
+build:
+  steps:
+    - xenoterracide/maven@0.3.16
