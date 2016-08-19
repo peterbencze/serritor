@@ -1,0 +1,8 @@
+box: maven
+
+build:
+  steps:
+    - script:
+        name: Run Maven
+        code: |
+          mvn package
