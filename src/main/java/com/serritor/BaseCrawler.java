@@ -8,23 +8,29 @@ package com.serritor;
  */
 public abstract class BaseCrawler {
     
+    protected final CrawlerConfiguration config = new CrawlerConfiguration();
+    
     private Thread crawlerThread;
    
     /**
-     * Starts the crawler in a new thread.
+     * Starts the crawler.
      */
     public final void start() {
         if (crawlerThread != null)
             throw new IllegalStateException("The crawler is already started.");
         
-        crawlerThread = new Thread() {
-            @Override
-            public void run() {
-                BaseCrawler.this.run();
-            }
-        };
-        
-        crawlerThread.start();
+        if (config.getRunInBackground()) {
+            crawlerThread = new Thread() {
+                @Override
+                public void run() {
+                    BaseCrawler.this.run();
+                }
+            };
+
+            crawlerThread.start();
+        } else {
+            run();
+        }
     }
     
     /**
