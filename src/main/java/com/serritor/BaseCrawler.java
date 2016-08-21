@@ -11,20 +11,26 @@ public abstract class BaseCrawler {
     private Thread crawlerThread;
    
     /**
-     * Starts the crawler in a new thread.
+     * Starts the crawler.
+     * 
+     * @param inNewThread If the crawler should run in a background thread.
      */
-    public final void start() {
+    public final void start(boolean inNewThread) {
         if (crawlerThread != null)
             throw new IllegalStateException("The crawler is already started.");
         
-        crawlerThread = new Thread() {
-            @Override
-            public void run() {
-                BaseCrawler.this.run();
-            }
-        };
-        
-        crawlerThread.start();
+        if (inNewThread) {
+            crawlerThread = new Thread() {
+                @Override
+                public void run() {
+                    BaseCrawler.this.run();
+                }
+            };
+
+            crawlerThread.start();
+        } else {
+            run();
+        }
     }
     
     /**
