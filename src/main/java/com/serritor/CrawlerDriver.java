@@ -4,15 +4,14 @@ package com.serritor;
  *
  * @author Krisztian Mozsi
  */
-public enum WebDriverType {
+public enum CrawlerDriver {
     
     CHROME_DRIVER,
-    EVENT_FIRING_WEBDRIVER,
     FIREFOX_DRIVER,
     HTML_UNIT_DRIVER,
     INTERNET_EXPLORER_DRIVER,
     PHANTOMJS_DRIVER,
-    REMOTE_WEBDRIVER,
+    REMOTE_WEB_DRIVER,
     SAFARI_DRIVER
     
 }
