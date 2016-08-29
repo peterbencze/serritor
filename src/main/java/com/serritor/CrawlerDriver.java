@@ -1,7 +1,8 @@
 package com.serritor;
 
 /**
- *
+ * List of available WebDrivers to be used with the crawler.
+ * 
  * @author Krisztian Mozsi
  */
 public enum CrawlerDriver {

@@ -23,6 +23,12 @@ public class WebDriverFactory {
     private static final String firefoxDriverSystemProperty = "webdriver.gecko.driver";
     private static final String ieDriverSystemProperty = "webdriver.ie.driver";
     
+    /**
+     * Gets a new instance of the WebDriver specified in the configuration.
+     * 
+     * @param config The configuration of the crawler
+     * @return An instance of the specified WebDriver
+     */
     public static WebDriver getDriver(CrawlerConfiguration config) {
         Map<String, Object> desiredCapabilities = config.getDesiredCapabilities();
         Capabilities capabilities = new DesiredCapabilities(desiredCapabilities);
@@ -47,6 +53,13 @@ public class WebDriverFactory {
         }
     }
     
+    /**
+     * Creates a new ChromeDriver.
+     * 
+     * @param driverPath The path to the driver
+     * @param capabilities Describes a series of key/value pairs that encapsulate aspects of a browser
+     * @return A new instance of ChromeDriver
+     */
     private static WebDriver getChromeDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
             System.setProperty(chromeDriverSystemProperty, driverPath);
@@ -54,6 +67,13 @@ public class WebDriverFactory {
         return new ChromeDriver(capabilities);
     }
     
+    /**
+     * Creates a new FirefoxDriver.
+     * 
+     * @param driverPath The path to the driver
+     * @param capabilities Describes a series of key/value pairs that encapsulate aspects of a browser
+     * @return A new instance of FirefoxDriver
+     */
     private static WebDriver getFirefoxDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
             System.setProperty(firefoxDriverSystemProperty, driverPath);
@@ -61,6 +81,13 @@ public class WebDriverFactory {
         return new FirefoxDriver(capabilities);
     }
     
+    /**
+     * Creates a new InternetExplorerDriver.
+     * 
+     * @param driverPath The path to the driver
+     * @param capabilities Describes a series of key/value pairs that encapsulate aspects of a browser
+     * @return A new instance of InternetExplorerDriver
+     */
     private static WebDriver getInternetExplorerDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
             System.setProperty(ieDriverSystemProperty, driverPath);
