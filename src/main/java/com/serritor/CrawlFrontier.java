@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.function.Predicate;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
@@ -19,11 +20,19 @@ public class CrawlFrontier {
     
     private final HashSet<String> urlFingerprints;
     private final PriorityQueue<CrawlRequest> crawlRequests;
+    private final Predicate<URL> urlFilter;
     
     public CrawlFrontier(List<URL> urlList, CrawlingStrategy strategy) {
         urlFingerprints = new HashSet<>();
         crawlRequests = getPriorityQueue(strategy);
-        urlList.forEach(url -> addCrawlRequest(url, 0));
+        
+        urlFilter = url -> {
+            return !urlFingerprints.contains(getFingerprintForUrl(url));
+        };
+        
+        urlList.stream()
+            .filter(urlFilter)
+            .forEach(url -> addCrawlRequest(url, 0));
     }
     
     /**
@@ -33,7 +42,9 @@ public class CrawlFrontier {
      */
     public void addExtractedUrls(CrawlResponse response) {
         int crawlDepth = response.getCrawlDepth();
-        response.getExtractedUrls().forEach(url -> addCrawlRequest(url, crawlDepth));
+        response.getExtractedUrls().stream()
+            .filter(urlFilter)
+            .forEach(url -> addCrawlRequest(url, crawlDepth));
     }
     
     /**
@@ -43,12 +54,8 @@ public class CrawlFrontier {
      * @param crawlDepth Crawl depth of the URL
      */
     private void addCrawlRequest(URL url, int crawlDepth) {
-        String urlFingerprint = getFingerprintForUrl(url);
-
-        if (!urlFingerprints.contains(urlFingerprint)) {
-            urlFingerprints.add(urlFingerprint);
-            crawlRequests.add(new CrawlRequest(url.toString(), crawlDepth));
-        }
+        urlFingerprints.add(getFingerprintForUrl(url));
+        crawlRequests.add(new CrawlRequest(url.toString(), crawlDepth));
     }
     
     /**

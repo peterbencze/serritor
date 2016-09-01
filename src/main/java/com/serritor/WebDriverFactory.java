@@ -48,9 +48,9 @@ public class WebDriverFactory {
                 return new RemoteWebDriver(capabilities);
             case SAFARI_DRIVER:
                 return new SafariDriver(capabilities);
-            default:
-                throw new AssertionError(config.getCrawlerDriver().name());
         }
+        
+        throw new IllegalArgumentException("Not supported crawler driver.");
     }
     
     /**
