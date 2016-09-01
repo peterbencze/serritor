@@ -13,7 +13,6 @@ import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -92,6 +91,7 @@ public class CrawlFrontierTest {
         assertNull(currentRequest);
     }
     
+    @Test
     public void getNextRequestAddExistingTest() {
         CrawlRequest currentRequest = frontier.getNextRequest();
         assertEquals(0, currentRequest.getCrawlDepth());
