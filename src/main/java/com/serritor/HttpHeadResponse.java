@@ -44,6 +44,10 @@ public class HttpHeadResponse {
      * @return True if the content type is text/html, false otherwise
      */
     public boolean isHtmlContent() {
+        // If the response did not contain a content-type header
+        if (contentType == null)
+            return false;
+        
         return contentType.contains("text/html");
     }
 }

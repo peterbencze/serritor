@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
@@ -21,11 +22,18 @@ public abstract class BaseCrawler {
     
     protected final CrawlerConfiguration config;
     
+    /**
+     * A temporary list that is used to store the URLs that were added from the callbacks.
+     */
+    private final List<String> urlsToVisit;
+    
     private Thread crawlerThread;
     
     public BaseCrawler() {
         // Create default configuration
         config = new CrawlerConfiguration();
+        
+        urlsToVisit = new ArrayList<>();
     }
    
     /**
@@ -50,6 +58,24 @@ public abstract class BaseCrawler {
     }
     
     /**
+     * Appends an URL to the list of URLs that should be visited by the crawler.
+     * 
+     * @param url The URL to be visited by the crawler
+     */
+    protected final void visitUrl(String url) {
+        urlsToVisit.add(url);
+    }
+    
+    /**
+     * Extends the list of URLs that should be visited by the crawler with a list of URLs.
+     * 
+     * @param urls The list of URLs to be visited by the crawler
+     */
+    protected final void visitUrls(List<String> urls) {
+        urlsToVisit.addAll(urls);
+    }
+    
+    /**
      * Contains the workflow of the crawler.
      */
     private void run() {
@@ -58,20 +84,32 @@ public abstract class BaseCrawler {
         CrawlFrontier frontier = new CrawlFrontier(getSeeds(), config.getCrawlingStrategy());
         
         while (frontier.hasNextRequest()) {
-            String nextRequestUrl = frontier.getNextRequest().getUrl();
+            CrawlRequest nextRequest = frontier.getNextRequest();
+            String nextRequestUrl = nextRequest.getUrl();
 
             driver.get(nextRequestUrl);
             
-            try {
-                onUrlOpen(driver);
-            } catch (Exception ex) {
-                onUrlOpenError(nextRequestUrl);
-            }
+            onUrlOpen(driver);
             
-            /* TODO: 
-            1. Call onUrlOpen (call onUrlOpenError if an exceptions occurs)
-            2. Send a HEAD request to each extracted URLs 
-            3. Add verified ones (status OK, content-type is HTML) to the frontier */
+            // Send an HTTP HEAD request to each URL (added by the user) to determine their content type and availability.
+            List<URL> urls = new ArrayList<>();
+            urlsToVisit.stream().forEach((String url) -> {
+                try {
+                    HttpHeadResponse response = getHttpHeadResponse(url);
+                    
+                    if (response.isStatusOk() && response.isHtmlContent())
+                        urls.add(response.getFinalUrl());
+                } catch (IOException ex) {
+                    // If for some reason the given URL is malformed or unavailable, call the appropriate callback to handle this situation.
+                    onUrlOpenError(url);
+                }
+            });
+            
+            CrawlResponse response = new CrawlResponse(urls, nextRequest.getCrawlDepth() + 1);
+            frontier.addExtractedUrls(response);
+            
+            // Clear the list for the next iteration.
+            urlsToVisit.clear();
         }
         
         driver.quit();
@@ -96,7 +134,11 @@ public abstract class BaseCrawler {
             finalUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
          
         int statusCode = response.getStatusLine().getStatusCode();
-        String contentType = response.getFirstHeader("content-type").getValue();
+        
+        String contentType = null;
+        Header contentTypeHeader = response.getFirstHeader("content-type");
+        if (contentTypeHeader != null)
+            contentType = contentTypeHeader.getValue();
         
         return new HttpHeadResponse(finalUrl, statusCode, contentType);
     }
