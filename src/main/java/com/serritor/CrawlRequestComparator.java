@@ -15,10 +15,10 @@ public class CrawlRequestComparator implements Comparator<CrawlRequest> {
     public int compare(CrawlRequest request1, CrawlRequest request2)
     {
         if (request1.getCrawlDepth() < request2.getCrawlDepth())
-            return 1;
+            return -1;
         
         if (request1.getCrawlDepth() > request2.getCrawlDepth())
-            return -1;
+            return 1;
         
         return 0;
     }
