@@ -6,3 +6,4 @@ build:
         name: Run Maven
         code: |
           mvn package
+          mvn test

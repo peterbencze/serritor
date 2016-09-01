@@ -55,13 +55,18 @@ public abstract class BaseCrawler {
     private void run() {
         WebDriver driver = WebDriverFactory.getDriver(config);
         
-        CrawlFrontier frontier = new CrawlFrontier();
-        frontier.addUrls(getSeeds());
+        CrawlFrontier frontier = new CrawlFrontier(getSeeds(), config.getCrawlingStrategy());
         
-        while(frontier.hasNextUrl()) {
-            String nextUrl = frontier.getNextUrl();
+        while (frontier.hasNextRequest()) {
+            String nextRequestUrl = frontier.getNextRequest().getUrl();
 
-            driver.get(nextUrl);
+            driver.get(nextRequestUrl);
+            
+            try {
+                onUrlOpen(driver);
+            } catch (Exception ex) {
+                onUrlOpenError(nextRequestUrl);
+            }
             
             /* TODO: 
             1. Call onUrlOpen (call onUrlOpenError if an exceptions occurs)
