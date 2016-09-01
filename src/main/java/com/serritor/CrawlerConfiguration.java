@@ -6,29 +6,35 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Provides an interface to specify properties to be used by the crawler.
- * 
+ * Provides an interface to configure the crawler.
+  * 
  * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public class CrawlerConfiguration {
-    
+
+    private final Map<String, Object> desiredCapabilities;
+    private final List<String> seeds;
+
+    private boolean debugMode;
     private boolean runInBackground;
-    
     private CrawlerDriver crawlerDriver;
     private String driverPath;
-    private Map<String, Object> desiredCapabilities;
-    
-    private List<String> seeds;
+    private CrawlingStrategy crawlingStrategy;
 
-    
     public CrawlerConfiguration() {
-        runInBackground = false;
-        
         crawlerDriver = CrawlerDriver.HTML_UNIT_DRIVER;
-        desiredCapabilities = new HashMap<>();
-        
+        desiredCapabilities = new HashMap<>();    
         seeds = new ArrayList<>();
+        crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
+    }
+
+    public boolean getDebugMode() {
+        return debugMode;
+    }
+
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
     
     public boolean getRunInBackground() {
@@ -58,20 +64,32 @@ public class CrawlerConfiguration {
     public Map<String, Object> getDesiredCapabilities() {
         return desiredCapabilities;
     }
+
+    public void addDesiredCapability(String key, Object value) {
+        desiredCapabilities.put(key, value);
+    }
     
-    public void setDesiredCapabilities(Map<String, Object> desiredCapabilities) {
-        this.desiredCapabilities = desiredCapabilities;
+    public void addDesiredCapabilities(Map<String, Object> desiredCapabilities) {
+        this.desiredCapabilities.putAll(desiredCapabilities);
     }
     
     public List<String> getSeeds() {
         return seeds;
     }
     
-    public void setSeed(String seed) {
+    public void addSeed(String seed) {
         seeds.add(seed);
     }
 
-    public void setSeeds(List<String> seeds) {
-        this.seeds = seeds;
+    public void addSeeds(List<String> seeds) {
+        this.seeds.addAll(seeds);
+    }
+
+    public CrawlingStrategy getCrawlingStrategy() {
+        return crawlingStrategy;
+    }
+
+    public void setCrawlingStrategy(CrawlingStrategy crawlingStrategy) {
+        this.crawlingStrategy = crawlingStrategy;
     }
 }

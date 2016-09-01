@@ -13,9 +13,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.openqa.selenium.WebDriver;
 
 /**
- * Provides a skeletal implementation of a crawler to minimize the effort for
- * users to implement their own.
- * 
+ * Provides a skeletal implementation of a crawler to minimize the effort for users to implement their own.
+  * 
  * @author Peter Bencze
  */
 public abstract class BaseCrawler {
@@ -65,15 +64,20 @@ public abstract class BaseCrawler {
             driver.get(nextUrl);
             
             /* TODO: 
-            1. Call onUrlOpen
-            2. Call onUrlExtract (to extract URLs)
-            3. Send a HEAD request to each extracted URLs 
-            4. Add verified ones (status OK, content-type is HTML) to the frontier */
+            1. Call onUrlOpen (call onUrlOpenError if an exceptions occurs)
+            2. Send a HEAD request to each extracted URLs 
+            3. Add verified ones (status OK, content-type is HTML) to the frontier */
         }
         
         driver.quit();
     }
-    
+
+    /**
+     * Returns a HTTP HEAD response for the given URL that can be used to decide if the given URL should be opened in the browser or not.
+     *
+     * @param url The URL to crawl
+     * @return A HTTP HEAD response with only the necessary properties
+     */
     private HttpHeadResponse getHttpHeadResponse(String url) throws IOException {
         HttpClient client = HttpClientBuilder.create().build();
         HttpClientContext context = HttpClientContext.create();
@@ -91,11 +95,16 @@ public abstract class BaseCrawler {
         
         return new HttpHeadResponse(finalUrl, statusCode, contentType);
     }
-    
+
+    /**
+     * Returns a list of start URLs (known as seeds).
+     *
+     * @return A list of seed URLs
+     */
     private List<URL> getSeeds() {
         List<URL> seeds = new ArrayList<>();
         
-        for (String url : config.getSeeds()) {
+        config.getSeeds().stream().forEach((url) -> {
             try {
                 if (!url.startsWith("http"))
                     url = "http://" + url;
@@ -105,10 +114,24 @@ public abstract class BaseCrawler {
                 if (response.isStatusOk() && response.isHtmlContent())
                     seeds.add(response.getFinalUrl());
             } catch (IOException ex) {
-                // Call error handling callback
-            }      
-        }
+                onUrlOpenError(url);
+            }
+        });
         
         return seeds;
     }
+
+    /**
+     * Abstract method to be called when the browser opens an URL.
+     *
+     * @param driver The driver instance of the browser.
+     */
+    protected abstract void onUrlOpen(WebDriver driver);
+
+    /**
+     * Abstract method to be called when an exception occurs while trying to open an URL.
+     *
+     * @param url The URL of the failed request
+     */
+    protected abstract void onUrlOpenError(String url);
 }
