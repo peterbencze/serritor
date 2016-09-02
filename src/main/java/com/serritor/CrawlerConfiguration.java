@@ -21,6 +21,7 @@ public class CrawlerConfiguration {
     private CrawlerDriver crawlerDriver;
     private String driverPath;
     private CrawlingStrategy crawlingStrategy;
+    private boolean allowOffsiteRequests;
 
     public CrawlerConfiguration() {
         crawlerDriver = CrawlerDriver.HTML_UNIT_DRIVER;
@@ -91,5 +92,13 @@ public class CrawlerConfiguration {
 
     public void setCrawlingStrategy(CrawlingStrategy crawlingStrategy) {
         this.crawlingStrategy = crawlingStrategy;
+    }
+
+    public boolean getAllowOffsiteRequests() {
+        return allowOffsiteRequests;
+    }
+
+    public void setAllowOffsiteRequests(boolean offsiteRequests) {
+        this.allowOffsiteRequests = offsiteRequests;
     }
 }

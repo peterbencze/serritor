@@ -9,6 +9,7 @@ import org.junit.Test;
  * Test cases for CrawlRequestComparator.
  * 
  * @author Krisztian Mozsi
+ * @author Peter Bencze
  */
 public class CrawlRequestComparatorTest {
     

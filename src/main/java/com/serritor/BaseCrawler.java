@@ -1,5 +1,6 @@
 package com.serritor;
 
+import com.google.common.net.InternetDomainName;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -8,6 +9,7 @@ import java.util.List;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -81,33 +83,32 @@ public abstract class BaseCrawler {
     private void run() {
         WebDriver driver = WebDriverFactory.getDriver(config);
         
-        CrawlFrontier frontier = new CrawlFrontier(getSeeds(), config.getCrawlingStrategy());
+        CrawlFrontier frontier = new CrawlFrontier(config, getSeeds());
         
         while (frontier.hasNextRequest()) {
-            CrawlRequest nextRequest = frontier.getNextRequest();
-            String nextRequestUrl = nextRequest.getUrl();
+            CrawlRequest currentRequest = frontier.getNextRequest();
 
-            driver.get(nextRequestUrl);
+            driver.get(currentRequest.getUrl().toString());
             
             onUrlOpen(driver);
             
             // Send an HTTP HEAD request to each URL (added by the user) to determine their content type and availability.
-            List<URL> urls = new ArrayList<>();
+            List<CrawlRequest> requests = new ArrayList<>();
             urlsToVisit.stream().forEach((String url) -> {
                 try {
                     HttpHeadResponse response = getHttpHeadResponse(url);
                     
-                    if (response.isStatusOk() && response.isHtmlContent())
-                        urls.add(response.getFinalUrl());
-                } catch (IOException ex) {
+                    if (response.isStatusOk() && response.isHtmlContent()) {
+                        URL finalUrl = response.getFinalUrl();
+                        requests.add(new CrawlRequest(getTopPrivateDomain(finalUrl), finalUrl, currentRequest.getCrawlDepth() + 1));
+                    }
+                } catch (IOException | IllegalArgumentException | IllegalStateException ex) {
                     // If for some reason the given URL is malformed or unavailable, call the appropriate callback to handle this situation.
                     onUrlOpenError(url);
                 }
             });
 
-            // Provide a response to the frontier with the list of URLs to visit and the crawl depth.
-            CrawlResponse response = new CrawlResponse(urls, nextRequest.getCrawlDepth() + 1);
-            frontier.addCrawlResponse(response);
+            frontier.addRequests(requests);
             
             // Clear the list for the next iteration.
             urlsToVisit.clear();
@@ -123,9 +124,10 @@ public abstract class BaseCrawler {
      * @return A HTTP HEAD response with only the necessary properties
      */
     private HttpHeadResponse getHttpHeadResponse(String url) throws IOException {
-        HttpClient client = HttpClientBuilder.create().build();
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(500).build();
+        HttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
         HttpClientContext context = HttpClientContext.create();
-        HttpHead headRequest = new HttpHead(url);    
+        HttpHead headRequest = new HttpHead(url);
         HttpResponse response = client.execute(headRequest, context);
         
         URL finalUrl = headRequest.getURI().toURL();      
@@ -144,12 +146,12 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Returns a list of start URLs (known as seeds).
+     * Returns a list of start requests (known as seeds).
      *
-     * @return A list of seed URLs
+     * @return A list of seeds
      */
-    private List<URL> getSeeds() {
-        List<URL> seeds = new ArrayList<>();
+    private List<CrawlRequest> getSeeds() {
+        List<CrawlRequest> seeds = new ArrayList<>();
         
         config.getSeeds().stream().forEach((url) -> {
             try {
@@ -158,8 +160,10 @@ public abstract class BaseCrawler {
                 
                 HttpHeadResponse response = getHttpHeadResponse(url);
                 
-                if (response.isStatusOk() && response.isHtmlContent())
-                    seeds.add(response.getFinalUrl());
+                if (response.isStatusOk() && response.isHtmlContent()) {
+                    URL finalUrl = response.getFinalUrl();
+                    seeds.add(new CrawlRequest(getTopPrivateDomain(finalUrl), finalUrl, 0));
+                }
             } catch (IOException ex) {
                 onUrlOpenError(url);
             }
@@ -169,9 +173,19 @@ public abstract class BaseCrawler {
     }
 
     /**
+     * Returns the top private domain for the given URL.
+     *
+     * @param url The URL to parse
+     * @return The top private domain
+     */
+    private String getTopPrivateDomain(URL url) {
+        return InternetDomainName.from(url.getHost()).topPrivateDomain().toString();
+    }
+
+    /**
      * Abstract method to be called when the browser opens an URL.
      *
-     * @param driver The driver instance of the browser.
+     * @param driver The driver instance of the browser
      */
     protected abstract void onUrlOpen(WebDriver driver);
 

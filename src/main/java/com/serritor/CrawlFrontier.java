@@ -8,54 +8,77 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
- * Provides an interface for the crawler to manage URLs while crawling.
- * 
+ * Provides an interface for the crawler to manage requests while crawling.
+  * 
  * @author Peter Bencze
  * @author Krisztian Mozsi
  */
 public class CrawlFrontier {
-    
+
+    private final CrawlerConfiguration config;
+
+    private final HashSet<String> topPrivateDomains;
     private final HashSet<String> urlFingerprints;
-    private final PriorityQueue<CrawlRequest> crawlRequests;
-    private final Predicate<URL> urlFilter;
-    
-    public CrawlFrontier(List<URL> urlList, CrawlingStrategy strategy) {
+    private final PriorityQueue<CrawlRequest> requests;
+
+    private final Predicate<CrawlRequest> duplicateRequestFilter;
+    private final Predicate<CrawlRequest> offsiteRequestFilter;
+
+    public CrawlFrontier(CrawlerConfiguration config, List<CrawlRequest> seeds) {
+        this.config = config;
+
         urlFingerprints = new HashSet<>();
-        crawlRequests = getPriorityQueue(strategy);
+        requests = getPriorityQueue(config.getCrawlingStrategy());
         
-        urlFilter = url -> {
-            return !urlFingerprints.contains(getFingerprintForUrl(url));
+        topPrivateDomains = new HashSet<>();
+        
+        duplicateRequestFilter = request -> {
+            return !urlFingerprints.contains(getFingerprintForUrl(request.getUrl()));
+        };
+
+        offsiteRequestFilter = request -> {
+            return topPrivateDomains.contains(request.getTopPrivateDomain());
         };
         
-        urlList.stream()
-            .filter(urlFilter)
-            .forEach(url -> addCrawlRequest(url, 0));
+        seeds.stream()
+            .filter(duplicateRequestFilter)
+            .forEach(request -> {
+                topPrivateDomains.add(request.getTopPrivateDomain());
+                addRequest(request);
+            });
     }
     
     /**
-     * Method for the crawler to provide a response to a request.
+     * Method for the crawler to add requests to the frontier.
      * 
-     * @param response A response object that contains the extracted URLs to crawl and the crawl depth
+     * @param requests A list of requests
      */
-    public void addCrawlResponse(CrawlResponse response) {
-        int crawlDepth = response.getCrawlDepth();
-        response.getExtractedUrls().stream()
-            .filter(urlFilter)
-            .forEach(url -> addCrawlRequest(url, crawlDepth));
+    public void addRequests(List<CrawlRequest> requests) {
+        List<CrawlRequest> filteredRequests = requests.stream()
+            .filter(duplicateRequestFilter)
+            .collect(Collectors.toList());
+
+        if (!config.getAllowOffsiteRequests()) {
+            filteredRequests = filteredRequests.stream()
+                .filter(offsiteRequestFilter)
+                .collect(Collectors.toList());
+        }
+
+        filteredRequests.forEach(request -> addRequest(request));
     }
     
     /**
-     * Adds an URL to the crawl requests and registers its fingerprint if the URL has not already been visited.
-     * 
-     * @param url The URL to add to the crawl requests
-     * @param crawlDepth Crawl depth of the URL
+     * Adds a request to the queue and stores its fingerprint.
+      * 
+     * @param request The request to be added to the queue
      */
-    private void addCrawlRequest(URL url, int crawlDepth) {
-        urlFingerprints.add(getFingerprintForUrl(url));
-        crawlRequests.add(new CrawlRequest(url.toString(), crawlDepth));
+    private void addRequest(CrawlRequest request) {
+        urlFingerprints.add(getFingerprintForUrl(request.getUrl()));
+        requests.add(request);
     }
     
     /**
@@ -102,21 +125,21 @@ public class CrawlFrontier {
     }
     
     /**
-     * Indicates if there are any URL left to crawl.
-     * 
-     * @return True if there are URLs left to crawl, false otherwise
+     * Indicates if there are any requests left in the queue.
+      * 
+     * @return True if there are requests in the queue, false otherwise
      */
     public boolean hasNextRequest() {
-        return !crawlRequests.isEmpty();
+        return !requests.isEmpty();
     }
     
     /**
-     * Gets the next URL to crawl.
-     * 
-     * @return The next URL to crawl
+     * Gets the next request from the queue.
+      * 
+     * @return The next request
      */
     public CrawlRequest getNextRequest() {
-        return crawlRequests.poll();
+        return requests.poll();
     }
     
 }
