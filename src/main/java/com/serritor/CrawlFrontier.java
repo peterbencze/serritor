@@ -36,11 +36,11 @@ public class CrawlFrontier {
     }
     
     /**
-     * Adds the extracted URLs to the crawl requests if the URL has not already been visited.
+     * Method for the crawler to provide a response to a request.
      * 
      * @param response A response object that contains the extracted URLs to crawl and the crawl depth
      */
-    public void addExtractedUrls(CrawlResponse response) {
+    public void addCrawlResponse(CrawlResponse response) {
         int crawlDepth = response.getCrawlDepth();
         response.getExtractedUrls().stream()
             .filter(urlFilter)

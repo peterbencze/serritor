@@ -124,7 +124,7 @@ public class CrawlFrontierTest {
 
         // add as extracted URLs
         CrawlResponse response = new CrawlResponse(urlList, crawlDepth);
-        frontier.addExtractedUrls(response);
+        frontier.addCrawlResponse(response);
     }
     
 }
