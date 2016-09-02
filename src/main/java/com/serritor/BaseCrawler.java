@@ -104,9 +104,10 @@ public abstract class BaseCrawler {
                     onUrlOpenError(url);
                 }
             });
-            
+
+            // Provide a response to the frontier with the list of URLs to visit and the crawl depth.
             CrawlResponse response = new CrawlResponse(urls, nextRequest.getCrawlDepth() + 1);
-            frontier.addExtractedUrls(response);
+            frontier.addCrawlResponse(response);
             
             // Clear the list for the next iteration.
             urlsToVisit.clear();
@@ -127,8 +128,7 @@ public abstract class BaseCrawler {
         HttpHead headRequest = new HttpHead(url);    
         HttpResponse response = client.execute(headRequest, context);
         
-        URL finalUrl = headRequest.getURI().toURL();
-        
+        URL finalUrl = headRequest.getURI().toURL();      
         List<URI> redirectLocations = context.getRedirectLocations();
         if (redirectLocations != null)
             finalUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
@@ -136,7 +136,7 @@ public abstract class BaseCrawler {
         int statusCode = response.getStatusLine().getStatusCode();
         
         String contentType = null;
-        Header contentTypeHeader = response.getFirstHeader("content-type");
+        Header contentTypeHeader = response.getFirstHeader("Content-Type");
         if (contentTypeHeader != null)
             contentType = contentTypeHeader.getValue();
         
