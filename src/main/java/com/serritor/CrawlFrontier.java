@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.Queue;
+import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
@@ -21,63 +21,57 @@ public class CrawlFrontier {
 
     private final CrawlerConfiguration config;
 
-    private final HashSet<String> topPrivateDomains;
-    private final HashSet<String> urlFingerprints;
-    private final PriorityQueue<CrawlRequest> requests;
+    private final Set<String> allowedDomains;
+    private final Set<String> urlFingerprints;
+    
+    private final Queue<CrawlRequest> requests;
 
-    private final Predicate<CrawlRequest> duplicateRequestFilter;
-    private final Predicate<CrawlRequest> offsiteRequestFilter;
-
-    public CrawlFrontier(CrawlerConfiguration config, List<CrawlRequest> seeds) {
+    public CrawlFrontier(CrawlerConfiguration config) {
         this.config = config;
 
+        allowedDomains = new HashSet<>();
         urlFingerprints = new HashSet<>();
+        
         requests = getPriorityQueue(config.getCrawlingStrategy());
         
-        topPrivateDomains = new HashSet<>();
-        
-        duplicateRequestFilter = request -> {
-            return !urlFingerprints.contains(getFingerprintForUrl(request.getUrl()));
-        };
-
-        offsiteRequestFilter = request -> {
-            return topPrivateDomains.contains(request.getTopPrivateDomain());
-        };
-        
-        seeds.stream()
-            .filter(duplicateRequestFilter)
-            .forEach(request -> {
-                topPrivateDomains.add(request.getTopPrivateDomain());
-                addRequest(request);
+        config.getSeeds().stream()
+            .forEach((CrawlRequest request) -> {
+                if (config.getFilterOffsiteRequests())
+                    allowedDomains.add(request.getTopPrivateDomain());
+                
+                if (config.getFilterDuplicateRequests()) {
+                    String urlFingerprint = getFingerprintForUrl(request.getUrl());
+                    
+                    if (!urlFingerprints.contains(urlFingerprint))
+                        addRequest(request, urlFingerprint);
+                }   
             });
     }
     
     /**
-     * Method for the crawler to add requests to the frontier.
+     * Method for the crawler to feed requests to the frontier.
      * 
-     * @param requests A list of requests
+     * @param request The request to be fed
      */
-    public void addRequests(List<CrawlRequest> requests) {
-        List<CrawlRequest> filteredRequests = requests.stream()
-            .filter(duplicateRequestFilter)
-            .collect(Collectors.toList());
-
-        if (!config.getAllowOffsiteRequests()) {
-            filteredRequests = filteredRequests.stream()
-                .filter(offsiteRequestFilter)
-                .collect(Collectors.toList());
-        }
-
-        filteredRequests.forEach(request -> addRequest(request));
+    public void feedRequest(CrawlRequest request) {
+        String urlFingerprint = getFingerprintForUrl(request.getUrl());
+        
+        if (config.getFilterDuplicateRequests() && urlFingerprints.contains(urlFingerprint))
+            return;
+        
+        if (config.getFilterOffsiteRequests() && !allowedDomains.contains(request.getTopPrivateDomain()))
+            return;
+        
+        addRequest(request, urlFingerprint);
     }
     
     /**
      * Adds a request to the queue and stores its fingerprint.
-      * 
+     * 
      * @param request The request to be added to the queue
      */
-    private void addRequest(CrawlRequest request) {
-        urlFingerprints.add(getFingerprintForUrl(request.getUrl()));
+    private void addRequest(CrawlRequest request, String urlFingerprint) {
+        urlFingerprints.add(urlFingerprint);
         requests.add(request);
     }
     
@@ -88,8 +82,11 @@ public class CrawlFrontier {
      * @return The fingerprint of the URL
      */
     private String getFingerprintForUrl(URL url) {  
-        StringBuilder truncatedUrl = new StringBuilder(url.getHost())
-                .append(url.getPath());
+        StringBuilder truncatedUrl = new StringBuilder(url.getHost());
+        
+        String path = url.getHost();
+        if (path != null && !path.equals("/"))
+            truncatedUrl.append(path);
         
         String query = url.getQuery();
         if (query != null) {
@@ -99,9 +96,7 @@ public class CrawlFrontier {
             List<String> queryParamList = new ArrayList(Arrays.asList(queryParams));
             Collections.sort(queryParamList);
 
-            queryParamList.stream().forEach((param) -> {
-                truncatedUrl.append(param);
-            });
+            queryParamList.stream().forEach(truncatedUrl::append);
         }
         
         return DigestUtils.sha256Hex(truncatedUrl.toString());

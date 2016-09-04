@@ -21,11 +21,11 @@ public class HttpHeadResponse {
     }
     
     /**
-     * Returns the final URL after redirections (if any).
+     * Returns the URL of the response.
      * 
-     * @return The final URL
+     * @return The URL
      */
-    public URL getFinalUrl() {
+    public URL getUrl() {
         return finalUrl;
     }
 

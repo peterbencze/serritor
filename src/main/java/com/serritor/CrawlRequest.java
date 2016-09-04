@@ -3,7 +3,7 @@ package com.serritor;
 import java.net.URL;
 
 /**
- * Represents a crawl request with the requested URL to crawl and its depth.
+ * Represents a crawl request with the requested URL, top private domain and crawl depth.
  * 
  * @author Krisztian Mozsi
  * @author Peter Bencze
@@ -14,10 +14,15 @@ public class CrawlRequest {
     private final URL url;
     private final int crawlDepth;
     
-    public CrawlRequest(String topPrivateDomain, URL url, int crawlDepth) {
+    
+    public CrawlRequest(URL url, String topPrivateDomain, int crawlDepth) {
         this.url = url;
         this.topPrivateDomain = topPrivateDomain;
         this.crawlDepth = crawlDepth;
+    }
+    
+    public CrawlRequest(URL url, String topPrivateDomain) {
+        this(url, topPrivateDomain, 0);
     }
 
     /**
