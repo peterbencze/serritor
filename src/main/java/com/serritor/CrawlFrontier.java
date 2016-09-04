@@ -84,7 +84,7 @@ public class CrawlFrontier {
     private String getFingerprintForUrl(URL url) {  
         StringBuilder truncatedUrl = new StringBuilder(url.getHost());
         
-        String path = url.getHost();
+        String path = url.getPath();
         if (path != null && !path.equals("/"))
             truncatedUrl.append(path);
         
