@@ -24,7 +24,7 @@ public class CrawlRequestComparatorTest {
     private CrawlRequestComparator comparator;
         
     @Test
-    public void breadthFirstSearchTest() {
+    public void breadthFirstCrawlTest() {
         try {
             comparator = new CrawlRequestComparator();
             crawlRequests = new PriorityQueue<>(comparator);
@@ -56,7 +56,7 @@ public class CrawlRequestComparatorTest {
     }
     
     @Test
-    public void depthFirstSearchTest() {
+    public void depthFirstCrawlTest() {
         try {
             comparator = new CrawlRequestComparator();
             crawlRequests = new PriorityQueue<>(comparator.reversed());

@@ -2,6 +2,7 @@ package com.serritor;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static org.junit.Assert.assertEquals;
@@ -28,19 +29,20 @@ public class CrawlFrontierTest {
     private final static String CHILD_URL = "http://root-url.com/child1.html";
     private final static String CHILD_URL2 = "http://root-url.com/child2.html";
     private final static String CHILD_URL3 = "http://root-url2.com/child3.html";
-    
+
+    private final static String OFFSITE_URL = "http://offsite-url.com";
+    private final static String OFFSITE_URL_DOMAIN = "offsite-url.com";
+
+    private CrawlerConfiguration config;
     private CrawlFrontier frontier;
     
     @Before
     public void initialize() {
-        try {
-            frontier = new CrawlFrontier(new CrawlerConfiguration());
-            
-            frontier.feedRequest(new CrawlRequest(new URL(ROOT_URL), ROOT_URL_DOMAIN));
-            frontier.feedRequest(new CrawlRequest(new URL(ROOT_URL2), ROOT_URL2_DOMAIN));
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(CrawlFrontierTest.class.getName()).log(Level.OFF, null, ex);
-        }
+        config = new CrawlerConfiguration();
+        config.addSeeds(Arrays.asList(ROOT_URL, ROOT_URL2));
+        config.setFilterOffsiteRequests(true);
+
+        frontier = new CrawlFrontier(config);
     }
     
     @Test
@@ -96,8 +98,9 @@ public class CrawlFrontierTest {
             assertEquals(1, currentRequest.getCrawlDepth());
             
             currentRequest = frontier.getNextRequest();
+            assertEquals(CHILD_URL3, currentRequest.getUrl().toString());
             assertEquals(2, currentRequest.getCrawlDepth());
-            assertEquals(CHILD_URL3, currentRequest.getUrl());
+            assertEquals(ROOT_URL2_DOMAIN, currentRequest.getTopPrivateDomain());
             
             currentRequest = frontier.getNextRequest();
             assertNull(currentRequest);
@@ -107,22 +110,76 @@ public class CrawlFrontierTest {
     }
     
     @Test
-    public void getNextRequestAddExistingTest() {
+    public void getNextRequestWithDuplicateRequestFilterTest() {
         try {
             CrawlRequest currentRequest = frontier.getNextRequest();
             assertEquals(0, currentRequest.getCrawlDepth());
             currentRequest = frontier.getNextRequest();
             assertEquals(0, currentRequest.getCrawlDepth());
             
-            // add a URL again
+            // feed a duplicate request
             frontier.feedRequest(new CrawlRequest(new URL(ROOT_URL), ROOT_URL_DOMAIN, 1));
             currentRequest = frontier.getNextRequest();
             assertNull(currentRequest);
-            
-            frontier.feedRequest(new CrawlRequest(new URL(CHILD_URL), ROOT_URL_DOMAIN, 2));
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(CrawlFrontierTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Test
+    public void getNextRequestWithOffsiteRequestFilterTest() {
+        try {
+            CrawlRequest currentRequest = frontier.getNextRequest();
+            assertEquals(0, currentRequest.getCrawlDepth());
             currentRequest = frontier.getNextRequest();
-            assertEquals(2, currentRequest.getCrawlDepth());
-            assertEquals(CHILD_URL, currentRequest.getUrl());
+            assertEquals(0, currentRequest.getCrawlDepth());
+
+            // feed an offsite request
+            frontier.feedRequest(new CrawlRequest(new URL(OFFSITE_URL), OFFSITE_URL_DOMAIN, 1));
+            currentRequest = frontier.getNextRequest();
+            assertNull(currentRequest);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(CrawlFrontierTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Test
+    public void getNextRequestWithoutDuplicateRequestFilterTest() {
+        try {
+            config.setFilterDuplicateRequests(false);
+
+            CrawlRequest currentRequest = frontier.getNextRequest();
+            assertEquals(0, currentRequest.getCrawlDepth());
+            currentRequest = frontier.getNextRequest();
+            assertEquals(0, currentRequest.getCrawlDepth());
+
+            // feed a duplicate request
+            frontier.feedRequest(new CrawlRequest(new URL(ROOT_URL), ROOT_URL_DOMAIN, 1));
+            currentRequest = frontier.getNextRequest();
+            assertEquals(ROOT_URL, currentRequest.getUrl().toString());
+            assertEquals(ROOT_URL_DOMAIN, currentRequest.getTopPrivateDomain());
+            assertEquals(1, currentRequest.getCrawlDepth());
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(CrawlFrontierTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    @Test
+    public void getNextRequestWithoutOffsiteRequestFilterTest() {
+        try {
+            config.setFilterOffsiteRequests(false);
+
+            CrawlRequest currentRequest = frontier.getNextRequest();
+            assertEquals(0, currentRequest.getCrawlDepth());
+            currentRequest = frontier.getNextRequest();
+            assertEquals(0, currentRequest.getCrawlDepth());
+
+            // feed an offsite request
+            frontier.feedRequest(new CrawlRequest(new URL(OFFSITE_URL), OFFSITE_URL_DOMAIN, 1));
+            currentRequest = frontier.getNextRequest();
+            assertEquals(OFFSITE_URL, currentRequest.getUrl().toString());
+            assertEquals(OFFSITE_URL_DOMAIN, currentRequest.getTopPrivateDomain());
+            assertEquals(1, currentRequest.getCrawlDepth());
         } catch (MalformedURLException ex) {
             Logger.getLogger(CrawlFrontierTest.class.getName()).log(Level.SEVERE, null, ex);
         }

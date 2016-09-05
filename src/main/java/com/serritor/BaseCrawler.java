@@ -28,18 +28,21 @@ public abstract class BaseCrawler {
     protected final CrawlerConfiguration config;
     
     /**
-     * Used to store the new crawl requests that were added from the callbacks.
+     * Used for storing the new crawl requests that were added from the callbacks.
      */
     private final List<CrawlRequest> newCrawlRequests;
     
     private Thread crawlerThread;
+    private HttpClient httpClient;
+    private WebDriver driver;
+    private CrawlFrontier frontier;
     private int currentCrawlDepth;
     
     
-    public BaseCrawler() {
+    protected BaseCrawler() {
         // Create the default configuration
         config = new CrawlerConfiguration();
-        
+
         newCrawlRequests = new ArrayList<>();
     }
    
@@ -93,9 +96,9 @@ public abstract class BaseCrawler {
      * Defines the workflow of the crawler.
      */
     private void run() {
-        WebDriver driver = WebDriverFactory.getDriver(config);
+        initialize();
         
-        CrawlFrontier frontier = new CrawlFrontier(config);
+        onBegin(driver);
         
         while (frontier.hasNextRequest()) {
             CrawlRequest currentRequest = frontier.getNextRequest();
@@ -116,8 +119,10 @@ public abstract class BaseCrawler {
                 }
                 
                 // If the HTTP status of the response is not 200 (OK), ignore it
-                if (!response.isStatusOk())
+                if (!response.isStatusOk()) {
+                    onUnsuccessfulResponseStatus(responseUrl);
                     continue;
+                }
                 
                 // URLs that point to non-HTML content should not be opened in the browser
                 if (!response.isHtmlContent()) {
@@ -141,6 +146,17 @@ public abstract class BaseCrawler {
         }
         
         driver.quit();
+        
+        onEnd();
+    }
+
+    /**
+     * Constructs all the objects that are required to run the crawler.
+     */
+    private void initialize() {
+        httpClient = HttpClientBuilder.create().build();
+        driver = WebDriverFactory.getDriver(config);
+        frontier = new CrawlFrontier(config);
     }
     
     /**
@@ -160,10 +176,9 @@ public abstract class BaseCrawler {
      * @return A HTTP HEAD response with only the necessary properties
      */
     private HttpHeadResponse getHttpHeadResponse(URL destinationUrl) throws IOException {
-        HttpClient client = HttpClientBuilder.create().build();
         HttpClientContext context = HttpClientContext.create();
         HttpHead headRequest = new HttpHead(destinationUrl.toString());
-        HttpResponse response = client.execute(headRequest, context);
+        HttpResponse response = httpClient.execute(headRequest, context);
         
         URL responseUrl = headRequest.getURI().toURL();    
         
@@ -185,23 +200,42 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Abstract method to be called when the browser opens an URL.
+     * Called when the crawler is about to begin its operation.
+     *
+     * @param driver
+     */
+    protected abstract void onBegin(WebDriver driver);
+
+    /**
+     * Called after the browser opens an URL.
      *
      * @param driver The driver instance of the browser
      */
     protected abstract void onUrlOpen(WebDriver driver);
     
     /**
-     * Abstract method to be called when getting a non-HTML response.
-     * 
-     * @param responseUrl The URL of the non-HTML response
+     * Called when getting a non-HTML response.
+      * 
+     * @param requestUrl The URL of the non-HTML response
      */
-    protected abstract void onNonHtmlResponse(URL responseUrl);
+    protected abstract void onNonHtmlResponse(URL requestUrl);
 
     /**
-     * Abstract method to be called when an exception occurs while sending a request to a URL.
+     * Called when getting an unsuccessful HTTP status code in the HEAD response.
+     *
+     * @param requestUrl
+     */
+    protected abstract void onUnsuccessfulResponseStatus(URL requestUrl);
+
+    /**
+     * Called when an exception occurs while sending a HEAD request to a URL.
      *
      * @param requestUrl The URL of the failed request
      */
     protected abstract void onUnreachableUrl(URL requestUrl);
+
+    /**
+     * Called when the crawler ends its operation.
+     */
+    protected abstract void onEnd();
 }
