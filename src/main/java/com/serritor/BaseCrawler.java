@@ -1,6 +1,8 @@
 package com.serritor;
 
+import com.google.common.net.InternetDomainName;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -20,20 +22,28 @@ import org.openqa.selenium.WebDriver;
  */
 public abstract class BaseCrawler {
     
+    /**
+     * Allows the application to configure the crawler.
+     */
     protected final CrawlerConfiguration config;
     
     /**
-     * A temporary list that is used to store the URLs that were added from the callbacks.
+     * Used for storing the new crawl requests that were added from the callbacks.
      */
-    private final List<String> urlsToVisit;
+    private final List<CrawlRequest> newCrawlRequests;
     
     private Thread crawlerThread;
+    private HttpClient httpClient;
+    private WebDriver driver;
+    private CrawlFrontier frontier;
+    private int currentCrawlDepth;
     
-    public BaseCrawler() {
-        // Create default configuration
+    
+    protected BaseCrawler() {
+        // Create the default configuration
         config = new CrawlerConfiguration();
-        
-        urlsToVisit = new ArrayList<>();
+
+        newCrawlRequests = new ArrayList<>();
     }
    
     /**
@@ -60,125 +70,172 @@ public abstract class BaseCrawler {
     /**
      * Appends an URL to the list of URLs that should be visited by the crawler.
      * 
-     * @param url The URL to be visited by the crawler
+     * @param urlToVisit The URL to be visited by the crawler
      */
-    protected final void visitUrl(String url) {
-        urlsToVisit.add(url);
+    protected final void visitUrl(String urlToVisit) {
+        try {
+            URL requestUrl = new URL(urlToVisit);
+            String topPrivateDomain = getTopPrivateDomain(requestUrl);
+            
+            newCrawlRequests.add(new CrawlRequest(requestUrl, topPrivateDomain, currentCrawlDepth));
+        } catch (MalformedURLException | IllegalStateException ex) {
+            throw new IllegalArgumentException(ex.getMessage());
+        }
     }
     
     /**
      * Extends the list of URLs that should be visited by the crawler with a list of URLs.
      * 
-     * @param urls The list of URLs to be visited by the crawler
+     * @param urlsToVisit The list of URLs to be visited by the crawler
      */
-    protected final void visitUrls(List<String> urls) {
-        urlsToVisit.addAll(urls);
+    protected final void visitUrls(List<String> urlsToVisit) {
+        urlsToVisit.stream().forEach(this::visitUrl);
     }
     
     /**
-     * Contains the workflow of the crawler.
+     * Defines the workflow of the crawler.
      */
     private void run() {
-        WebDriver driver = WebDriverFactory.getDriver(config);
+        initialize();
         
-        CrawlFrontier frontier = new CrawlFrontier(getSeeds(), config.getCrawlingStrategy());
+        onBegin(driver);
         
         while (frontier.hasNextRequest()) {
-            CrawlRequest nextRequest = frontier.getNextRequest();
-            String nextRequestUrl = nextRequest.getUrl();
+            CrawlRequest currentRequest = frontier.getNextRequest();
+            
+            URL requestUrl = currentRequest.getUrl();
+            currentCrawlDepth = currentRequest.getCrawlDepth();
+            
+            try {
+                // Send an HTTP HEAD request to the current URL to determine its availability and content type
+                HttpHeadResponse response = getHttpHeadResponse(requestUrl);
 
-            driver.get(nextRequestUrl);
-            
-            onUrlOpen(driver);
-            
-            // Send an HTTP HEAD request to each URL (added by the user) to determine their content type and availability.
-            List<URL> urls = new ArrayList<>();
-            urlsToVisit.stream().forEach((String url) -> {
-                try {
-                    HttpHeadResponse response = getHttpHeadResponse(url);
-                    
-                    if (response.isStatusOk() && response.isHtmlContent())
-                        urls.add(response.getFinalUrl());
-                } catch (IOException ex) {
-                    // If for some reason the given URL is malformed or unavailable, call the appropriate callback to handle this situation.
-                    onUrlOpenError(url);
+                URL responseUrl = response.getUrl();
+                
+                // If the request has been redirected, a new crawl request should be created for the redirected URL
+                if (!responseUrl.equals(requestUrl)) {
+                    frontier.feedRequest(new CrawlRequest(responseUrl, getTopPrivateDomain(responseUrl), currentCrawlDepth));
+                    continue;
                 }
-            });
+                
+                // If the HTTP status of the response is not 200 (OK), ignore it
+                if (!response.isStatusOk()) {
+                    onUnsuccessfulResponseStatus(responseUrl);
+                    continue;
+                }
+                
+                // URLs that point to non-HTML content should not be opened in the browser
+                if (!response.isHtmlContent()) {
+                    onNonHtmlResponse(responseUrl);
+                    continue;
+                }
+                
+                driver.get(requestUrl.toString());
 
-            // Provide a response to the frontier with the list of URLs to visit and the crawl depth.
-            CrawlResponse response = new CrawlResponse(urls, nextRequest.getCrawlDepth() + 1);
-            frontier.addCrawlResponse(response);
-            
-            // Clear the list for the next iteration.
-            urlsToVisit.clear();
+                onUrlOpen(driver);
+                
+                // Add the new crawl requests (added from the callbacks) to the frontier
+                newCrawlRequests.stream().forEach(frontier::feedRequest);
+
+                // Clear the list for the next iteration.
+                newCrawlRequests.clear();
+            } catch (IOException ex) {
+                // If for some reason the given URL is unreachable, call the appropriate callback to handle this situation
+                onUnreachableUrl(requestUrl);
+            }
         }
         
         driver.quit();
+        
+        onEnd();
+    }
+
+    /**
+     * Constructs all the objects that are required to run the crawler.
+     */
+    private void initialize() {
+        httpClient = HttpClientBuilder.create().build();
+        driver = WebDriverFactory.getDriver(config);
+        frontier = new CrawlFrontier(config);
+    }
+    
+    /**
+     * Returns the top private domain for the given URL.
+     *
+     * @param url The URL to parse
+     * @return The top private domain
+     */
+    private String getTopPrivateDomain(URL url) {
+        return InternetDomainName.from(url.getHost()).topPrivateDomain().toString();
     }
 
     /**
      * Returns a HTTP HEAD response for the given URL that can be used to decide if the given URL should be opened in the browser or not.
      *
-     * @param url The URL to crawl
+     * @param destinationUrl The URL to crawl
      * @return A HTTP HEAD response with only the necessary properties
      */
-    private HttpHeadResponse getHttpHeadResponse(String url) throws IOException {
-        HttpClient client = HttpClientBuilder.create().build();
+    private HttpHeadResponse getHttpHeadResponse(URL destinationUrl) throws IOException {
         HttpClientContext context = HttpClientContext.create();
-        HttpHead headRequest = new HttpHead(url);    
-        HttpResponse response = client.execute(headRequest, context);
+        HttpHead headRequest = new HttpHead(destinationUrl.toString());
+        HttpResponse response = httpClient.execute(headRequest, context);
         
-        URL finalUrl = headRequest.getURI().toURL();      
+        URL responseUrl = headRequest.getURI().toURL();    
+        
+        // If the request has been redirected, get the final URL
         List<URI> redirectLocations = context.getRedirectLocations();
         if (redirectLocations != null)
-            finalUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
+            responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
          
         int statusCode = response.getStatusLine().getStatusCode();
         
         String contentType = null;
+        
+        // Get the value of the "Content-Type" header
         Header contentTypeHeader = response.getFirstHeader("Content-Type");
         if (contentTypeHeader != null)
             contentType = contentTypeHeader.getValue();
         
-        return new HttpHeadResponse(finalUrl, statusCode, contentType);
+        return new HttpHeadResponse(responseUrl, statusCode, contentType);
     }
 
     /**
-     * Returns a list of start URLs (known as seeds).
+     * Called when the crawler is about to begin its operation.
      *
-     * @return A list of seed URLs
+     * @param driver
      */
-    private List<URL> getSeeds() {
-        List<URL> seeds = new ArrayList<>();
-        
-        config.getSeeds().stream().forEach((url) -> {
-            try {
-                if (!url.startsWith("http"))
-                    url = "http://" + url;
-                
-                HttpHeadResponse response = getHttpHeadResponse(url);
-                
-                if (response.isStatusOk() && response.isHtmlContent())
-                    seeds.add(response.getFinalUrl());
-            } catch (IOException ex) {
-                onUrlOpenError(url);
-            }
-        });
-        
-        return seeds;
-    }
+    protected abstract void onBegin(WebDriver driver);
 
     /**
-     * Abstract method to be called when the browser opens an URL.
+     * Called after the browser opens an URL.
      *
-     * @param driver The driver instance of the browser.
+     * @param driver The driver instance of the browser
      */
     protected abstract void onUrlOpen(WebDriver driver);
+    
+    /**
+     * Called when getting a non-HTML response.
+      * 
+     * @param requestUrl The URL of the non-HTML response
+     */
+    protected abstract void onNonHtmlResponse(URL requestUrl);
 
     /**
-     * Abstract method to be called when an exception occurs while trying to open an URL.
+     * Called when getting an unsuccessful HTTP status code in the HEAD response.
      *
-     * @param url The URL of the failed request
+     * @param requestUrl
      */
-    protected abstract void onUrlOpenError(String url);
+    protected abstract void onUnsuccessfulResponseStatus(URL requestUrl);
+
+    /**
+     * Called when an exception occurs while sending a HEAD request to a URL.
+     *
+     * @param requestUrl The URL of the failed request
+     */
+    protected abstract void onUnreachableUrl(URL requestUrl);
+
+    /**
+     * Called when the crawler ends its operation.
+     */
+    protected abstract void onEnd();
 }

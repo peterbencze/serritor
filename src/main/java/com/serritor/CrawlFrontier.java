@@ -7,55 +7,72 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.function.Predicate;
+import java.util.Queue;
+import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
- * Provides an interface for the crawler to manage URLs while crawling.
- * 
+ * Provides an interface for the crawler to manage requests while crawling.
+  * 
  * @author Peter Bencze
  * @author Krisztian Mozsi
  */
 public class CrawlFrontier {
+
+    private final CrawlerConfiguration config;
+
+    private final Set<String> allowedDomains;
+    private final Set<String> urlFingerprints;
     
-    private final HashSet<String> urlFingerprints;
-    private final PriorityQueue<CrawlRequest> crawlRequests;
-    private final Predicate<URL> urlFilter;
-    
-    public CrawlFrontier(List<URL> urlList, CrawlingStrategy strategy) {
+    private final Queue<CrawlRequest> requests;
+
+    public CrawlFrontier(CrawlerConfiguration config) {
+        this.config = config;
+
+        allowedDomains = new HashSet<>();
         urlFingerprints = new HashSet<>();
-        crawlRequests = getPriorityQueue(strategy);
         
-        urlFilter = url -> {
-            return !urlFingerprints.contains(getFingerprintForUrl(url));
-        };
+        requests = getPriorityQueue(config.getCrawlingStrategy());
         
-        urlList.stream()
-            .filter(urlFilter)
-            .forEach(url -> addCrawlRequest(url, 0));
+        config.getSeeds().stream()
+            .forEach((CrawlRequest request) -> {
+                if (config.getFilterOffsiteRequests())
+                    allowedDomains.add(request.getTopPrivateDomain());
+                
+                if (config.getFilterDuplicateRequests()) {
+                    String urlFingerprint = getFingerprintForUrl(request.getUrl());
+                    
+                    if (!urlFingerprints.contains(urlFingerprint))
+                        addRequest(request, urlFingerprint);
+                }   
+            });
     }
     
     /**
-     * Method for the crawler to provide a response to a request.
+     * Method for the crawler to feed requests to the frontier.
      * 
-     * @param response A response object that contains the extracted URLs to crawl and the crawl depth
+     * @param request The request to be fed
      */
-    public void addCrawlResponse(CrawlResponse response) {
-        int crawlDepth = response.getCrawlDepth();
-        response.getExtractedUrls().stream()
-            .filter(urlFilter)
-            .forEach(url -> addCrawlRequest(url, crawlDepth));
+    public void feedRequest(CrawlRequest request) {
+        String urlFingerprint = getFingerprintForUrl(request.getUrl());
+        
+        if (config.getFilterDuplicateRequests() && urlFingerprints.contains(urlFingerprint))
+            return;
+        
+        if (config.getFilterOffsiteRequests() && !allowedDomains.contains(request.getTopPrivateDomain()))
+            return;
+        
+        addRequest(request, urlFingerprint);
     }
     
     /**
-     * Adds an URL to the crawl requests and registers its fingerprint if the URL has not already been visited.
+     * Adds a request to the queue and stores its fingerprint.
      * 
-     * @param url The URL to add to the crawl requests
-     * @param crawlDepth Crawl depth of the URL
+     * @param request The request to be added to the queue
      */
-    private void addCrawlRequest(URL url, int crawlDepth) {
-        urlFingerprints.add(getFingerprintForUrl(url));
-        crawlRequests.add(new CrawlRequest(url.toString(), crawlDepth));
+    private void addRequest(CrawlRequest request, String urlFingerprint) {
+        urlFingerprints.add(urlFingerprint);
+        requests.add(request);
     }
     
     /**
@@ -65,8 +82,11 @@ public class CrawlFrontier {
      * @return The fingerprint of the URL
      */
     private String getFingerprintForUrl(URL url) {  
-        StringBuilder truncatedUrl = new StringBuilder(url.getHost())
-                .append(url.getPath());
+        StringBuilder truncatedUrl = new StringBuilder(url.getHost());
+        
+        String path = url.getPath();
+        if (path != null && !path.equals("/"))
+            truncatedUrl.append(path);
         
         String query = url.getQuery();
         if (query != null) {
@@ -76,9 +96,7 @@ public class CrawlFrontier {
             List<String> queryParamList = new ArrayList(Arrays.asList(queryParams));
             Collections.sort(queryParamList);
 
-            queryParamList.stream().forEach((param) -> {
-                truncatedUrl.append(param);
-            });
+            queryParamList.stream().forEach(truncatedUrl::append);
         }
         
         return DigestUtils.sha256Hex(truncatedUrl.toString());
@@ -102,21 +120,21 @@ public class CrawlFrontier {
     }
     
     /**
-     * Indicates if there are any URL left to crawl.
-     * 
-     * @return True if there are URLs left to crawl, false otherwise
+     * Indicates if there are any requests left in the queue.
+      * 
+     * @return True if there are requests in the queue, false otherwise
      */
     public boolean hasNextRequest() {
-        return !crawlRequests.isEmpty();
+        return !requests.isEmpty();
     }
     
     /**
-     * Gets the next URL to crawl.
-     * 
-     * @return The next URL to crawl
+     * Gets the next request from the queue.
+      * 
+     * @return The next request
      */
     public CrawlRequest getNextRequest() {
-        return crawlRequests.poll();
+        return requests.poll();
     }
     
 }
