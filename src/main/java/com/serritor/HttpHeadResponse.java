@@ -1,23 +1,24 @@
 package com.serritor;
 
 import java.net.URL;
-import org.apache.http.HttpStatus;
+import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
 
 /**
- * Represents a response of a HTTP HEAD request with only the necessary properties.
+ * Represents a response of a HTTP HEAD request.
  * 
  * @author Peter Bencze
  */
 public class HttpHeadResponse {
     
-    private final URL finalUrl;
-    private final int statusCode;
-    private final String contentType;
+    private final URL url;
+    private final HttpResponse response;
     
-    public HttpHeadResponse(URL finalUrl, int statusCode, String contentType) {
-        this.finalUrl = finalUrl;
-        this.statusCode = statusCode;
-        this.contentType = contentType;
+    public HttpHeadResponse(URL url, HttpResponse response) {
+        this.url = url;
+        this.response = response;
     }
     
     /**
@@ -26,28 +27,83 @@ public class HttpHeadResponse {
      * @return The URL
      */
     public URL getUrl() {
-        return finalUrl;
+        return url;
     }
-
+    
     /**
-     * Indicates if the HTTP status code of the response is 200 (OK).
+     * Checks if a certain header is present in this message.
      * 
-     * @return True if the status code is 200 (OK), false otherwise
+     * @param name The name of the header
+     * @return True if it is present, false otherwise
      */
-    public boolean isStatusOk() {
-        return statusCode == HttpStatus.SC_OK;
+    public boolean containsHeader(String name) {
+        return response.containsHeader(name);
     }
-
+    
     /**
-     * Indicates if the content type of the response is text/html.
+     * Returns all the headers of this response.
      * 
-     * @return True if the content type is text/html, false otherwise
+     * @return All the headers
      */
-    public boolean isHtmlContent() {
-        // In case the server did not send the Content-Type header
-        if (contentType == null)
-            return false;
-        
-        return contentType.contains("text/html");
+    public Header[] getAllHeaders() {
+        return response.getAllHeaders();
+    }
+    
+    /**
+     * Returns the first header with a specified name of this response.
+     * 
+     * @param name The name of the header
+     * @return The first header with the specified name
+     */
+    public Header getFirstHeader(String name) {
+        return response.getFirstHeader(name);
+    }
+    
+    /**
+     * Returns all the headers with a specified name of this response.
+     * 
+     * @param name The name of the headers
+     * @return All the headers
+     */
+    public Header[] getHeaders(String name) {
+        return response.getHeaders(name);
+    }
+    
+    /**
+     * Returns the last header with a specified name of this response.
+     * 
+     * @param name The name of the header
+     * @return  The last header with a specified name
+     */
+    public Header getLastHeader(String name) {
+        return response.getLastHeader(name);
+    }
+    
+    /**
+     * Returns the protocol version this response is compatible with.
+     * 
+     * @return The compatible protocol version
+     */
+    public ProtocolVersion getProtocolVersion() {
+        return response.getProtocolVersion();
+    }
+    
+    /**
+     * Returns an iterator of all the headers.
+     * 
+     * @return An iterator of all the headers
+     */
+    public HeaderIterator headerIterator() {
+        return response.headerIterator();
+    }
+    
+    /**
+     * Returns an iterator of the headers with a given name.
+     * 
+     * @param name The name of the headers
+     * @return An iterator of the headers with a given name
+     */
+    public HeaderIterator headerIterator(String name) {
+        return response.headerIterator(name);
     }
 }

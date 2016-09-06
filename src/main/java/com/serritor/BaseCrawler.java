@@ -13,11 +13,12 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement their own.
-  * 
+ * 
  * @author Peter Bencze
  */
 public abstract class BaseCrawler {
@@ -32,6 +33,7 @@ public abstract class BaseCrawler {
      */
     private final List<CrawlRequest> newCrawlRequests;
     
+    private boolean isRunning;
     private Thread crawlerThread;
     private HttpClient httpClient;
     private WebDriver driver;
@@ -53,6 +55,8 @@ public abstract class BaseCrawler {
         if (crawlerThread != null)
             throw new IllegalStateException("The crawler is already started.");
         
+        isRunning = true;
+        
         if (config.getRunInBackground()) {
             crawlerThread = new Thread() {
                 @Override
@@ -65,6 +69,16 @@ public abstract class BaseCrawler {
         } else {
             run();
         }
+    }
+    
+    /**
+     * Stops the crawler.
+     */
+    public final void stop() {
+        if (!isRunning)
+            throw new IllegalStateException("The crawler is not started.");
+        
+        isRunning = false;
     }
     
     /**
@@ -98,54 +112,72 @@ public abstract class BaseCrawler {
     private void run() {
         initialize();
         
-        onBegin(driver);
+        try {
+            onBegin(driver);
         
-        while (frontier.hasNextRequest()) {
-            CrawlRequest currentRequest = frontier.getNextRequest();
-            
-            URL requestUrl = currentRequest.getUrl();
-            currentCrawlDepth = currentRequest.getCrawlDepth();
-            
-            try {
-                // Send an HTTP HEAD request to the current URL to determine its availability and content type
-                HttpHeadResponse response = getHttpHeadResponse(requestUrl);
+            while (isRunning && frontier.hasNextRequest()) {
+                CrawlRequest currentRequest = frontier.getNextRequest();
 
-                URL responseUrl = response.getUrl();
+                URL requestUrl = currentRequest.getUrl();
+                currentCrawlDepth = currentRequest.getCrawlDepth();
+
+                HttpHeadResponse httpHeadResponse;
                 
+                try {
+                    // Send an HTTP HEAD request to the current URL to determine its availability and content type
+                    httpHeadResponse = getHttpHeadResponse(requestUrl);
+                } catch (IOException ex) {
+                    // If for some reason the given URL is unreachable, call the appropriate callback to handle this situation
+                    onUnreachableUrl(requestUrl);
+                    continue;
+                }
+
+                URL responseUrl = httpHeadResponse.getUrl();
+
                 // If the request has been redirected, a new crawl request should be created for the redirected URL
                 if (!responseUrl.equals(requestUrl)) {
                     frontier.feedRequest(new CrawlRequest(responseUrl, getTopPrivateDomain(responseUrl), currentCrawlDepth));
                     continue;
-                }
-                
-                // If the HTTP status of the response is not 200 (OK), ignore it
-                if (!response.isStatusOk()) {
-                    onUnsuccessfulResponseStatus(responseUrl);
-                    continue;
-                }
-                
-                // URLs that point to non-HTML content should not be opened in the browser
-                if (!response.isHtmlContent()) {
-                    onNonHtmlResponse(responseUrl);
-                    continue;
-                }
-                
-                driver.get(requestUrl.toString());
+                }       
 
-                onUrlOpen(driver);
-                
+                // Get the content type of the response
+                String contentType = null;  
+
+                Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
+
+                if (contentTypeHeader != null)
+                    contentType = contentTypeHeader.getValue();
+
+                if (contentType != null && contentType.contains("text/html")) {
+                    boolean timedOut = false;
+                    
+                    try {
+                        // Open the URL in the browser
+                        driver.get(requestUrl.toString());
+                    } catch (TimeoutException ex) {
+                        timedOut = true;
+                    }
+                    
+                    // Check if the request has timed out
+                    if (!timedOut)
+                        onBrowserOpen(httpHeadResponse, driver);
+                    else
+                        onBrowserTimeout(httpHeadResponse, driver);
+                } else {
+                    // URLs that point to non-HTML content should not be opened in the browser
+                    onNonHtmlResponse(httpHeadResponse);
+                }
+
                 // Add the new crawl requests (added from the callbacks) to the frontier
                 newCrawlRequests.stream().forEach(frontier::feedRequest);
 
                 // Clear the list for the next iteration.
-                newCrawlRequests.clear();
-            } catch (IOException ex) {
-                // If for some reason the given URL is unreachable, call the appropriate callback to handle this situation
-                onUnreachableUrl(requestUrl);
+                newCrawlRequests.clear();            
             }
+        } finally {
+            // Always close the driver
+            driver.quit();
         }
-        
-        driver.quit();
         
         onEnd();
     }
@@ -170,7 +202,7 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Returns a HTTP HEAD response for the given URL that can be used to decide if the given URL should be opened in the browser or not.
+     * Returns a HTTP HEAD response for the given URL.
      *
      * @param destinationUrl The URL to crawl
      * @return A HTTP HEAD response with only the necessary properties
@@ -186,17 +218,8 @@ public abstract class BaseCrawler {
         List<URI> redirectLocations = context.getRedirectLocations();
         if (redirectLocations != null)
             responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
-         
-        int statusCode = response.getStatusLine().getStatusCode();
         
-        String contentType = null;
-        
-        // Get the value of the "Content-Type" header
-        Header contentTypeHeader = response.getFirstHeader("Content-Type");
-        if (contentTypeHeader != null)
-            contentType = contentTypeHeader.getValue();
-        
-        return new HttpHeadResponse(responseUrl, statusCode, contentType);
+        return new HttpHeadResponse(responseUrl, response);
     }
 
     /**
@@ -204,38 +227,41 @@ public abstract class BaseCrawler {
      *
      * @param driver
      */
-    protected abstract void onBegin(WebDriver driver);
+    protected void onBegin(WebDriver driver) {};
 
     /**
      * Called after the browser opens an URL.
      *
-     * @param driver The driver instance of the browser
+     * @param httpHeadResponse The HEAD response of the request
+     * @param driver The WebDriver instance
      */
-    protected abstract void onUrlOpen(WebDriver driver);
+    protected void onBrowserOpen(HttpHeadResponse httpHeadResponse, WebDriver driver) {};
+    
+    /**
+     * Called when the request times out in the browser.
+     * Use this callback with caution: the page might be half-loaded or not loaded at all.
+     * 
+     * @param httpHeadResponse The HEAD response of the request
+     * @param driver The WebDriver instance
+     */
+    protected void onBrowserTimeout(HttpHeadResponse httpHeadResponse, WebDriver driver) {};
     
     /**
      * Called when getting a non-HTML response.
-      * 
-     * @param requestUrl The URL of the non-HTML response
+     * 
+     * @param httpHeadResponse The HTTP HEAD response of the request
      */
-    protected abstract void onNonHtmlResponse(URL requestUrl);
-
-    /**
-     * Called when getting an unsuccessful HTTP status code in the HEAD response.
-     *
-     * @param requestUrl
-     */
-    protected abstract void onUnsuccessfulResponseStatus(URL requestUrl);
+    protected void onNonHtmlResponse(HttpHeadResponse httpHeadResponse) {};
 
     /**
      * Called when an exception occurs while sending a HEAD request to a URL.
      *
      * @param requestUrl The URL of the failed request
      */
-    protected abstract void onUnreachableUrl(URL requestUrl);
+    protected void onUnreachableUrl(URL requestUrl) {};
 
     /**
      * Called when the crawler ends its operation.
      */
-    protected abstract void onEnd();
+    protected void onEnd() {};
 }
