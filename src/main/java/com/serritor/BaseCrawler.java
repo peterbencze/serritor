@@ -33,7 +33,8 @@ public abstract class BaseCrawler {
      */
     private final List<CrawlRequest> newCrawlRequests;
     
-    private boolean isRunning;
+    private boolean stopCrawling;
+    private boolean isStopped;
     private Thread crawlerThread;
     private HttpClient httpClient;
     private WebDriver driver;
@@ -46,16 +47,18 @@ public abstract class BaseCrawler {
         config = new CrawlerConfiguration();
 
         newCrawlRequests = new ArrayList<>();
+        
+        isStopped = true;
     }
    
     /**
      * Starts the crawler.
      */
     public final void start() {
-        if (crawlerThread != null)
+        if (!isStopped)
             throw new IllegalStateException("The crawler is already started.");
         
-        isRunning = true;
+        isStopped = false;
         
         if (config.getRunInBackground()) {
             crawlerThread = new Thread() {
@@ -75,10 +78,13 @@ public abstract class BaseCrawler {
      * Stops the crawler.
      */
     public final void stop() {
-        if (!isRunning)
+        if (isStopped)
             throw new IllegalStateException("The crawler is not started.");
         
-        isRunning = false;
+        if (stopCrawling)
+            throw new IllegalStateException("Stop has already been called.");
+        
+        stopCrawling = true;
     }
     
     /**
@@ -115,7 +121,7 @@ public abstract class BaseCrawler {
         try {
             onBegin(driver);
         
-            while (isRunning && frontier.hasNextRequest()) {
+            while (!stopCrawling && frontier.hasNextRequest()) {
                 CrawlRequest currentRequest = frontier.getNextRequest();
 
                 URL requestUrl = currentRequest.getUrl();
@@ -172,14 +178,17 @@ public abstract class BaseCrawler {
                 newCrawlRequests.stream().forEach(frontier::feedRequest);
 
                 // Clear the list for the next iteration.
-                newCrawlRequests.clear();            
+                newCrawlRequests.clear();   
             }
+            
+            onFinish();
         } finally {
             // Always close the driver
             driver.quit();
-        }
         
-        onEnd();
+            stopCrawling = false;
+            isStopped = true;
+        }
     }
 
     /**
@@ -261,7 +270,7 @@ public abstract class BaseCrawler {
     protected void onUnreachableUrl(URL requestUrl) {};
 
     /**
-     * Called when the crawler ends its operation.
+     * Called when the crawler finishes its operation.
      */
-    protected void onEnd() {};
+    protected void onFinish() {};
 }
