@@ -1,10 +1,12 @@
 package com.serritor;
 
 import java.net.URL;
+import java.util.Locale;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
 
 /**
  * Represents a response of a HTTP HEAD request.
@@ -105,5 +107,23 @@ public class HttpHeadResponse {
      */
     public HeaderIterator headerIterator(String name) {
         return response.headerIterator(name);
+    }
+    
+    /**
+     * Obtains the locale of this response.
+     * 
+     * @return The locale of this response
+     */
+    public Locale getLocale() {
+        return response.getLocale();
+    }
+    
+    /**
+     * Obtains the status line of this response.
+     * 
+     * @return The status line of this response
+     */
+    public StatusLine getStatusLine() {
+        return response.getStatusLine();
     }
 }
