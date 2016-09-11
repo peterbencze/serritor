@@ -1,5 +1,6 @@
 package com.serritor;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Comparator;
  * 
  * @author Krisztian Mozsi
  */
-public class CrawlRequestComparator implements Comparator<CrawlRequest> {
+public class CrawlRequestComparator implements Comparator<CrawlRequest>, Serializable {
     
     @Override
     public int compare(CrawlRequest request1, CrawlRequest request2)

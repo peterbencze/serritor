@@ -2,11 +2,15 @@ package com.serritor;
 
 import com.google.common.net.InternetDomainName;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -28,14 +32,8 @@ public abstract class BaseCrawler {
      */
     protected final CrawlerConfiguration config;
     
-    /**
-     * Used for storing the new crawl requests that were added from the callbacks.
-     */
-    private final List<CrawlRequest> newCrawlRequests;
-    
     private boolean stopCrawling;
     private boolean isStopped;
-    private Thread crawlerThread;
     private HttpClient httpClient;
     private WebDriver driver;
     private CrawlFrontier frontier;
@@ -45,32 +43,28 @@ public abstract class BaseCrawler {
     protected BaseCrawler() {
         // Create the default configuration
         config = new CrawlerConfiguration();
-
-        newCrawlRequests = new ArrayList<>();
         
         isStopped = true;
     }
-   
+    
     /**
      * Starts the crawler.
      */
     public final void start() {
-        if (!isStopped)
-            throw new IllegalStateException("The crawler is already started.");
-        
-        isStopped = false;
-        
-        if (config.getRunInBackground()) {
-            crawlerThread = new Thread() {
-                @Override
-                public void run() {
-                    BaseCrawler.this.run();
-                }
-            };
-
-            crawlerThread.start();
-        } else {
-            run();
+        start(null);
+    }
+    
+    /**
+     * Resumes a previously saved state.
+     * 
+     * @param in The input stream to use
+     * @throws IOException Any of the usual Input/Output related exceptions.
+     * @throws ClassNotFoundException Class of a serialized object cannot be found.
+     */
+    public final void resume(InputStream in) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
+            CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
+            start(frontierToUse);
         }
     }
     
@@ -88,36 +82,71 @@ public abstract class BaseCrawler {
     }
     
     /**
-     * Appends an URL to the list of URLs that should be visited by the crawler.
+     * Saves the current state of the crawler to the specified output stream.
      * 
-     * @param urlToVisit The URL to be visited by the crawler
+     * @param out The output stream to use
+     * @throws IOException Any exception thrown by the underlying OutputStream.
      */
-    protected final void visitUrl(String urlToVisit) {
+    public final void saveState(OutputStream out) throws IOException {
+        if (frontier == null)
+            throw new IllegalStateException("No state to save.");
+        
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
+            objectOutputStream.writeObject(frontier);
+        }
+    }
+    
+    /**
+     * Appends an URL to the list of URLs that should be crawled.
+     * 
+     * @param urlToCrawl The URL to be crawled
+     */
+    protected final void crawlUrl(String urlToCrawl) {
         try {
-            URL requestUrl = new URL(urlToVisit);
+            URL requestUrl = new URL(urlToCrawl);
             String topPrivateDomain = getTopPrivateDomain(requestUrl);
             
-            newCrawlRequests.add(new CrawlRequest(requestUrl, topPrivateDomain, currentCrawlDepth));
+            frontier.feedRequest(new CrawlRequest(requestUrl, topPrivateDomain, currentCrawlDepth));
         } catch (MalformedURLException | IllegalStateException ex) {
             throw new IllegalArgumentException(ex.getMessage());
         }
     }
     
     /**
-     * Extends the list of URLs that should be visited by the crawler with a list of URLs.
+     * Extends the list of URLs that should be crawled with a list of URLs.
      * 
-     * @param urlsToVisit The list of URLs to be visited by the crawler
+     * @param urlsToCrawl The list of URLs to be crawled
      */
-    protected final void visitUrls(List<String> urlsToVisit) {
-        urlsToVisit.stream().forEach(this::visitUrl);
+    protected final void crawlUrls(List<String> urlsToCrawl) {
+        urlsToCrawl.stream().forEach(this::crawlUrl);
+    }
+    
+    /**
+     * Constructs all the necessary objects and runs the crawler.
+     * 
+     * @param frontierToUse Previously saved frontier to be used by the crawler.
+     */
+    private void start(CrawlFrontier frontierToUse) {
+        if (!isStopped)
+            throw new IllegalStateException("The crawler is already started.");
+        
+        isStopped = false;
+        
+        httpClient = HttpClientBuilder.create().build();
+        driver = WebDriverFactory.getDriver(config);
+        
+        if (frontierToUse == null)
+            this.frontier = new CrawlFrontier(config);
+        else
+            this.frontier = frontierToUse;
+        
+        run();
     }
     
     /**
      * Defines the workflow of the crawler.
      */
     private void run() {
-        initialize();
-        
         try {
             onBegin(driver);
         
@@ -173,15 +202,13 @@ public abstract class BaseCrawler {
                     // URLs that point to non-HTML content should not be opened in the browser
                     onNonHtmlResponse(httpHeadResponse);
                 }
-
-                // Add the new crawl requests (added from the callbacks) to the frontier
-                newCrawlRequests.stream().forEach(frontier::feedRequest);
-
-                // Clear the list for the next iteration.
-                newCrawlRequests.clear();   
+                
+                TimeUnit.MILLISECONDS.sleep(config.getDelayBetweenRequests().toMillis());
             }
             
             onFinish();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         } finally {
             // Always close the driver
             driver.quit();
@@ -189,15 +216,6 @@ public abstract class BaseCrawler {
             stopCrawling = false;
             isStopped = true;
         }
-    }
-
-    /**
-     * Constructs all the objects that are required to run the crawler.
-     */
-    private void initialize() {
-        httpClient = HttpClientBuilder.create().build();
-        driver = WebDriverFactory.getDriver(config);
-        frontier = new CrawlFrontier(config);
     }
     
     /**
