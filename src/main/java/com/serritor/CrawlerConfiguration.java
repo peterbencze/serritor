@@ -1,8 +1,10 @@
 package com.serritor;
 
 import com.google.common.net.InternetDomainName;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,18 +16,18 @@ import java.util.Map;
  * @author Krisztian Mozsi
  * @author Peter Bencze
  */
-public class CrawlerConfiguration {
+public class CrawlerConfiguration implements Serializable {
 
     private final Map<String, Object> desiredCapabilities;
     private final List<CrawlRequest> seeds;
 
-    private boolean debugMode;
-    private boolean runInBackground;
     private CrawlerDriver crawlerDriver;
     private String driverPath;
     private CrawlingStrategy crawlingStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
+    private Duration delayBetweenRequests;
+    
 
     public CrawlerConfiguration() {
         crawlerDriver = CrawlerDriver.HTML_UNIT_DRIVER;
@@ -33,22 +35,7 @@ public class CrawlerConfiguration {
         seeds = new ArrayList<>();
         crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
         filterDuplicateRequests = true;
-    }
-
-    public boolean getDebugMode() {
-        return debugMode;
-    }
-
-    public void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
-    }
-    
-    public boolean getRunInBackground() {
-        return runInBackground;
-    }
-    
-    public void setRunInBackground(boolean runInBackground) {
-        this.runInBackground = runInBackground;
+        delayBetweenRequests = Duration.ZERO;
     }
     
     public CrawlerDriver getCrawlerDriver() {
@@ -122,5 +109,13 @@ public class CrawlerConfiguration {
 
     public void setFilterOffsiteRequests(boolean filterOffsiteRequests) {
         this.filterOffsiteRequests = filterOffsiteRequests;
+    }
+    
+    public Duration getDelayBetweenRequests() {
+        return delayBetweenRequests;
+    }
+
+    public void setDelayBetweenRequests(Duration delayBetweenRequests) {
+        this.delayBetweenRequests = delayBetweenRequests;
     }
 }

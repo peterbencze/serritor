@@ -1,5 +1,6 @@
 package com.serritor;
 
+import java.io.Serializable;
 import java.net.URL;
 
 /**
@@ -8,7 +9,7 @@ import java.net.URL;
  * @author Krisztian Mozsi
  * @author Peter Bencze
  */
-public class CrawlRequest {
+public class CrawlRequest implements Serializable {
 
     private final String topPrivateDomain;
     private final URL url;

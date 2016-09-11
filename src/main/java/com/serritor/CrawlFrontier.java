@@ -1,5 +1,6 @@
 package com.serritor;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +18,7 @@ import org.apache.commons.codec.digest.DigestUtils;
  * @author Peter Bencze
  * @author Krisztian Mozsi
  */
-public class CrawlFrontier {
+public class CrawlFrontier implements Serializable {
 
     private final CrawlerConfiguration config;
 
@@ -63,6 +64,24 @@ public class CrawlFrontier {
             return;
         
         addRequest(request, urlFingerprint);
+    }
+    
+    /**
+     * Indicates if there are any requests left in the queue.
+      * 
+     * @return True if there are requests in the queue, false otherwise
+     */
+    public boolean hasNextRequest() {
+        return !requests.isEmpty();
+    }
+    
+    /**
+     * Gets the next request from the queue.
+      * 
+     * @return The next request
+     */
+    public CrawlRequest getNextRequest() {
+        return requests.poll();
     }
     
     /**
@@ -118,23 +137,4 @@ public class CrawlFrontier {
         
         throw new IllegalArgumentException("Not supported crawling strategy.");
     }
-    
-    /**
-     * Indicates if there are any requests left in the queue.
-      * 
-     * @return True if there are requests in the queue, false otherwise
-     */
-    public boolean hasNextRequest() {
-        return !requests.isEmpty();
-    }
-    
-    /**
-     * Gets the next request from the queue.
-      * 
-     * @return The next request
-     */
-    public CrawlRequest getNextRequest() {
-        return requests.poll();
-    }
-    
 }
