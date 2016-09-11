@@ -135,10 +135,7 @@ public abstract class BaseCrawler {
         httpClient = HttpClientBuilder.create().build();
         driver = WebDriverFactory.getDriver(config);
         
-        if (frontierToUse == null)
-            this.frontier = new CrawlFrontier(config);
-        else
-            this.frontier = frontierToUse;
+        frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
         
         run();
     }
