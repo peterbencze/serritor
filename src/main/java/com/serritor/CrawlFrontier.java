@@ -2,9 +2,7 @@ package com.serritor;
 
 import java.io.Serializable;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -112,10 +110,11 @@ public class CrawlFrontier implements Serializable {
             truncatedUrl.append("?");
             
             String[] queryParams = url.getQuery().split("&");
-            List<String> queryParamList = new ArrayList(Arrays.asList(queryParams));
-            Collections.sort(queryParamList);
-
-            queryParamList.stream().forEach(truncatedUrl::append);
+            
+            List<String> queryParamList = Arrays.asList(queryParams);
+            queryParamList.stream()
+                .sorted(String::compareToIgnoreCase)
+                .forEachOrdered(truncatedUrl::append);
         }
         
         return DigestUtils.sha256Hex(truncatedUrl.toString());
