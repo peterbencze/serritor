@@ -151,6 +151,7 @@ public abstract class BaseCrawler {
                 CrawlRequest currentRequest = frontier.getNextRequest();
 
                 URL requestUrl = currentRequest.getUrl();
+                String requestUrlAsString = requestUrl.toString();
                 currentCrawlDepth = currentRequest.getCrawlDepth();
 
                 HttpHeadResponse httpHeadResponse;
@@ -167,7 +168,7 @@ public abstract class BaseCrawler {
                 URL responseUrl = httpHeadResponse.getUrl();
 
                 // If the request has been redirected, a new crawl request should be created for the redirected URL
-                if (!responseUrl.equals(requestUrl)) {
+                if (!responseUrl.toString().equals(requestUrlAsString)) {
                     frontier.feedRequest(new CrawlRequest(responseUrl, getTopPrivateDomain(responseUrl), currentCrawlDepth));
                     continue;
                 }       
@@ -185,7 +186,7 @@ public abstract class BaseCrawler {
                     
                     try {
                         // Open the URL in the browser
-                        driver.get(requestUrl.toString());
+                        driver.get(requestUrlAsString);
                     } catch (TimeoutException ex) {
                         timedOut = true;
                     }
@@ -251,7 +252,7 @@ public abstract class BaseCrawler {
      *
      * @param driver
      */
-    protected void onBegin(WebDriver driver) {};
+    protected void onBegin(WebDriver driver) {}
 
     /**
      * Called after the browser opens an URL.
@@ -259,7 +260,7 @@ public abstract class BaseCrawler {
      * @param httpHeadResponse The HEAD response of the request
      * @param driver The WebDriver instance
      */
-    protected void onBrowserOpen(HttpHeadResponse httpHeadResponse, WebDriver driver) {};
+    protected void onBrowserOpen(HttpHeadResponse httpHeadResponse, WebDriver driver) {}
     
     /**
      * Called when the request times out in the browser.
@@ -268,24 +269,24 @@ public abstract class BaseCrawler {
      * @param httpHeadResponse The HEAD response of the request
      * @param driver The WebDriver instance
      */
-    protected void onBrowserTimeout(HttpHeadResponse httpHeadResponse, WebDriver driver) {};
+    protected void onBrowserTimeout(HttpHeadResponse httpHeadResponse, WebDriver driver) {}
     
     /**
      * Called when getting a non-HTML response.
      * 
      * @param httpHeadResponse The HTTP HEAD response of the request
      */
-    protected void onNonHtmlResponse(HttpHeadResponse httpHeadResponse) {};
+    protected void onNonHtmlResponse(HttpHeadResponse httpHeadResponse) {}
 
     /**
      * Called when an exception occurs while sending a HEAD request to a URL.
      *
      * @param requestUrl The URL of the failed request
      */
-    protected void onUnreachableUrl(URL requestUrl) {};
+    protected void onUnreachableUrl(URL requestUrl) {}
 
     /**
      * Called when the crawler finishes its operation.
      */
-    protected void onFinish() {};
+    protected void onFinish() {}
 }

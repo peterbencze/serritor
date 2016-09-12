@@ -19,9 +19,14 @@ import org.openqa.selenium.safari.SafariDriver;
  */
 public class WebDriverFactory {
     
-    private static final String chromeDriverSystemProperty = "webdriver.chrome.driver";
-    private static final String firefoxDriverSystemProperty = "webdriver.gecko.driver";
-    private static final String ieDriverSystemProperty = "webdriver.ie.driver";
+    private static final String CHROME_DRIVER_SYSTEM_PROPERTY = "webdriver.chrome.driver";
+    private static final String FIREFOX_DRIVER_SYSTEM_PROPERTY = "webdriver.gecko.driver";
+    private static final String IE_DRIVER_SYSTEM_PROPERTY = "webdriver.ie.driver";
+    
+    
+    private WebDriverFactory() {
+        throw new IllegalAccessError("Factory class");
+    }
     
     /**
      * Gets a new instance of the WebDriver specified in the configuration.
@@ -62,7 +67,7 @@ public class WebDriverFactory {
      */
     private static WebDriver getChromeDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
-            System.setProperty(chromeDriverSystemProperty, driverPath);
+            System.setProperty(CHROME_DRIVER_SYSTEM_PROPERTY, driverPath);
         
         return new ChromeDriver(capabilities);
     }
@@ -76,7 +81,7 @@ public class WebDriverFactory {
      */
     private static WebDriver getFirefoxDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
-            System.setProperty(firefoxDriverSystemProperty, driverPath);
+            System.setProperty(FIREFOX_DRIVER_SYSTEM_PROPERTY, driverPath);
         
         return new FirefoxDriver(capabilities);
     }
@@ -90,7 +95,7 @@ public class WebDriverFactory {
      */
     private static WebDriver getInternetExplorerDriver(String driverPath, Capabilities capabilities) {
         if (driverPath != null)
-            System.setProperty(ieDriverSystemProperty, driverPath);
+            System.setProperty(IE_DRIVER_SYSTEM_PROPERTY, driverPath);
         
         return new InternetExplorerDriver(capabilities);
     }

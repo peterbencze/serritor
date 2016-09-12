@@ -1,7 +1,13 @@
 package com.serritor;
 
 import com.google.common.net.InternetDomainName;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
@@ -18,11 +24,13 @@ import java.util.Map;
  */
 public class CrawlerConfiguration implements Serializable {
 
-    private final Map<String, Object> desiredCapabilities;
+    private static final Gson gson = new Gson();
+    
     private final List<CrawlRequest> seeds;
 
     private CrawlerDriver crawlerDriver;
     private String driverPath;
+    private transient Map<String, Object> desiredCapabilities;
     private CrawlingStrategy crawlingStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
@@ -117,5 +125,20 @@ public class CrawlerConfiguration implements Serializable {
 
     public void setDelayBetweenRequests(Duration delayBetweenRequests) {
         this.delayBetweenRequests = delayBetweenRequests;
+    }
+    
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        
+        // desiredCapabilities is non-serializable, so convert it to JSON to serialize it
+        out.writeUTF(gson.toJson(desiredCapabilities));
+    }
+    
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        // Reconstruct desiredCapabilities from the JSON input
+        Type desiredCapabilitiesType = new TypeToken<Map<String, Object>>() {}.getType();
+        desiredCapabilities = gson.fromJson(in.readUTF(), desiredCapabilitiesType);
     }
 }
