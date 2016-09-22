@@ -1,4 +1,4 @@
-package com.serritor;
+package com.serritor.api;
 
 /**
  * Available strategies that can be used while crawling.
