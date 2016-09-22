@@ -48,5 +48,8 @@ That's it! In just a few lines you can make a crawler that extracts and crawls e
 config.setWebDriver(new ChromeDriver());
 ```
 
+## Support
+The developers would like to thank [Precognox](http://precognox.com/) for the support.
+
 ## License
 The source code of Serritor is made available under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
