@@ -20,7 +20,7 @@ import java.net.URL;
 
 /**
  * Represents a non-HTML response.
- * 
+ *
  * @author Peter Bencze
  */
 public final class NonHtmlResponse extends CallbackParameter {
@@ -37,7 +37,7 @@ public final class NonHtmlResponse extends CallbackParameter {
 
     /**
      * Returns the URL of the non-HTML response.
-     * 
+     *
      * @return The URL of the response
      */
     public URL getUrl() {
@@ -46,7 +46,7 @@ public final class NonHtmlResponse extends CallbackParameter {
 
     /**
      * Returns the HTTP HEAD response.
-     * 
+     *
      * @return The HTTP HEAD response
      */
     public HttpHeadResponse getHttpHeadResponse() {
@@ -59,9 +59,6 @@ public final class NonHtmlResponse extends CallbackParameter {
         private URL refererUrl;
         private URL responseUrl;
         private HttpHeadResponse httpHeadResponse;
-
-        public NonHtmlResponseBuilder() {
-        }
 
         public NonHtmlResponseBuilder setCrawlDepth(int crawlDepth) {
             this.crawlDepth = crawlDepth;

@@ -124,7 +124,7 @@ public final class CrawlFrontier implements Serializable {
         StringBuilder truncatedUrl = new StringBuilder(url.getHost());
 
         String path = url.getPath();
-        if (path != null && !path.equals("/")) {
+        if (path != null && !"/".equals(path)) {
             truncatedUrl.append(path);
         }
 

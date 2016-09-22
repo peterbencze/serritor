@@ -21,7 +21,7 @@ import java.net.URL;
 
 /**
  * Represents an unsuccessful request.
- * 
+ *
  * @author Peter Bencze
  */
 public final class UnsuccessfulRequest extends CallbackParameter {
@@ -38,7 +38,7 @@ public final class UnsuccessfulRequest extends CallbackParameter {
 
     /**
      * Returns the URL of the request.
-     * 
+     *
      * @return The URL of the request
      */
     public URL getUrl() {
@@ -47,7 +47,7 @@ public final class UnsuccessfulRequest extends CallbackParameter {
 
     /**
      * Returns the exception that was thrown.
-     * 
+     *
      * @return The thrown exception
      */
     public IOException getException() {
@@ -60,9 +60,6 @@ public final class UnsuccessfulRequest extends CallbackParameter {
         private URL referer;
         private URL requestUrl;
         private IOException exception;
-
-        public UnsuccessfulRequestBuilder() {
-        }
 
         public UnsuccessfulRequestBuilder setCrawlDepth(int crawlDepth) {
             this.crawlDepth = crawlDepth;
