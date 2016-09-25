@@ -1,7 +1,7 @@
 Serritor
 ========
 
-Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java.
+Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. Crawling dynamic web pages is no longer a problem!
 
 ## Requirements
 - [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
@@ -10,7 +10,7 @@ Serritor is an open source web crawler framework built upon [Selenium](http://ww
 See the [Wiki](https://github.com/peterbencze/serritor/wiki) page.
 
 ## Quickstart
-BaseCrawler provides a skeletal implementation of a crawler to minimize the effort to create your own. Create a class that extends BaseCrawler. In this class, you can customize the behavior of your crawler. There are callbacks available for every stage of the crawling. Below you can find a sample implementation:
+BaseCrawler provides a skeletal implementation of a crawler to minimize the effort to create your own. First, create a class that extends BaseCrawler. In this class, you can customize the behavior of your crawler. There are callbacks available for every stage of crawling. Below you can find a sample implementation:
 ```java
 public class MyCrawler extends BaseCrawler {
     
@@ -22,14 +22,7 @@ public class MyCrawler extends BaseCrawler {
     @Override
     protected void onResponseComplete(HtmlResponse response) {
         List<WebElement> links = response.getWebDriver().findElements(By.tagName("a"));
-        
-        links.stream().forEach((WebElement link) -> {            
-            try {
-                crawlUrlAsString(link.getAttribute("href"));
-            } catch (StaleElementReferenceException | IllegalArgumentException ex) {
-                System.out.println("URL extraction error: " + ex.getMessage());
-            }
-        });
+        links.stream().forEach((WebElement link) -> crawlUrlAsString(link.getAttribute("href")));
     }
 
     @Override
@@ -43,7 +36,9 @@ public class MyCrawler extends BaseCrawler {
     }
 }
 ```
-That's it! In just a few lines you can make a crawler that extracts and crawls every URL it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver, so you can use all the features that are provided by Selenium. By default, the crawler uses HtmlUnitDriver but you can also set your preferred WebDriver like this:
+That's it! In just a few lines you can make a crawler that extracts and crawls every URL it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver, so you can use all the features that are provided by Selenium.
+
+By default, the crawler uses [HtmlUnitDriver](https://github.com/SeleniumHQ/selenium/wiki/HtmlUnitDriver) but you can also set your preferred WebDriver:
 ```java
 config.setWebDriver(new ChromeDriver());
 ```
