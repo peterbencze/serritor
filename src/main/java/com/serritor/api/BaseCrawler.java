@@ -228,8 +228,8 @@ public abstract class BaseCrawler {
                 } catch (IOException ex) {
                     UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder()
                             .setCrawlDepth(currentCrawlDepth)
-                            .setReferer(currentRequest.getRefererUrl())
-                            .setRequestUrl(currentRequestUrl)
+                            .setRefererUrl(currentRequest.getRefererUrl())
+                            .setCurrentUrl(currentRequestUrl)
                             .setException(ex)
                             .build();
 
@@ -265,7 +265,7 @@ public abstract class BaseCrawler {
                     HtmlResponse htmlResponse = new HtmlResponseBuilder()
                             .setCrawlDepth(currentCrawlDepth)
                             .setRefererUrl(currentRequest.getRefererUrl())
-                            .setResponseUrl(currentRequestUrl)
+                            .setCurrentUrl(currentRequestUrl)
                             .setHttpHeadResponse(httpHeadResponse)
                             .setWebDriver(webDriver)
                             .build();
@@ -282,7 +282,7 @@ public abstract class BaseCrawler {
                     NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder()
                             .setCrawlDepth(currentCrawlDepth)
                             .setRefererUrl(currentRequest.getRefererUrl())
-                            .setResponseUrl(currentRequestUrl)
+                            .setCurrentUrl(currentRequestUrl)
                             .setHttpHeadResponse(httpHeadResponse)
                             .build();
 

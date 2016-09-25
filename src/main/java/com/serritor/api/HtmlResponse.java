@@ -16,7 +16,6 @@
 package com.serritor.api;
 
 import com.serritor.internal.CallbackParameter;
-import java.net.URL;
 import org.openqa.selenium.WebDriver;
 
 /**
@@ -26,25 +25,14 @@ import org.openqa.selenium.WebDriver;
  */
 public final class HtmlResponse extends CallbackParameter {
 
-    private final URL responseUrl;
     private final HttpHeadResponse httpHeadResponse;
     private final WebDriver webDriver;
 
     private HtmlResponse(HtmlResponseBuilder builder) {
-        super(builder.crawlDepth, builder.refererUrl);
+        super(builder);
 
-        this.responseUrl = builder.responseUrl;
         this.httpHeadResponse = builder.httpHeadResponse;
         this.webDriver = builder.webDriver;
-    }
-
-    /**
-     * Returns the URL of the response.
-     * 
-     * @return The URL of the response
-     */
-    public URL getUrl() {
-        return responseUrl;
     }
 
     /**
@@ -65,29 +53,11 @@ public final class HtmlResponse extends CallbackParameter {
         return webDriver;
     }
 
-    public static class HtmlResponseBuilder {
+    public static class HtmlResponseBuilder extends CallbackParameterBuilder<HtmlResponseBuilder> {
 
-        private int crawlDepth;
-        private URL refererUrl;
-        private URL responseUrl;
         private HttpHeadResponse httpHeadResponse;
         private WebDriver webDriver;
-
-        public HtmlResponseBuilder setCrawlDepth(int crawlDepth) {
-            this.crawlDepth = crawlDepth;
-            return this;
-        }
-
-        public HtmlResponseBuilder setRefererUrl(URL refererUrl) {
-            this.refererUrl = refererUrl;
-            return this;
-        }
-
-        public HtmlResponseBuilder setResponseUrl(URL responseUrl) {
-            this.responseUrl = responseUrl;
-            return this;
-        }
-
+        
         public HtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
             this.httpHeadResponse = httpHeadResponse;
             return this;
@@ -98,6 +68,7 @@ public final class HtmlResponse extends CallbackParameter {
             return this;
         }
 
+        @Override
         public HtmlResponse build() {
             return new HtmlResponse(this);
         }

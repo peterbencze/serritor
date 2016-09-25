@@ -25,28 +25,63 @@ import java.net.URL;
 public abstract class CallbackParameter {
 
     private final int crawlDepth;
-    private final URL referer;
+    private final URL refererUrl;
+    private final URL currentUrl;
 
-    protected CallbackParameter(int crawlDepth, URL referer) {
-        this.crawlDepth = crawlDepth;
-        this.referer = referer;
+    protected CallbackParameter(CallbackParameterBuilder builder) {
+        this.crawlDepth = builder.crawlDepth;
+        this.refererUrl = builder.refererUrl;
+        this.currentUrl = builder.currentUrl;
     }
 
     /**
-     * Returns the crawl depth of the current request or response.
+     * Returns the current crawl depth.
      * 
-     * @return The crawl depth of the current request or response
+     * @return The current crawl depth
      */
     public final int getCrawlDepth() {
         return crawlDepth;
     }
 
     /**
-     * Returns the referer URL of the current request or response.
+     * Returns the referer URL.
      * 
-     * @return The referer URL of the current request or response
+     * @return The referer URL
      */
     public final URL getRefererUrl() {
-        return referer;
+        return refererUrl;
+    }
+    
+    /**
+     * Returns the current URL.
+     * 
+     * @return The current URL
+     */
+    public final URL getCurrentUrl() {
+        return currentUrl;
+    }
+    
+    public abstract class CallbackParameterBuilder<T extends CallbackParameterBuilder> {
+        
+        private int crawlDepth;
+        private URL refererUrl;
+        private URL currentUrl;
+        
+        public T setCrawlDepth(int crawlDepth) {
+            this.crawlDepth = crawlDepth;
+            return (T) this;
+        }
+        
+        public T setRefererUrl(URL refererUrl) {
+            this.refererUrl = refererUrl;
+            return (T) this;
+        }
+        
+        public T setCurrentUrl(URL currentUrl) {
+            this.currentUrl = currentUrl;
+            return (T) this;
+        }
+        
+        public abstract CallbackParameter build();
     }
 }
