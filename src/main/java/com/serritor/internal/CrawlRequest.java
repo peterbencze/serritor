@@ -32,10 +32,10 @@ public final class CrawlRequest implements Serializable {
     private final int crawlDepth;
 
     private CrawlRequest(CrawlRequestBuilder builder) {
-        this.refererUrl = builder.refererUrl;
-        this.requestUrl = builder.requestUrl;
-        this.topPrivateDomain = builder.topPrivateDomain;
-        this.crawlDepth = builder.crawlDepth;
+        refererUrl = builder.refererUrl;
+        requestUrl = builder.requestUrl;
+        topPrivateDomain = builder.topPrivateDomain;
+        crawlDepth = builder.crawlDepth;
     }
 
     /**

@@ -20,7 +20,7 @@ import org.openqa.selenium.WebDriver;
 
 /**
  * Represents an HTML response.
- * 
+ *
  * @author Peter Bencze
  */
 public final class HtmlResponse extends CallbackParameter {
@@ -31,13 +31,13 @@ public final class HtmlResponse extends CallbackParameter {
     private HtmlResponse(HtmlResponseBuilder builder) {
         super(builder);
 
-        this.httpHeadResponse = builder.httpHeadResponse;
-        this.webDriver = builder.webDriver;
+        httpHeadResponse = builder.httpHeadResponse;
+        webDriver = builder.webDriver;
     }
 
     /**
      * Returns the HTTP HEAD response.
-     * 
+     *
      * @return The HTTP HEAD response
      */
     public HttpHeadResponse getHttpHeadResponse() {
@@ -46,7 +46,7 @@ public final class HtmlResponse extends CallbackParameter {
 
     /**
      * Returns the WebDriver instance for the browser.
-     * 
+     *
      * @return The WebDriver instance
      */
     public WebDriver getWebDriver() {
@@ -57,7 +57,7 @@ public final class HtmlResponse extends CallbackParameter {
 
         private HttpHeadResponse httpHeadResponse;
         private WebDriver webDriver;
-        
+
         public HtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
             this.httpHeadResponse = httpHeadResponse;
             return this;

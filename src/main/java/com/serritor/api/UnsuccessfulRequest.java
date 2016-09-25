@@ -30,7 +30,7 @@ public final class UnsuccessfulRequest extends CallbackParameter {
     private UnsuccessfulRequest(UnsuccessfulRequestBuilder builder) {
         super(builder);
 
-        this.exception = builder.exception;
+        exception = builder.exception;
     }
 
     /**

@@ -29,7 +29,7 @@ public final class NonHtmlResponse extends CallbackParameter {
     private NonHtmlResponse(NonHtmlResponseBuilder builder) {
         super(builder);
 
-        this.httpHeadResponse = builder.httpHeadResponse;
+        httpHeadResponse = builder.httpHeadResponse;
     }
 
     /**
