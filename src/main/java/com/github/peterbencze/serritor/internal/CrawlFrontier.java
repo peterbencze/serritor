@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.internal;
+package com.github.peterbencze.serritor.internal;
 
-import com.serritor.api.CrawlingStrategy;
-import com.serritor.internal.CrawlRequest;
-import com.serritor.internal.CrawlRequestComparator;
+import com.github.peterbencze.serritor.api.CrawlingStrategy;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
@@ -29,7 +27,8 @@ import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
- * Provides an interface for the crawler to manage crawl requests while crawling.
+ * Provides an interface for the crawler to manage crawl requests while
+ * crawling.
  *
  * @author Peter Bencze
  * @author Krisztian Mozsi

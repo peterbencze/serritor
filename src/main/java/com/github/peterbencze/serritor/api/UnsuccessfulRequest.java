@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.api;
+package com.github.peterbencze.serritor.api;
 
-import com.serritor.internal.CallbackParameter;
+import com.github.peterbencze.serritor.internal.CallbackParameter;
 import java.io.IOException;
 
 /**

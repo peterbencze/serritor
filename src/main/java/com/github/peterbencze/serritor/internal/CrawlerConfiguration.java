@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.internal;
+package com.github.peterbencze.serritor.internal;
 
-import com.serritor.api.CrawlingStrategy;
-import com.serritor.internal.CrawlRequest;
+import com.github.peterbencze.serritor.api.CrawlingStrategy;
 import com.google.common.net.InternetDomainName;
-import com.serritor.internal.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.internal.CrawlRequest.CrawlRequestBuilder;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;

@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.api;
+package com.github.peterbencze.serritor.api;
 
-import com.serritor.internal.CallbackParameter;
-import org.openqa.selenium.WebDriver;
+import com.github.peterbencze.serritor.internal.CallbackParameter;
 
 /**
- * Represents an HTML response.
+ * Represents a non-HTML response.
  *
  * @author Peter Bencze
  */
-public final class HtmlResponse extends CallbackParameter {
+public final class NonHtmlResponse extends CallbackParameter {
 
     private final HttpHeadResponse httpHeadResponse;
-    private final WebDriver webDriver;
 
-    private HtmlResponse(HtmlResponseBuilder builder) {
+    private NonHtmlResponse(NonHtmlResponseBuilder builder) {
         super(builder);
 
         httpHeadResponse = builder.httpHeadResponse;
-        webDriver = builder.webDriver;
     }
 
     /**
@@ -44,33 +41,18 @@ public final class HtmlResponse extends CallbackParameter {
         return httpHeadResponse;
     }
 
-    /**
-     * Returns the WebDriver instance for the browser.
-     *
-     * @return The WebDriver instance
-     */
-    public WebDriver getWebDriver() {
-        return webDriver;
-    }
-
-    public static class HtmlResponseBuilder extends CallbackParameterBuilder<HtmlResponseBuilder> {
+    public static class NonHtmlResponseBuilder extends CallbackParameterBuilder<NonHtmlResponseBuilder> {
 
         private HttpHeadResponse httpHeadResponse;
-        private WebDriver webDriver;
 
-        public HtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
+        public NonHtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
             this.httpHeadResponse = httpHeadResponse;
             return this;
         }
 
-        public HtmlResponseBuilder setWebDriver(WebDriver webDriver) {
-            this.webDriver = webDriver;
-            return this;
-        }
-
         @Override
-        public HtmlResponse build() {
-            return new HtmlResponse(this);
+        public NonHtmlResponse build() {
+            return new NonHtmlResponse(this);
         }
     }
 }

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.api;
+package com.github.peterbencze.serritor.api;
 
 import com.google.common.net.InternetDomainName;
-import com.serritor.internal.CrawlFrontier;
-import com.serritor.internal.CrawlRequest;
-import com.serritor.internal.CrawlRequest.CrawlRequestBuilder;
-import com.serritor.internal.CrawlerConfiguration;
-import com.serritor.api.HtmlResponse.HtmlResponseBuilder;
-import com.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
-import com.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
+import com.github.peterbencze.serritor.internal.CrawlFrontier;
+import com.github.peterbencze.serritor.internal.CrawlRequest;
+import com.github.peterbencze.serritor.internal.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
+import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
+import com.github.peterbencze.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
+import com.github.peterbencze.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -203,7 +203,7 @@ public abstract class BaseCrawler {
     private void run() {
         try {
             onBegin();
-            
+
             while (!stopCrawling && frontier.hasNextRequest()) {
                 CrawlRequest currentRequest = frontier.getNextRequest();
 
@@ -216,7 +216,7 @@ public abstract class BaseCrawler {
 
                 try {
                     HttpClientContext context = HttpClientContext.create();
-                    
+
                     // Send an HTTP HEAD request to the current URL to determine its availability and content type
                     httpHeadResponse = getHttpHeadResponse(currentRequestUrl, context);
 
@@ -325,21 +325,21 @@ public abstract class BaseCrawler {
         HttpResponse response = httpClient.execute(headRequest, context);
         return new HttpHeadResponse(response);
     }
-    
+
     /**
      * Returns the content type of the response.
-     * 
+     *
      * @param httpHeadResponse The HTTP HEAD response
      * @return The content type of the response
      */
     private String getContentType(HttpHeadResponse httpHeadResponse) {
         String contentType = null;
-        
+
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
         if (contentTypeHeader != null) {
             contentType = contentTypeHeader.getValue();
         }
-        
+
         return contentType;
     }
 

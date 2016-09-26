@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.serritor.internal;
+package com.github.peterbencze.serritor.internal;
 
-import com.serritor.internal.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.internal.CrawlRequest.CrawlRequestBuilder;
 import java.util.PriorityQueue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
