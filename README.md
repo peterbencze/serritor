@@ -40,12 +40,12 @@ public class MyCrawler extends BaseCrawler {
 
     @Override
     protected void onNonHtmlResponse(NonHtmlResponse response) {
-        System.out.println("Received a non-HTML response from: " + response.getUrl());
+        System.out.println("Received a non-HTML response from: " + response.getCurrentUrl());
     }
     
     @Override
     protected void onUnsuccessfulRequest(UnsuccessfulRequest request) {
-        System.out.println("Could not get response from: " + request.getUrl());
+        System.out.println("Could not get response from: " + request.getCurrentUrl());
     }
 }
 ```
