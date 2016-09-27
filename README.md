@@ -3,8 +3,21 @@ Serritor
 
 Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. Crawling dynamic web pages is no longer a problem!
 
-## Requirements
-- [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+## Installation
+### Using Maven
+
+Add the following dependency to your pom.xml:
+```xml
+<dependency>
+    <groupId>com.github.peterbencze</groupId>
+    <artifactId>serritor</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
+### Without Maven
+
+The standalone JAR files are available on the [releases](https://github.com/peterbencze/serritor/releases) page.
 
 ## Documentation
 See the [Wiki](https://github.com/peterbencze/serritor/wiki) page.
