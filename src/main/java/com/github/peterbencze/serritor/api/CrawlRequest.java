@@ -19,6 +19,7 @@ import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 
 /**
  * Represents a crawl request that might be processed by the crawler in the
@@ -33,11 +34,13 @@ public final class CrawlRequest implements Serializable {
     private final URL requestUrl;
     private final String topPrivateDomain;
     private final int priority;
+    private final Serializable metadata;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {
         requestUrl = builder.requestUrl;
         topPrivateDomain = builder.topPrivateDomain;
         priority = builder.priority;
+        metadata = builder.metadata;
     }
 
     /**
@@ -67,13 +70,29 @@ public final class CrawlRequest implements Serializable {
         return priority;
     }
 
+    /**
+     * Returns metadata associated with the request.
+     *
+     * @return The request's metadata
+     */
+    public Optional<Serializable> getMetadata() {
+        return Optional.ofNullable(metadata);
+    }
+
     public static final class CrawlRequestBuilder {
 
         private final URL requestUrl;
 
         private String topPrivateDomain;
         private int priority;
+        private Serializable metadata;
 
+        /**
+         * Constructs a CrawlRequestBuilder instance that can be used to create
+         * CrawRequest instances.
+         *
+         * @param requestUrl The request's URL given as a URL instance
+         */
         public CrawlRequestBuilder(final URL requestUrl) {
             this.requestUrl = requestUrl;
 
@@ -83,22 +102,52 @@ public final class CrawlRequest implements Serializable {
                         .topPrivateDomain()
                         .toString();
             } catch (IllegalStateException ex) {
-                throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the provided request URL (\"%s\").", requestUrl), ex);
+                throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the given request URL (\"%s\").", requestUrl), ex);
             }
 
             // Default priority is 0
             priority = 0;
         }
 
+        /**
+         * Constructs a CrawlRequestBuilder instance that can be used to create
+         * CrawRequest instances.
+         *
+         * @param requestUrl The request's URL given as a String instance
+         */
         public CrawlRequestBuilder(final String requestUrl) {
             this(getUrlFromString(requestUrl));
         }
 
+        /**
+         * Sets the request's priority.
+         *
+         * @param priority The priority of the request (higher number means
+         * higher priority)
+         * @return The builder instance
+         */
         public CrawlRequestBuilder setPriority(final int priority) {
             this.priority = priority;
             return this;
         }
 
+        /**
+         * Sets additional metadata for the request which can be later accessed
+         * when the crawler processed the request.
+         *
+         * @param metadata The metadata associated with the request
+         * @return The builder instance
+         */
+        public CrawlRequestBuilder setMetadata(final Serializable metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        /**
+         * Builds the specified CrawlRequest instance.
+         *
+         * @return The specified CrawlRequest instance
+         */
         public CrawlRequest build() {
             return new CrawlRequest(this);
         }
@@ -115,7 +164,7 @@ public final class CrawlRequest implements Serializable {
             try {
                 return new URL(requestUrl);
             } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException(String.format("The provided request URL (\"%s\") is malformed.", requestUrl), ex);
+                throw new IllegalArgumentException(String.format("The given request URL (\"%s\") is malformed.", requestUrl), ex);
             }
         }
     }

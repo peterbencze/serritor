@@ -42,7 +42,7 @@ public abstract class CallbackParameter {
      * @return The referer URL
      */
     public final Optional<URL> getRefererUrl() {
-        return Optional.of(refererUrl);
+        return Optional.ofNullable(refererUrl);
     }
 
     /**
