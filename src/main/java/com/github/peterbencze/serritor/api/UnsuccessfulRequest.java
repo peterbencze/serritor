@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Represents an unsuccessful request.
@@ -27,7 +28,7 @@ public final class UnsuccessfulRequest extends CallbackParameter {
 
     private final IOException exception;
 
-    private UnsuccessfulRequest(UnsuccessfulRequestBuilder builder) {
+    private UnsuccessfulRequest(final UnsuccessfulRequestBuilder builder) {
         super(builder);
 
         exception = builder.exception;
@@ -42,11 +43,15 @@ public final class UnsuccessfulRequest extends CallbackParameter {
         return exception;
     }
 
-    public static class UnsuccessfulRequestBuilder extends CallbackParameterBuilder<UnsuccessfulRequestBuilder> {
+    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder<UnsuccessfulRequestBuilder> {
 
         private IOException exception;
 
-        public UnsuccessfulRequestBuilder setException(IOException exception) {
+        public UnsuccessfulRequestBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+            super(refererUrl, crawlDepth, crawlRequest);
+        }
+
+        public UnsuccessfulRequestBuilder setException(final IOException exception) {
             this.exception = exception;
             return this;
         }

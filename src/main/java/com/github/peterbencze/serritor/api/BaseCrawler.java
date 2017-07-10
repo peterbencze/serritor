@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package com.github.peterbencze.serritor.api;
 
-import com.google.common.net.InternetDomainName;
-import com.github.peterbencze.serritor.internal.CrawlFrontier;
-import com.github.peterbencze.serritor.internal.CrawlRequest;
-import com.github.peterbencze.serritor.internal.CrawlRequest.CrawlRequestBuilder;
-import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
+import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
+import com.github.peterbencze.serritor.internal.CrawlCandidate;
+import com.github.peterbencze.serritor.internal.CrawlFrontier;
+import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -50,23 +48,27 @@ import org.openqa.selenium.WebDriver;
  */
 public abstract class BaseCrawler {
 
-    /**
-     * Allows the application to configure the crawler.
-     */
+    //Allows the application to configure the crawler
     protected final CrawlerConfiguration config;
 
-    private boolean stopCrawling;
+    // Indicates if the crawler is currently running or not
     private boolean isStopped;
+
+    // Indicates if the crawling should be stopped (used for cancelling the loop in the run method)
+    private boolean stopCrawling;
+
+    // Used for sending HTTP HEAD requests and receiving associate responses
     private HttpClient httpClient;
+
     private WebDriver webDriver;
+
     private CrawlFrontier frontier;
-    private int currentCrawlDepth;
-    private URL currentRequestUrl;
 
     protected BaseCrawler() {
-        // Create the default configuration
+        // Create a default configuration
         config = new CrawlerConfiguration();
 
+        // Indicate that the crawler is not running
         isStopped = true;
     }
 
@@ -78,6 +80,46 @@ public abstract class BaseCrawler {
     }
 
     /**
+     * Constructs all the necessary objects and runs the crawler.
+     *
+     * @param frontierToUse Previously saved frontier to be used by the crawler.
+     */
+    private void start(final CrawlFrontier frontierToUse) {
+        // Check if the crawler is running
+        if (!isStopped) {
+            throw new IllegalStateException("The crawler is already started.");
+        }
+
+        isStopped = false;
+
+        httpClient = HttpClientBuilder.create().build();
+
+        webDriver = config.getWebDriver();
+
+        frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
+
+        run();
+    }
+
+    /**
+     * Saves the current state of the crawler to the specified output stream.
+     *
+     * @param out The output stream to use
+     * @throws IOException Any exception thrown by the underlying OutputStream.
+     */
+    public final void saveState(final OutputStream out) throws IOException {
+        // Check if the crawler has been started, otherwise we have nothing to save
+        if (frontier == null) {
+            throw new IllegalStateException("No state to save.");
+        }
+
+        // Save the frontier's current state
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
+            objectOutputStream.writeObject(frontier);
+        }
+    }
+
+    /**
      * Resumes a previously saved state.
      *
      * @param in The input stream to use
@@ -85,7 +127,7 @@ public abstract class BaseCrawler {
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(InputStream in) throws IOException, ClassNotFoundException {
+    public final void resume(final InputStream in) throws IOException, ClassNotFoundException {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
             CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
             start(frontierToUse);
@@ -96,6 +138,7 @@ public abstract class BaseCrawler {
      * Stops the crawler.
      */
     public final void stop() {
+        // Check if the crawler is running
         if (isStopped) {
             throw new IllegalStateException("The crawler is not started.");
         }
@@ -104,45 +147,31 @@ public abstract class BaseCrawler {
             throw new IllegalStateException("Stop has already been called.");
         }
 
+        // Indicate that the crawling should be stopped
         stopCrawling = true;
     }
 
     /**
-     * Saves the current state of the crawler to the specified output stream.
+     * Passes a crawl request to the crawl frontier.
      *
-     * @param out The output stream to use
-     * @throws IOException Any exception thrown by the underlying OutputStream.
+     * @param request The crawl request
      */
-    public final void saveState(OutputStream out) throws IOException {
-        if (frontier == null) {
-            throw new IllegalStateException("No state to save.");
-        }
-
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
-            objectOutputStream.writeObject(frontier);
-        }
+    protected final void crawl(final CrawlRequest request) {
+        frontier.feedRequest(request, false);
     }
 
     /**
      * Appends an URL to the list of URLs that should be crawled.
      *
      * @param urlToCrawl The URL to be crawled
+     *
+     * @deprecated As of release 1.2, replaced by
+     * {@link #crawl(com.github.peterbencze.serritor.api.CrawlRequest)}
      */
-    protected final void crawlUrl(URL urlToCrawl) {
-        try {
-            String topPrivateDomain = getTopPrivateDomain(urlToCrawl);
-
-            CrawlRequest newCrawlRequest = new CrawlRequestBuilder()
-                    .setRefererUrl(currentRequestUrl)
-                    .setRequestUrl(urlToCrawl)
-                    .setTopPrivateDomain(topPrivateDomain)
-                    .setCrawlDepth(currentCrawlDepth + 1)
-                    .build();
-
-            frontier.feedRequest(newCrawlRequest);
-        } catch (IllegalStateException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+    @Deprecated
+    protected final void crawlUrl(final URL urlToCrawl) {
+        CrawlRequest request = new CrawlRequestBuilder(urlToCrawl).build();
+        crawl(request);
     }
 
     /**
@@ -150,12 +179,19 @@ public abstract class BaseCrawler {
      *
      * @param urlToCrawl The URL to be crawled
      */
-    protected final void crawlUrlAsString(String urlToCrawl) {
-        try {
-            crawlUrl(new URL(urlToCrawl));
-        } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+    @Deprecated
+    protected final void crawlUrlAsString(final String urlToCrawl) {
+        CrawlRequest request = new CrawlRequestBuilder(urlToCrawl).build();
+        crawl(request);
+    }
+
+    /**
+     * Passes multiple crawl requests to the crawl frontier.
+     *
+     * @param requests The list of crawl requests
+     */
+    protected final void crawl(final List<CrawlRequest> requests) {
+        requests.stream().forEach(this::crawl);
     }
 
     /**
@@ -163,7 +199,8 @@ public abstract class BaseCrawler {
      *
      * @param urlsToCrawl The list of URLs to be crawled
      */
-    protected final void crawlUrls(List<URL> urlsToCrawl) {
+    @Deprecated
+    protected final void crawlUrls(final List<URL> urlsToCrawl) {
         urlsToCrawl.stream().forEach(this::crawlUrl);
     }
 
@@ -173,28 +210,9 @@ public abstract class BaseCrawler {
      *
      * @param urlsToCrawl The list of URLs to be crawled
      */
-    protected final void crawlUrlsAsStrings(List<String> urlsToCrawl) {
+    @Deprecated
+    protected final void crawlUrlsAsStrings(final List<String> urlsToCrawl) {
         urlsToCrawl.stream().forEach(this::crawlUrlAsString);
-    }
-
-    /**
-     * Constructs all the necessary objects and runs the crawler.
-     *
-     * @param frontierToUse Previously saved frontier to be used by the crawler.
-     */
-    private void start(CrawlFrontier frontierToUse) {
-        if (!isStopped) {
-            throw new IllegalStateException("The crawler is already started.");
-        }
-
-        isStopped = false;
-
-        httpClient = HttpClientBuilder.create().build();
-        webDriver = config.getWebDriver();
-
-        frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
-
-        run();
     }
 
     /**
@@ -204,21 +222,21 @@ public abstract class BaseCrawler {
         try {
             onBegin();
 
-            while (!stopCrawling && frontier.hasNextRequest()) {
-                CrawlRequest currentRequest = frontier.getNextRequest();
+            while (!stopCrawling && frontier.hasNextCandidate()) {
+                // Get the next crawl candidate from the queue
+                CrawlCandidate currentCandidate = frontier.getNextCandidate();
 
-                currentRequestUrl = currentRequest.getRequestUrl();
-                String currentRequestUrlAsString = currentRequestUrl.toString();
-                currentCrawlDepth = currentRequest.getCrawlDepth();
+                URL currentCandidateUrl = currentCandidate.getCandidateUrl();
+                String currentRequestUrlAsString = currentCandidateUrl.toString();
 
                 HttpHeadResponse httpHeadResponse;
-                URL responseUrl = currentRequestUrl;
+                URL responseUrl = currentCandidateUrl;
 
                 try {
                     HttpClientContext context = HttpClientContext.create();
 
                     // Send an HTTP HEAD request to the current URL to determine its availability and content type
-                    httpHeadResponse = getHttpHeadResponse(currentRequestUrl, context);
+                    httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
 
                     // If the request has been redirected, get the final URL
                     List<URI> redirectLocations = context.getRedirectLocations();
@@ -226,10 +244,8 @@ public abstract class BaseCrawler {
                         responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
                     }
                 } catch (IOException ex) {
-                    UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder()
-                            .setCrawlDepth(currentCrawlDepth)
-                            .setRefererUrl(currentRequest.getRefererUrl())
-                            .setCurrentUrl(currentRequestUrl)
+                    UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                            currentCandidate.getCrawlRequest())
                             .setException(ex)
                             .build();
 
@@ -239,20 +255,14 @@ public abstract class BaseCrawler {
 
                 // If the request has been redirected, a new crawl request should be created for the redirected URL
                 if (!responseUrl.toString().equals(currentRequestUrlAsString)) {
-                    CrawlRequest newCrawlRequest = new CrawlRequestBuilder()
-                            .setRefererUrl(currentRequestUrl)
-                            .setRequestUrl(responseUrl)
-                            .setTopPrivateDomain(getTopPrivateDomain(responseUrl))
-                            .setCrawlDepth(currentCrawlDepth)
-                            .build();
+                    CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
+                    frontier.feedRequest(redirectedCrawlRequest, false);
 
-                    frontier.feedRequest(newCrawlRequest);
                     continue;
                 }
 
-                // Get the content type of the response
-                String contentType = getContentType(httpHeadResponse);
-                if (contentType != null && contentType.contains("text/html")) {
+                // Check if the content of the response is HTML
+                if (isContentHtml(httpHeadResponse)) {
                     boolean timedOut = false;
 
                     try {
@@ -262,10 +272,8 @@ public abstract class BaseCrawler {
                         timedOut = true;
                     }
 
-                    HtmlResponse htmlResponse = new HtmlResponseBuilder()
-                            .setCrawlDepth(currentCrawlDepth)
-                            .setRefererUrl(currentRequest.getRefererUrl())
-                            .setCurrentUrl(currentRequestUrl)
+                    HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                            currentCandidate.getCrawlRequest())
                             .setHttpHeadResponse(httpHeadResponse)
                             .setWebDriver(webDriver)
                             .build();
@@ -279,10 +287,8 @@ public abstract class BaseCrawler {
                 } else {
                     // URLs that point to non-HTML content should not be opened in the browser
 
-                    NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder()
-                            .setCrawlDepth(currentCrawlDepth)
-                            .setRefererUrl(currentRequest.getRefererUrl())
-                            .setCurrentUrl(currentRequestUrl)
+                    NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                            currentCandidate.getCrawlRequest())
                             .setHttpHeadResponse(httpHeadResponse)
                             .build();
 
@@ -305,42 +311,26 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Returns the top private domain for the given URL.
-     *
-     * @param url The URL to parse
-     * @return The top private domain
-     */
-    private String getTopPrivateDomain(URL url) {
-        return InternetDomainName.from(url.getHost()).topPrivateDomain().toString();
-    }
-
-    /**
      * Returns a HTTP HEAD response for the given URL.
      *
      * @param destinationUrl The URL to crawl
      * @return The HTTP HEAD response
      */
-    private HttpHeadResponse getHttpHeadResponse(URL destinationUrl, HttpClientContext context) throws IOException {
+    private HttpHeadResponse getHttpHeadResponse(final URL destinationUrl, final HttpClientContext context) throws IOException {
         HttpHead headRequest = new HttpHead(destinationUrl.toString());
         HttpResponse response = httpClient.execute(headRequest, context);
         return new HttpHeadResponse(response);
     }
 
     /**
-     * Returns the content type of the response.
+     * Indicates if the content of the response is HTML or not.
      *
      * @param httpHeadResponse The HTTP HEAD response
-     * @return The content type of the response
+     * @return True if the content is HTML, false otherwise
      */
-    private String getContentType(HttpHeadResponse httpHeadResponse) {
-        String contentType = null;
-
+    private boolean isContentHtml(final HttpHeadResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
-        if (contentTypeHeader != null) {
-            contentType = contentTypeHeader.getValue();
-        }
-
-        return contentType;
+        return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
     }
 
     /**
@@ -354,7 +344,7 @@ public abstract class BaseCrawler {
      *
      * @param response The HTML response
      */
-    protected void onResponseComplete(HtmlResponse response) {
+    protected void onResponseComplete(final HtmlResponse response) {
     }
 
     /**
@@ -364,7 +354,7 @@ public abstract class BaseCrawler {
      *
      * @param response The HTML response
      */
-    protected void onResponseTimeout(HtmlResponse response) {
+    protected void onResponseTimeout(final HtmlResponse response) {
     }
 
     /**
@@ -372,7 +362,7 @@ public abstract class BaseCrawler {
      *
      * @param response The non-HTML response
      */
-    protected void onNonHtmlResponse(NonHtmlResponse response) {
+    protected void onNonHtmlResponse(final NonHtmlResponse response) {
     }
 
     /**
@@ -381,7 +371,7 @@ public abstract class BaseCrawler {
      *
      * @param request The unsuccessful request
      */
-    protected void onUnsuccessfulRequest(UnsuccessfulRequest request) {
+    protected void onUnsuccessfulRequest(final UnsuccessfulRequest request) {
     }
 
     /**
