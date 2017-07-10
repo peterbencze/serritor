@@ -83,7 +83,7 @@ public final class CrawlRequest implements Serializable {
                         .topPrivateDomain()
                         .toString();
             } catch (IllegalStateException ex) {
-                throw new IllegalArgumentException("The top private domain cannot be extracted from the provided request URL.", ex);
+                throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the provided request URL (\"%s\").", requestUrl), ex);
             }
 
             // Default priority is 0
@@ -115,7 +115,7 @@ public final class CrawlRequest implements Serializable {
             try {
                 return new URL(requestUrl);
             } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException("The provided request URL is malformed.", ex);
+                throw new IllegalArgumentException(String.format("The provided request URL (\"%s\") is malformed.", requestUrl), ex);
             }
         }
     }
