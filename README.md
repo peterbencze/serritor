@@ -11,7 +11,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 
@@ -26,26 +26,35 @@ See the [Wiki](https://github.com/peterbencze/serritor/wiki) page.
 BaseCrawler provides a skeletal implementation of a crawler to minimize the effort to create your own. First, create a class that extends BaseCrawler. In this class, you can customize the behavior of your crawler. There are callbacks available for every stage of crawling. Below you can find a sample implementation:
 ```java
 public class MyCrawler extends BaseCrawler {
-    
+
     public MyCrawler() {
-        config.addSeedAsString("http://yourspecificwebsite.com");
-        config.setFilterOffsiteRequests(true);
+        // Enable offsite request filtering
+        config.setOffsiteRequestFiltering(true);
+
+        // Add a crawl seed, this is where the crawling starts
+        CrawlRequest request = new CrawlRequestBuilder("http://example.com").build();
+        config.addCrawlSeed(request);
     }
 
     @Override
-    protected void onResponseComplete(HtmlResponse response) {
-        List<WebElement> links = response.getWebDriver().findElements(By.tagName("a"));
-        links.stream().forEach((WebElement link) -> crawlUrlAsString(link.getAttribute("href")));
+    protected void onResponseComplete(final HtmlResponse response) {
+        // Crawl every link that can be found on the page
+        response.getWebDriver().findElements(By.tagName("a"))
+                .stream()
+                .forEach((WebElement link) -> {
+                    CrawlRequest request = new CrawlRequestBuilder(link.getAttribute("href")).build();
+                    crawl(request);
+                });
     }
 
     @Override
-    protected void onNonHtmlResponse(NonHtmlResponse response) {
-        System.out.println("Received a non-HTML response from: " + response.getCurrentUrl());
+    protected void onNonHtmlResponse(final NonHtmlResponse response) {
+        System.out.println("Received a non-HTML response from: " + response.getCrawlRequest().getRequestUrl());
     }
-    
+
     @Override
-    protected void onUnsuccessfulRequest(UnsuccessfulRequest request) {
-        System.out.println("Could not get response from: " + request.getCurrentUrl());
+    protected void onUnsuccessfulRequest(final UnsuccessfulRequest request) {
+        System.out.println("Could not get response from: " + request.getCrawlRequest().getRequestUrl());
     }
 }
 ```
@@ -55,9 +64,6 @@ By default, the crawler uses [HtmlUnitDriver](https://github.com/SeleniumHQ/sele
 ```java
 config.setWebDriver(new ChromeDriver());
 ```
-
-## Support
-The developers would like to thank [Precognox](http://precognox.com/) for the support.
 
 ## License
 The source code of Serritor is made available under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
