@@ -41,13 +41,16 @@ public final class CrawlerConfiguration implements Serializable {
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
     private Duration delayBetweenRequests;
+    private int maxCrawlDepth;
 
     public CrawlerConfiguration() {
+        // Default configuration
         webDriver = new HtmlUnitDriver(true);
         crawlSeeds = new ArrayList<>();
         crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
         filterDuplicateRequests = true;
         delayBetweenRequests = Duration.ZERO;
+        maxCrawlDepth = 0;
     }
 
     /**
@@ -283,5 +286,23 @@ public final class CrawlerConfiguration implements Serializable {
      */
     public void setDelayBetweenRequests(final Duration delayBetweenRequests) {
         this.delayBetweenRequests = delayBetweenRequests;
+    }
+
+    /**
+     * Returns the maximum possible crawl depth.
+     *
+     * @return The maximum crawl depth
+     */
+    public int getMaxCrawlDepth() {
+        return maxCrawlDepth;
+    }
+
+    /**
+     * Sets the maximum possible crawl depth.
+     *
+     * @param maxCrawlDepth The maximum crawl depth, zero means no limit
+     */
+    public void setMaxCrawlDepth(int maxCrawlDepth) {
+        this.maxCrawlDepth = maxCrawlDepth;
     }
 }

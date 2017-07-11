@@ -92,14 +92,24 @@ public final class CrawlFrontier implements Serializable {
             urlFingerprints.add(urlFingerprint);
         }
 
-        // Construct the crawl candidate
-        CrawlCandidateBuilder builder = new CrawlCandidateBuilder(request);
-
+        CrawlCandidateBuilder builder;
+        
         if (!isCrawlSeed) {
-            builder = builder.setRefererUrl(currentCandidate.getCandidateUrl())
-                    .setCrawlDepth(currentCandidate.getCrawlDepth() + 1);
+            int crawlDepthLimit = config.getMaxCrawlDepth();
+            int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
+
+            // If a crawl depth limit is set, check if the candidate's crawl depth is less than or equal to the limit
+            if (crawlDepthLimit != 0 && nextCrawlDepth > crawlDepthLimit) {
+                return;
+            }
+            
+            builder = new CrawlCandidateBuilder(request).setRefererUrl(currentCandidate.getCandidateUrl())
+                    .setCrawlDepth(nextCrawlDepth);
+        } else {
+            builder = new CrawlCandidateBuilder(request);
         }
 
+        // Finally, add constructed candidate to the queue
         candidates.add(builder.build());
     }
 
