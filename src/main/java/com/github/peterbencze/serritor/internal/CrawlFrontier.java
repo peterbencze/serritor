@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
@@ -93,7 +94,7 @@ public final class CrawlFrontier implements Serializable {
         }
 
         CrawlCandidateBuilder builder;
-        
+
         if (!isCrawlSeed) {
             int crawlDepthLimit = config.getMaxCrawlDepth();
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
@@ -102,7 +103,7 @@ public final class CrawlFrontier implements Serializable {
             if (crawlDepthLimit != 0 && nextCrawlDepth > crawlDepthLimit) {
                 return;
             }
-            
+
             builder = new CrawlCandidateBuilder(request).setRefererUrl(currentCandidate.getCandidateUrl())
                     .setCrawlDepth(nextCrawlDepth);
         } else {
@@ -175,11 +176,11 @@ public final class CrawlFrontier implements Serializable {
     private PriorityQueue<CrawlCandidate> getPriorityQueue() {
         switch (config.getCrawlingStrategy()) {
             case BREADTH_FIRST:
-                return new PriorityQueue<>(Comparator.comparing(CrawlCandidate::getCrawlDepth)
-                        .thenComparing(CrawlCandidate::getPriority, reverseOrder()));
+                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth)
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
             case DEPTH_FIRST:
-                return new PriorityQueue<>(Comparator.comparing(CrawlCandidate::getCrawlDepth, reverseOrder())
-                        .thenComparing(CrawlCandidate::getPriority, reverseOrder()));
+                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth, reverseOrder())
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
         }
 
         throw new IllegalArgumentException("Unsupported crawling strategy.");
