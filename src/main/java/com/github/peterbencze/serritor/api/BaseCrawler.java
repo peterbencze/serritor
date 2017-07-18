@@ -161,58 +161,12 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Appends an URL to the list of URLs that should be crawled.
-     *
-     * @param urlToCrawl The URL to be crawled
-     *
-     * @deprecated As of release 1.2, replaced by
-     * {@link #crawl(com.github.peterbencze.serritor.api.CrawlRequest)}
-     */
-    @Deprecated
-    protected final void crawlUrl(final URL urlToCrawl) {
-        CrawlRequest request = new CrawlRequestBuilder(urlToCrawl).build();
-        crawl(request);
-    }
-
-    /**
-     * Appends an URL (as String) to the list of URLs that should be crawled.
-     *
-     * @param urlToCrawl The URL to be crawled
-     */
-    @Deprecated
-    protected final void crawlUrlAsString(final String urlToCrawl) {
-        CrawlRequest request = new CrawlRequestBuilder(urlToCrawl).build();
-        crawl(request);
-    }
-
-    /**
      * Passes multiple crawl requests to the crawl frontier.
      *
      * @param requests The list of crawl requests
      */
     protected final void crawl(final List<CrawlRequest> requests) {
         requests.stream().forEach(this::crawl);
-    }
-
-    /**
-     * Extends the list of URLs that should be crawled with a list of URLs.
-     *
-     * @param urlsToCrawl The list of URLs to be crawled
-     */
-    @Deprecated
-    protected final void crawlUrls(final List<URL> urlsToCrawl) {
-        urlsToCrawl.stream().forEach(this::crawlUrl);
-    }
-
-    /**
-     * Extends the list of URLs (as Strings) that should be crawled with a list
-     * of URLs.
-     *
-     * @param urlsToCrawl The list of URLs to be crawled
-     */
-    @Deprecated
-    protected final void crawlUrlsAsStrings(final List<String> urlsToCrawl) {
-        urlsToCrawl.stream().forEach(this::crawlUrlAsString);
     }
 
     /**
