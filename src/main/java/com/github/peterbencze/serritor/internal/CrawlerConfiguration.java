@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,12 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlingStrategy;
-import com.google.common.net.InternetDomainName;
-import com.github.peterbencze.serritor.internal.CrawlRequest.CrawlRequestBuilder;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
  * Provides an interface to configure the crawler.
@@ -35,96 +30,137 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  */
 public final class CrawlerConfiguration implements Serializable {
 
-    private final List<CrawlRequest> seeds;
+    private final List<CrawlRequest> crawlSeeds;
 
-    private transient WebDriver webDriver;
     private CrawlingStrategy crawlingStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
     private Duration delayBetweenRequests;
+    private int maxCrawlDepth;
 
     public CrawlerConfiguration() {
-        webDriver = new HtmlUnitDriver(true);
-        seeds = new ArrayList<>();
+        // Default configuration
+        crawlSeeds = new ArrayList<>();
         crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
         filterDuplicateRequests = true;
         delayBetweenRequests = Duration.ZERO;
+        maxCrawlDepth = 0;
     }
 
-    public WebDriver getWebDriver() {
-        return webDriver;
+    /**
+     * Returns the list of crawl seeds.
+     *
+     * @return The list of crawl seeds
+     */
+    public List<CrawlRequest> getCrawlSeeds() {
+        return crawlSeeds;
     }
 
-    public void setWebDriver(WebDriver webDriver) {
-        this.webDriver = webDriver;
+    /**
+     * Appends a crawl request to the list of crawl seeds.
+     *
+     * @param request The crawl request
+     */
+    public void addCrawlSeed(final CrawlRequest request) {
+        crawlSeeds.add(request);
     }
 
-    public List<CrawlRequest> getSeeds() {
-        return seeds;
+    /**
+     * Appends a list of crawl requests to the list of crawl seeds.
+     *
+     * @param requests The list of crawl requests
+     */
+    public void addCrawlSeeds(final List<CrawlRequest> requests) {
+        crawlSeeds.addAll(requests);
     }
 
-    public void addSeed(URL seed) {
-        try {
-            String topPrivateDomain = InternetDomainName.from(seed.getHost())
-                    .topPrivateDomain()
-                    .toString();
-
-            CrawlRequest newCrawlRequest = new CrawlRequestBuilder()
-                    .setRequestUrl(seed)
-                    .setTopPrivateDomain(topPrivateDomain)
-                    .build();
-
-            seeds.add(newCrawlRequest);
-        } catch (IllegalStateException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-    }
-
-    public void addSeedAsString(String seed) {
-        try {
-            addSeed(new URL(seed));
-        } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-    }
-
-    public void addSeeds(List<URL> seeds) {
-        seeds.stream().forEach(this::addSeed);
-    }
-
-    public void addSeedsAsStrings(List<String> seeds) {
-        seeds.stream().forEach(this::addSeedAsString);
-    }
-
+    /**
+     * Returns the crawling strategy of the crawler.
+     *
+     * @return The crawling strategy
+     */
     public CrawlingStrategy getCrawlingStrategy() {
         return crawlingStrategy;
     }
 
-    public void setCrawlingStrategy(CrawlingStrategy crawlingStrategy) {
+    /**
+     * Sets the crawling strategy of the crawler.
+     *
+     * @param crawlingStrategy The crawling strategy
+     */
+    public void setCrawlingStrategy(final CrawlingStrategy crawlingStrategy) {
         this.crawlingStrategy = crawlingStrategy;
     }
 
-    public boolean getFilterDuplicateRequests() {
+    /**
+     * Indicates if duplicate request filtering is enabled or not.
+     *
+     * @return True if it is enabled, false otherwise
+     */
+    public boolean isDuplicateRequestFilteringEnabled() {
         return filterDuplicateRequests;
     }
 
-    public void setFilterDuplicateRequests(boolean filterDuplicateRequests) {
+    /**
+     * Sets duplicate request filtering.
+     *
+     * @param filterDuplicateRequests True means enabled, false means disabled
+     */
+    public void setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
         this.filterDuplicateRequests = filterDuplicateRequests;
     }
 
-    public boolean getFilterOffsiteRequests() {
+    /**
+     * Indicates if offsite request filtering is enabled or not.
+     *
+     * @return True if it is enabled, false otherwise
+     */
+    public boolean isOffsiteRequestFilteringEnabled() {
         return filterOffsiteRequests;
     }
 
-    public void setFilterOffsiteRequests(boolean filterOffsiteRequests) {
+    /**
+     * Sets offsite request filtering.
+     *
+     * @param filterOffsiteRequests True means enabled, false means disabled
+     */
+    public void setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
         this.filterOffsiteRequests = filterOffsiteRequests;
     }
 
+    /**
+     * Returns the delay between each request.
+     *
+     * @return The delay between each request
+     */
     public Duration getDelayBetweenRequests() {
         return delayBetweenRequests;
     }
 
-    public void setDelayBetweenRequests(Duration delayBetweenRequests) {
+    /**
+     * Sets the delay between each request.
+     *
+     * @param delayBetweenRequests The delay between each request
+     */
+    public void setDelayBetweenRequests(final Duration delayBetweenRequests) {
         this.delayBetweenRequests = delayBetweenRequests;
+    }
+
+    /**
+     * Returns the maximum possible crawl depth.
+     *
+     * @return The maximum crawl depth
+     */
+    public int getMaxCrawlDepth() {
+        return maxCrawlDepth;
+    }
+
+    /**
+     * Sets the maximum possible crawl depth.
+     *
+     * @param maxCrawlDepth The maximum crawl depth, zero means no limit
+     */
+    public void setMaxCrawlDepth(int maxCrawlDepth) {
+        this.maxCrawlDepth = maxCrawlDepth;
     }
 }

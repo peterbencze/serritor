@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
+import java.net.URL;
 import org.openqa.selenium.WebDriver;
 
 /**
@@ -28,7 +29,7 @@ public final class HtmlResponse extends CallbackParameter {
     private final HttpHeadResponse httpHeadResponse;
     private final WebDriver webDriver;
 
-    private HtmlResponse(HtmlResponseBuilder builder) {
+    private HtmlResponse(final HtmlResponseBuilder builder) {
         super(builder);
 
         httpHeadResponse = builder.httpHeadResponse;
@@ -53,17 +54,21 @@ public final class HtmlResponse extends CallbackParameter {
         return webDriver;
     }
 
-    public static class HtmlResponseBuilder extends CallbackParameterBuilder<HtmlResponseBuilder> {
+    public static final class HtmlResponseBuilder extends CallbackParameterBuilder<HtmlResponseBuilder> {
 
         private HttpHeadResponse httpHeadResponse;
         private WebDriver webDriver;
 
-        public HtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
+        public HtmlResponseBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+            super(refererUrl, crawlDepth, crawlRequest);
+        }
+
+        public HtmlResponseBuilder setHttpHeadResponse(final HttpHeadResponse httpHeadResponse) {
             this.httpHeadResponse = httpHeadResponse;
             return this;
         }
 
-        public HtmlResponseBuilder setWebDriver(WebDriver webDriver) {
+        public HtmlResponseBuilder setWebDriver(final WebDriver webDriver) {
             this.webDriver = webDriver;
             return this;
         }

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public final class HttpHeadResponse {
 
     private final HttpResponse response;
 
-    public HttpHeadResponse(HttpResponse response) {
+    public HttpHeadResponse(final HttpResponse response) {
         this.response = response;
     }
 
@@ -41,7 +41,7 @@ public final class HttpHeadResponse {
      * @param name The name of the header
      * @return True if it is present, false otherwise
      */
-    public boolean containsHeader(String name) {
+    public boolean containsHeader(final String name) {
         return response.containsHeader(name);
     }
 
@@ -60,7 +60,7 @@ public final class HttpHeadResponse {
      * @param name The name of the header
      * @return The first header with the specified name
      */
-    public Header getFirstHeader(String name) {
+    public Header getFirstHeader(final String name) {
         return response.getFirstHeader(name);
     }
 
@@ -70,7 +70,7 @@ public final class HttpHeadResponse {
      * @param name The name of the headers
      * @return All the headers
      */
-    public Header[] getHeaders(String name) {
+    public Header[] getHeaders(final String name) {
         return response.getHeaders(name);
     }
 
@@ -80,7 +80,7 @@ public final class HttpHeadResponse {
      * @param name The name of the header
      * @return The last header with a specified name
      */
-    public Header getLastHeader(String name) {
+    public Header getLastHeader(final String name) {
         return response.getLastHeader(name);
     }
 
@@ -108,7 +108,7 @@ public final class HttpHeadResponse {
      * @param name The name of the headers
      * @return An iterator of the headers with a given name
      */
-    public HeaderIterator headerIterator(String name) {
+    public HeaderIterator headerIterator(final String name) {
         return response.headerIterator(name);
     }
 

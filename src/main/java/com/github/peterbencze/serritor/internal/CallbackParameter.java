@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlRequest;
 import java.net.URL;
+import java.util.Optional;
 
 /**
- * The base class that all callback parameters inherit from.
+ * The base class from which all callback parameters inherit from.
  *
  * @author Peter Bencze
  */
@@ -26,12 +28,21 @@ public abstract class CallbackParameter {
 
     private final int crawlDepth;
     private final URL refererUrl;
-    private final URL currentUrl;
+    private final CrawlRequest crawlRequest;
 
-    protected CallbackParameter(CallbackParameterBuilder builder) {
+    protected CallbackParameter(final CallbackParameterBuilder builder) {
         crawlDepth = builder.crawlDepth;
         refererUrl = builder.refererUrl;
-        currentUrl = builder.currentUrl;
+        crawlRequest = builder.crawlRequest;
+    }
+
+    /**
+     * Returns the referer URL.
+     *
+     * @return The referer URL
+     */
+    public final Optional<URL> getRefererUrl() {
+        return Optional.ofNullable(refererUrl);
     }
 
     /**
@@ -44,42 +55,36 @@ public abstract class CallbackParameter {
     }
 
     /**
-     * Returns the referer URL.
+     * Returns the crawl request that was processed by the crawler.
      *
-     * @return The referer URL
+     * @return The processed crawl request
      */
-    public final URL getRefererUrl() {
-        return refererUrl;
+    public final CrawlRequest getCrawlRequest() {
+        return crawlRequest;
     }
 
     /**
-     * Returns the current URL.
+     * Returns the request's URL.
      *
-     * @return The current URL
+     * @return The request's URL
+     *
+     * @deprecated As of release 1.2, replaced by {@link #getCrawlRequest()}
      */
+    @Deprecated
     public final URL getCurrentUrl() {
-        return currentUrl;
+        return crawlRequest.getRequestUrl();
     }
 
     public static abstract class CallbackParameterBuilder<T extends CallbackParameterBuilder<T>> {
 
-        private int crawlDepth;
-        private URL refererUrl;
-        private URL currentUrl;
+        private final URL refererUrl;
+        private final int crawlDepth;
+        private final CrawlRequest crawlRequest;
 
-        public T setCrawlDepth(int crawlDepth) {
-            this.crawlDepth = crawlDepth;
-            return (T) this;
-        }
-
-        public T setRefererUrl(URL refererUrl) {
+        public CallbackParameterBuilder(final URL refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             this.refererUrl = refererUrl;
-            return (T) this;
-        }
-
-        public T setCurrentUrl(URL currentUrl) {
-            this.currentUrl = currentUrl;
-            return (T) this;
+            this.crawlDepth = crawlDepth;
+            this.crawlRequest = crawlRequest;
         }
 
         public abstract CallbackParameter build();

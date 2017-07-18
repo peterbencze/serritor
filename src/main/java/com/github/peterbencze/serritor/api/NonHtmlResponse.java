@@ -1,5 +1,5 @@
 /* 
- * Copyright 2016 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
+import java.net.URL;
 
 /**
  * Represents a non-HTML response.
@@ -26,7 +27,7 @@ public final class NonHtmlResponse extends CallbackParameter {
 
     private final HttpHeadResponse httpHeadResponse;
 
-    private NonHtmlResponse(NonHtmlResponseBuilder builder) {
+    private NonHtmlResponse(final NonHtmlResponseBuilder builder) {
         super(builder);
 
         httpHeadResponse = builder.httpHeadResponse;
@@ -41,11 +42,15 @@ public final class NonHtmlResponse extends CallbackParameter {
         return httpHeadResponse;
     }
 
-    public static class NonHtmlResponseBuilder extends CallbackParameterBuilder<NonHtmlResponseBuilder> {
+    public static final class NonHtmlResponseBuilder extends CallbackParameterBuilder<NonHtmlResponseBuilder> {
 
         private HttpHeadResponse httpHeadResponse;
 
-        public NonHtmlResponseBuilder setHttpHeadResponse(HttpHeadResponse httpHeadResponse) {
+        public NonHtmlResponseBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+            super(refererUrl, crawlDepth, crawlRequest);
+        }
+
+        public NonHtmlResponseBuilder setHttpHeadResponse(final HttpHeadResponse httpHeadResponse) {
             this.httpHeadResponse = httpHeadResponse;
             return this;
         }
