@@ -128,6 +128,18 @@ public abstract class BaseCrawler {
             objectOutputStream.writeObject(frontier);
         }
     }
+    
+    /**
+     * Resumes a previously saved state using HtmlUnit headless browser.
+     *
+     * @param in The input stream to use
+     * @throws IOException Any of the usual Input/Output related exceptions.
+     * @throws ClassNotFoundException Class of a serialized object cannot be
+     * found.
+     */
+    public final void resume(final InputStream in) throws IOException, ClassNotFoundException {
+        resume(new HtmlUnitDriver(true), in);
+    }
 
     /**
      * Resumes a previously saved state.
