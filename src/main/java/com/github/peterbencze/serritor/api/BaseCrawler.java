@@ -72,7 +72,7 @@ public abstract class BaseCrawler {
         // Indicate that the crawler is not running
         isStopped = true;
     }
-    
+
     /**
      * Starts the crawler using HtmlUnit headless browser.
      */
@@ -81,8 +81,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler.
-     * 
+     * Starts the crawler using the browser specified by the WebDriver instance.
+     *
      * @param driver The WebDriver instance that will be used by the crawler
      */
     public final void start(final WebDriver driver) {
@@ -128,7 +128,7 @@ public abstract class BaseCrawler {
             objectOutputStream.writeObject(frontier);
         }
     }
-    
+
     /**
      * Resumes a previously saved state using HtmlUnit headless browser.
      *
@@ -142,7 +142,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Resumes a previously saved state.
+     * Resumes a previously saved state using the browser specified by the
+     * WebDriver instance.
      *
      * @param driver The WebDriver instance that will be used by the crawler
      * @param in The input stream to use
