@@ -39,6 +39,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for
@@ -71,12 +72,21 @@ public abstract class BaseCrawler {
         // Indicate that the crawler is not running
         isStopped = true;
     }
+    
+    /**
+     * Starts the crawler using HtmlUnit headless browser.
+     */
+    public final void start() {
+        start(new HtmlUnitDriver(true), null);
+    }
 
     /**
      * Starts the crawler.
+     * 
+     * @param driver The WebDriver instance that will be used by the crawler
      */
-    public final void start() {
-        start(null);
+    public final void start(final WebDriver driver) {
+        start(driver, null);
     }
 
     /**
@@ -84,7 +94,7 @@ public abstract class BaseCrawler {
      *
      * @param frontierToUse Previously saved frontier to be used by the crawler.
      */
-    private void start(final CrawlFrontier frontierToUse) {
+    private void start(final WebDriver driver, final CrawlFrontier frontierToUse) {
         // Check if the crawler is running
         if (!isStopped) {
             throw new IllegalStateException("The crawler is already started.");
@@ -94,7 +104,7 @@ public abstract class BaseCrawler {
 
         httpClient = HttpClientBuilder.create().build();
 
-        webDriver = config.getWebDriver();
+        webDriver = driver;
 
         frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
 
@@ -122,15 +132,16 @@ public abstract class BaseCrawler {
     /**
      * Resumes a previously saved state.
      *
+     * @param driver The WebDriver instance that will be used by the crawler
      * @param in The input stream to use
      * @throws IOException Any of the usual Input/Output related exceptions.
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(final InputStream in) throws IOException, ClassNotFoundException {
+    public final void resume(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
             CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
-            start(frontierToUse);
+            start(driver, frontierToUse);
         }
     }
 

@@ -21,8 +21,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
  * Provides an interface to configure the crawler.
@@ -34,7 +32,6 @@ public final class CrawlerConfiguration implements Serializable {
 
     private final List<CrawlRequest> crawlSeeds;
 
-    private transient WebDriver webDriver;
     private CrawlingStrategy crawlingStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
@@ -43,30 +40,11 @@ public final class CrawlerConfiguration implements Serializable {
 
     public CrawlerConfiguration() {
         // Default configuration
-        webDriver = new HtmlUnitDriver(true);
         crawlSeeds = new ArrayList<>();
         crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
         filterDuplicateRequests = true;
         delayBetweenRequests = Duration.ZERO;
         maxCrawlDepth = 0;
-    }
-
-    /**
-     * Returns the WebDriver instance used by the crawler.
-     *
-     * @return The WebDriver instance
-     */
-    public WebDriver getWebDriver() {
-        return webDriver;
-    }
-
-    /**
-     * Sets the WebDriver that will be used by the crawler.
-     *
-     * @param webDriver A WebDriver instance
-     */
-    public void setWebDriver(final WebDriver webDriver) {
-        this.webDriver = webDriver;
     }
 
     /**
