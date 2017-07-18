@@ -60,9 +60,23 @@ public class MyCrawler extends BaseCrawler {
 ```
 That's it! In just a few lines you can make a crawler that extracts and crawls every URL it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver, so you can use all the features that are provided by Selenium.
 
-By default, the crawler uses [HtmlUnitDriver](https://github.com/SeleniumHQ/selenium/wiki/HtmlUnitDriver) but you can also set your preferred WebDriver:
+By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourceforge.net/):
 ```java
-config.setWebDriver(new ChromeDriver());
+public static void main(String[] args) {
+    MyCrawler myCrawler = new MyCrawler();
+
+    // Use HtmlUnit headless browser
+    myCrawler.start();
+}
+```
+Of course, you can also use any other browsers by specifying a corresponding WebDriver instance:
+```java
+public static void main(String[] args) {
+    MyCrawler myCrawler = new MyCrawler();
+
+    // Use Google Chrome
+    myCrawler.start(new ChromeDriver());
+}
 ```
 
 ## License
