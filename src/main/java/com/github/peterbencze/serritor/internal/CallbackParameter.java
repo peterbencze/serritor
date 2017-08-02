@@ -63,18 +63,6 @@ public abstract class CallbackParameter {
         return crawlRequest;
     }
 
-    /**
-     * Returns the request's URL.
-     *
-     * @return The request's URL
-     *
-     * @deprecated As of release 1.2, replaced by {@link #getCrawlRequest()}
-     */
-    @Deprecated
-    public final URL getCurrentUrl() {
-        return crawlRequest.getRequestUrl();
-    }
-
     public static abstract class CallbackParameterBuilder<T extends CallbackParameterBuilder<T>> {
 
         private final URL refererUrl;
