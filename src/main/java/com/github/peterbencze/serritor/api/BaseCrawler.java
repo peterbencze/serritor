@@ -176,11 +176,19 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Passes a crawl request to the crawl frontier.
+     * Passes a crawl request to the crawl frontier. The crawler must be
+     * running, otherwise use
+     * {@link CrawlerConfiguration#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
+     * for adding crawl seeds.
      *
      * @param request The crawl request
      */
     protected final void crawl(final CrawlRequest request) {
+        // Check if the crawler is running
+        if (isStopped) {
+            throw new IllegalStateException("The crawler is not started. Maybe you meant to add this request as a crawl seed?");
+        }
+
         frontier.feedRequest(request, false);
     }
 
