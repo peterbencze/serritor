@@ -77,7 +77,7 @@ public abstract class BaseCrawler {
      * Starts the crawler using HtmlUnit headless browser.
      */
     public final void start() {
-        start(new HtmlUnitDriver(true), null);
+        start(new HtmlUnitDriver(true));
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class BaseCrawler {
      * @param driver The WebDriver instance that will be used by the crawler
      */
     public final void start(final WebDriver driver) {
-        start(driver, null);
+        start(driver, new CrawlFrontier(config));
     }
 
     /**
@@ -106,7 +106,7 @@ public abstract class BaseCrawler {
 
         webDriver = driver;
 
-        frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
+        frontier = frontierToUse;
 
         run();
     }
