@@ -136,8 +136,8 @@ public abstract class BaseCrawler {
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(final InputStream in) throws IOException, ClassNotFoundException {
-        resume(new HtmlUnitDriver(true), in);
+    public final void resumeState(final InputStream in) throws IOException, ClassNotFoundException {
+        resumeState(new HtmlUnitDriver(true), in);
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class BaseCrawler {
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
+    public final void resumeState(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
         ObjectInputStream objectInputStream = new ObjectInputStream(in);
         CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
         
