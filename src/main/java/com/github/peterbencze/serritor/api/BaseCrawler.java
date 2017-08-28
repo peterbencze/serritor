@@ -124,9 +124,8 @@ public abstract class BaseCrawler {
         }
 
         // Save the frontier's current state
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
-            objectOutputStream.writeObject(frontier);
-        }
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
+        objectOutputStream.writeObject(frontier);
     }
 
     /**
@@ -152,10 +151,10 @@ public abstract class BaseCrawler {
      * found.
      */
     public final void resume(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
-            CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
-            start(driver, frontierToUse);
-        }
+        ObjectInputStream objectInputStream = new ObjectInputStream(in);
+        CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
+        
+        start(driver, frontierToUse);
     }
 
     /**
