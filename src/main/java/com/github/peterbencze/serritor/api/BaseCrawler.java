@@ -77,7 +77,7 @@ public abstract class BaseCrawler {
      * Starts the crawler using HtmlUnit headless browser.
      */
     public final void start() {
-        start(new HtmlUnitDriver(true), null);
+        start(new HtmlUnitDriver(true));
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class BaseCrawler {
      * @param driver The WebDriver instance that will be used by the crawler
      */
     public final void start(final WebDriver driver) {
-        start(driver, null);
+        start(driver, new CrawlFrontier(config));
     }
 
     /**
@@ -106,7 +106,7 @@ public abstract class BaseCrawler {
 
         webDriver = driver;
 
-        frontier = frontierToUse != null ? frontierToUse : new CrawlFrontier(config);
+        frontier = frontierToUse;
 
         run();
     }
@@ -124,9 +124,8 @@ public abstract class BaseCrawler {
         }
 
         // Save the frontier's current state
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
-            objectOutputStream.writeObject(frontier);
-        }
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
+        objectOutputStream.writeObject(frontier);
     }
 
     /**
@@ -137,8 +136,8 @@ public abstract class BaseCrawler {
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(final InputStream in) throws IOException, ClassNotFoundException {
-        resume(new HtmlUnitDriver(true), in);
+    public final void resumeState(final InputStream in) throws IOException, ClassNotFoundException {
+        resumeState(new HtmlUnitDriver(true), in);
     }
 
     /**
@@ -151,11 +150,11 @@ public abstract class BaseCrawler {
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
-    public final void resume(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream objectInputStream = new ObjectInputStream(in)) {
-            CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
-            start(driver, frontierToUse);
-        }
+    public final void resumeState(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
+        ObjectInputStream objectInputStream = new ObjectInputStream(in);
+        CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
+        
+        start(driver, frontierToUse);
     }
 
     /**
@@ -176,11 +175,19 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Passes a crawl request to the crawl frontier.
+     * Passes a crawl request to the crawl frontier. The crawler must be
+     * running, otherwise use
+     * {@link CrawlerConfiguration#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
+     * for adding crawl seeds.
      *
      * @param request The crawl request
      */
     protected final void crawl(final CrawlRequest request) {
+        // Check if the crawler is running
+        if (isStopped) {
+            throw new IllegalStateException("The crawler is not started. Maybe you meant to add this request as a crawl seed?");
+        }
+
         frontier.feedRequest(request, false);
     }
 
