@@ -11,7 +11,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.2</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
