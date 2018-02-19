@@ -29,6 +29,12 @@ import java.util.List;
  * @author Peter Bencze
  */
 public final class CrawlerConfiguration implements Serializable {
+    
+    private static final CrawlingStrategy DEFAULT_CRAWLING_STRATEGY = CrawlingStrategy.BREADTH_FIRST;
+    private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
+    private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
+    private static final Duration DEFAULT_DELAY_BETWEEN_REQUESTS = Duration.ZERO;
+    private static final int DEFAULT_MAX_CRAWL_DEPTH = 0;
 
     private final List<CrawlRequest> crawlSeeds;
 
@@ -41,11 +47,11 @@ public final class CrawlerConfiguration implements Serializable {
     public CrawlerConfiguration() {
         // Default configuration
         crawlSeeds = new ArrayList<>();
-        crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
-        filterDuplicateRequests = true;
-        filterOffsiteRequests = false;
-        delayBetweenRequests = Duration.ZERO;
-        maxCrawlDepth = 0;
+        crawlingStrategy = DEFAULT_CRAWLING_STRATEGY;
+        filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
+        filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
+        delayBetweenRequests = DEFAULT_DELAY_BETWEEN_REQUESTS;
+        maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
     }
 
     /**
