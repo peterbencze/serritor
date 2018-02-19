@@ -43,6 +43,7 @@ public final class CrawlerConfiguration implements Serializable {
         crawlSeeds = new ArrayList<>();
         crawlingStrategy = CrawlingStrategy.BREADTH_FIRST;
         filterDuplicateRequests = true;
+        filterOffsiteRequests = false;
         delayBetweenRequests = Duration.ZERO;
         maxCrawlDepth = 0;
     }
