@@ -43,11 +43,11 @@ public final class UnsuccessfulRequest extends CallbackParameter {
         return exception;
     }
 
-    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder<UnsuccessfulRequestBuilder> {
+    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder {
 
         private IOException exception;
 
-        public UnsuccessfulRequestBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+        public UnsuccessfulRequestBuilder(final URL refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             super(refererUrl, crawlDepth, crawlRequest);
         }
 

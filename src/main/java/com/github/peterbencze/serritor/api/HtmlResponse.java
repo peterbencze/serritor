@@ -54,12 +54,12 @@ public final class HtmlResponse extends CallbackParameter {
         return webDriver;
     }
 
-    public static final class HtmlResponseBuilder extends CallbackParameterBuilder<HtmlResponseBuilder> {
+    public static final class HtmlResponseBuilder extends CallbackParameterBuilder {
 
         private HttpHeadResponse httpHeadResponse;
         private WebDriver webDriver;
 
-        public HtmlResponseBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+        public HtmlResponseBuilder(final URL refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             super(refererUrl, crawlDepth, crawlRequest);
         }
 

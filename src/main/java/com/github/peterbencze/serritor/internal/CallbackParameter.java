@@ -63,7 +63,7 @@ public abstract class CallbackParameter {
         return crawlRequest;
     }
 
-    public static abstract class CallbackParameterBuilder<T extends CallbackParameterBuilder<T>> {
+    public static abstract class CallbackParameterBuilder {
 
         private final URL refererUrl;
         private final int crawlDepth;
