@@ -54,7 +54,7 @@ public final class CrawlFrontier implements Serializable {
         allowedDomains = new HashSet<>();
         urlFingerprints = new HashSet<>();
 
-        // Construct a priority queue according to the crawling strategy specified in the configuration
+        // Construct a priority queue according to the crawl strategy specified in the configuration
         candidates = getPriorityQueue();
 
         // Feed initial crawl requests (seeds)
@@ -174,7 +174,7 @@ public final class CrawlFrontier implements Serializable {
      * comparator
      */
     private PriorityQueue<CrawlCandidate> getPriorityQueue() {
-        switch (config.getCrawlingStrategy()) {
+        switch (config.getCrawlStrategy()) {
             case BREADTH_FIRST:
                 return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth)
                         .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
@@ -183,6 +183,6 @@ public final class CrawlFrontier implements Serializable {
                         .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
         }
 
-        throw new IllegalArgumentException("Unsupported crawling strategy.");
+        throw new IllegalArgumentException("Unsupported crawl strategy.");
     }
 }

@@ -20,7 +20,7 @@ package com.github.peterbencze.serritor.api;
  *
  * @author Peter Bencze
  */
-public enum CrawlingStrategy {
+public enum CrawlStrategy {
 
     BREADTH_FIRST,
     DEPTH_FIRST

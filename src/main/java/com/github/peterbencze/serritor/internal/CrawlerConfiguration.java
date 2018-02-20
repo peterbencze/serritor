@@ -16,7 +16,7 @@
 package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlRequest;
-import com.github.peterbencze.serritor.api.CrawlingStrategy;
+import com.github.peterbencze.serritor.api.CrawlStrategy;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public final class CrawlerConfiguration implements Serializable {
     
-    private static final CrawlingStrategy DEFAULT_CRAWLING_STRATEGY = CrawlingStrategy.BREADTH_FIRST;
+    private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
     private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
     private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
     private static final Duration DEFAULT_DELAY_BETWEEN_REQUESTS = Duration.ZERO;
@@ -38,7 +38,7 @@ public final class CrawlerConfiguration implements Serializable {
 
     private final List<CrawlRequest> crawlSeeds;
 
-    private CrawlingStrategy crawlingStrategy;
+    private CrawlStrategy crawlStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
     private Duration delayBetweenRequests;
@@ -47,7 +47,7 @@ public final class CrawlerConfiguration implements Serializable {
     public CrawlerConfiguration() {
         // Default configuration
         crawlSeeds = new ArrayList<>();
-        crawlingStrategy = DEFAULT_CRAWLING_STRATEGY;
+        crawlStrategy = DEFAULT_CRAWL_STRATEGY;
         filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
         filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
         delayBetweenRequests = DEFAULT_DELAY_BETWEEN_REQUESTS;
@@ -82,21 +82,21 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Returns the crawling strategy of the crawler.
+     * Returns the crawl strategy of the crawler.
      *
-     * @return The crawling strategy
+     * @return The crawl strategy
      */
-    public CrawlingStrategy getCrawlingStrategy() {
-        return crawlingStrategy;
+    public CrawlStrategy getCrawlStrategy() {
+        return crawlStrategy;
     }
 
     /**
-     * Sets the crawling strategy of the crawler.
+     * Sets the crawl strategy of the crawler.
      *
-     * @param crawlingStrategy The crawling strategy
+     * @param crawlStrategy The crawl strategy
      */
-    public void setCrawlingStrategy(final CrawlingStrategy crawlingStrategy) {
-        this.crawlingStrategy = crawlingStrategy;
+    public void setCrawlStrategy(final CrawlStrategy crawlStrategy) {
+        this.crawlStrategy = crawlStrategy;
     }
 
     /**

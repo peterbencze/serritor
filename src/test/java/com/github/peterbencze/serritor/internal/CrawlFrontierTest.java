@@ -17,7 +17,7 @@ package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
-import com.github.peterbencze.serritor.api.CrawlingStrategy;
+import com.github.peterbencze.serritor.api.CrawlStrategy;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -325,8 +325,8 @@ public final class CrawlFrontierTest {
 
     @Test
     public void getNextRequestDepthFirstTest() {
-        // Set the crawling strategy to depth-first
-        config.setCrawlingStrategy(CrawlingStrategy.DEPTH_FIRST);
+        // Set the crawl strategy to depth-first
+        config.setCrawlStrategy(CrawlStrategy.DEPTH_FIRST);
         frontier = new CrawlFrontier(config);
 
         // Get the crawl candidate of root URL 1
