@@ -80,6 +80,8 @@ public final class CrawlRequest implements Serializable {
     }
 
     public static final class CrawlRequestBuilder {
+        
+        private static final int DEFAULT_PRIORITY = 0;
 
         private final URL requestUrl;
 
@@ -105,8 +107,8 @@ public final class CrawlRequest implements Serializable {
                 throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the given request URL (\"%s\").", requestUrl), ex);
             }
 
-            // Default priority is 0
-            priority = 0;
+            // Set default priority
+            priority = DEFAULT_PRIORITY;
         }
 
         /**
