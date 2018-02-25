@@ -15,6 +15,7 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
 import java.io.Serializable;
@@ -29,20 +30,26 @@ import java.util.List;
  * @author Peter Bencze
  */
 public final class CrawlerConfiguration implements Serializable {
-    
+
     private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
     private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
     private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
-    private static final Duration DEFAULT_DELAY_BETWEEN_REQUESTS = Duration.ZERO;
     private static final int DEFAULT_MAX_CRAWL_DEPTH = 0;
+    private static final CrawlDelayStrategy DEFAULT_CRAWL_DELAY = CrawlDelayStrategy.FIXED;
+    private static final long DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS = Duration.ZERO.toMillis();
+    private static final long DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS = Duration.ofSeconds(1).toMillis();
+    private static final long DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS = Duration.ofMinutes(1).toMillis();
 
     private final List<CrawlRequest> crawlSeeds;
 
     private CrawlStrategy crawlStrategy;
     private boolean filterDuplicateRequests;
     private boolean filterOffsiteRequests;
-    private Duration delayBetweenRequests;
     private int maxCrawlDepth;
+    private CrawlDelayStrategy crawlDelayStrategy;
+    private long fixedCrawlDelayInMillis;
+    private long minCrawlDelayInMillis;
+    private long maxCrawlDelayInMillis;
 
     public CrawlerConfiguration() {
         // Default configuration
@@ -50,8 +57,11 @@ public final class CrawlerConfiguration implements Serializable {
         crawlStrategy = DEFAULT_CRAWL_STRATEGY;
         filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
         filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
-        delayBetweenRequests = DEFAULT_DELAY_BETWEEN_REQUESTS;
         maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
+        crawlDelayStrategy = DEFAULT_CRAWL_DELAY;
+        fixedCrawlDelayInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
+        minCrawlDelayInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
+        maxCrawlDelayInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
     }
 
     /**
@@ -136,24 +146,6 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Returns the delay between each request.
-     *
-     * @return The delay between each request
-     */
-    public Duration getDelayBetweenRequests() {
-        return delayBetweenRequests;
-    }
-
-    /**
-     * Sets the delay between each request.
-     *
-     * @param delayBetweenRequests The delay between each request
-     */
-    public void setDelayBetweenRequests(final Duration delayBetweenRequests) {
-        this.delayBetweenRequests = delayBetweenRequests;
-    }
-
-    /**
      * Returns the maximum possible crawl depth.
      *
      * @return The maximum crawl depth
@@ -169,5 +161,103 @@ public final class CrawlerConfiguration implements Serializable {
      */
     public void setMaxCrawlDepth(final int maxCrawlDepth) {
         this.maxCrawlDepth = maxCrawlDepth;
+    }
+
+    /**
+     * Sets the crawl delay strategy to be used by the crawler.
+     *
+     * @param crawlDelayStrategy The crawl delay strategy
+     */
+    public void setCrawlDelayStrategy(final CrawlDelayStrategy crawlDelayStrategy) {
+        this.crawlDelayStrategy = crawlDelayStrategy;
+    }
+
+    /**
+     * Returns the crawl delay strategy used by the crawler.
+     *
+     * @return The crawl delay type
+     */
+    public CrawlDelayStrategy getCrawlDelayStrategy() {
+        return crawlDelayStrategy;
+    }
+
+    /**
+     * Sets the exact duration of delay between each request.
+     *
+     * @param fixedCrawlDelayDuration The duration of delay
+     */
+    public void setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
+        try {
+            fixedCrawlDelayInMillis = fixedCrawlDelayDuration.toMillis();
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("The duration is too large.");
+        }
+    }
+
+    /**
+     * Returns the exact duration of delay between each request.
+     *
+     * @return The duration of delay in milliseconds
+     */
+    public long getFixedCrawlDelayInMillis() {
+        return fixedCrawlDelayInMillis;
+    }
+
+    /**
+     * Sets the minimum duration of delay between each request.
+     *
+     * @param minCrawlDelayDuration The minimum duration of delay
+     */
+    public void setMinimumCrawlDelayDuration(final Duration minCrawlDelayDuration) {
+        if (minCrawlDelayDuration.isNegative()) {
+            throw new IllegalArgumentException("The minimum crawl delay should be positive.");
+        }
+
+        try {
+            long delayInMillis = minCrawlDelayDuration.toMillis();
+            if (delayInMillis >= maxCrawlDelayInMillis) {
+                throw new IllegalArgumentException("The minimum crawl delay should be less than the maximum.");
+            }
+
+            minCrawlDelayInMillis = delayInMillis;
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("The duration is too large.");
+        }
+    }
+
+    /**
+     * Returns the minimum duration of delay between each request.
+     *
+     * @return The minimum duration of delay in milliseconds
+     */
+    public long getMinimumCrawlDelayInMillis() {
+        return minCrawlDelayInMillis;
+    }
+
+    /**
+     * Sets the maximum duration of delay between each request.
+     *
+     * @param maxCrawlDelayDuration The maximum duration of delay
+     */
+    public void setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
+        try {
+            long delayInMillis = maxCrawlDelayDuration.toMillis();
+            if (delayInMillis <= minCrawlDelayInMillis) {
+                throw new IllegalArgumentException("The maximum crawl delay should be higher than the minimum.");
+            }
+
+            maxCrawlDelayInMillis = delayInMillis;
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("The duration is too large.");
+        }
+    }
+
+    /**
+     * Returns the maximum duration of delay between each request.
+     *
+     * @return The maximum duration of delay in milliseconds
+     */
+    public long getMaximumCrawlDelayInMillis() {
+        return maxCrawlDelayInMillis;
     }
 }

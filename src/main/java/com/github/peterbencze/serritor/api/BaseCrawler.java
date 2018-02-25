@@ -20,6 +20,8 @@ import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
 import com.github.peterbencze.serritor.internal.CrawlCandidate;
+import com.github.peterbencze.serritor.internal.CrawlDelay;
+import com.github.peterbencze.serritor.internal.CrawlDelayFactory;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
 import java.io.IOException;
@@ -37,6 +39,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
@@ -49,7 +52,7 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  */
 public abstract class BaseCrawler {
 
-    //Allows the application to configure the crawler
+    // Allows the application to configure the crawler
     protected final CrawlerConfiguration config;
 
     // Indicates if the crawler is currently running or not
@@ -63,7 +66,10 @@ public abstract class BaseCrawler {
 
     private WebDriver webDriver;
 
-    private CrawlFrontier frontier;
+    private CrawlFrontier crawlFrontier;
+
+    // Specifies which type of crawl delay to use
+    private CrawlDelay crawlDelay;
 
     protected BaseCrawler() {
         // Create a default configuration
@@ -92,23 +98,34 @@ public abstract class BaseCrawler {
     /**
      * Constructs all the necessary objects and runs the crawler.
      *
-     * @param frontierToUse Previously saved frontier to be used by the crawler.
+     * @param frontierToUse Crawl frontier to be used by the crawler.
      */
     private void start(final WebDriver driver, final CrawlFrontier frontierToUse) {
-        // Check if the crawler is running
-        if (!isStopped) {
-            throw new IllegalStateException("The crawler is already started.");
+        try {
+            // Check if the crawler is running
+            if (!isStopped) {
+                throw new IllegalStateException("The crawler is already started.");
+            }
+
+            isStopped = false;
+
+            httpClient = HttpClientBuilder.create().build();
+
+            webDriver = driver;
+
+            crawlFrontier = frontierToUse;
+
+            CrawlDelayFactory crawlDelayFactory = new CrawlDelayFactory(config, (JavascriptExecutor) driver);
+            crawlDelay = crawlDelayFactory.getInstanceOf(config.getCrawlDelayStrategy());
+
+            run();
+        } finally {
+            // Always close the WebDriver
+            webDriver.quit();
+
+            stopCrawling = false;
+            isStopped = true;
         }
-
-        isStopped = false;
-
-        httpClient = HttpClientBuilder.create().build();
-
-        webDriver = driver;
-
-        frontier = frontierToUse;
-
-        run();
     }
 
     /**
@@ -119,13 +136,13 @@ public abstract class BaseCrawler {
      */
     public final void saveState(final OutputStream out) throws IOException {
         // Check if the crawler has been started, otherwise we have nothing to save
-        if (frontier == null) {
+        if (crawlFrontier == null) {
             throw new IllegalStateException("No state to save.");
         }
 
         // Save the frontier's current state
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
-        objectOutputStream.writeObject(frontier);
+        objectOutputStream.writeObject(crawlFrontier);
     }
 
     /**
@@ -153,7 +170,7 @@ public abstract class BaseCrawler {
     public final void resumeState(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
         ObjectInputStream objectInputStream = new ObjectInputStream(in);
         CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
-        
+
         start(driver, frontierToUse);
     }
 
@@ -188,7 +205,7 @@ public abstract class BaseCrawler {
             throw new IllegalStateException("The crawler is not started. Maybe you meant to add this request as a crawl seed?");
         }
 
-        frontier.feedRequest(request, false);
+        crawlFrontier.feedRequest(request, false);
     }
 
     /**
@@ -204,95 +221,85 @@ public abstract class BaseCrawler {
      * Defines the workflow of the crawler.
      */
     private void run() {
-        try {
-            onBegin();
+        onBegin();
 
-            while (!stopCrawling && frontier.hasNextCandidate()) {
-                // Get the next crawl candidate from the queue
-                CrawlCandidate currentCandidate = frontier.getNextCandidate();
+        while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
+            // Get the next crawl candidate from the queue
+            CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
 
-                URL currentCandidateUrl = currentCandidate.getCandidateUrl();
-                String currentRequestUrlAsString = currentCandidateUrl.toString();
+            URL currentCandidateUrl = currentCandidate.getCandidateUrl();
+            String currentRequestUrlAsString = currentCandidateUrl.toString();
 
-                HttpHeadResponse httpHeadResponse;
-                URL responseUrl = currentCandidateUrl;
+            HttpHeadResponse httpHeadResponse;
+            URL responseUrl = currentCandidateUrl;
 
-                try {
-                    HttpClientContext context = HttpClientContext.create();
+            try {
+                HttpClientContext context = HttpClientContext.create();
 
-                    // Send an HTTP HEAD request to the current URL to determine its availability and content type
-                    httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
+                // Send an HTTP HEAD request to the current URL to determine its availability and content type
+                httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
 
-                    // If the request has been redirected, get the final URL
-                    List<URI> redirectLocations = context.getRedirectLocations();
-                    if (redirectLocations != null) {
-                        responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
-                    }
-                } catch (IOException ex) {
-                    UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                            currentCandidate.getCrawlRequest())
-                            .setException(ex)
-                            .build();
-
-                    onUnsuccessfulRequest(unsuccessfulRequest);
-                    continue;
+                // If the request has been redirected, get the final URL
+                List<URI> redirectLocations = context.getRedirectLocations();
+                if (redirectLocations != null) {
+                    responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
                 }
+            } catch (IOException ex) {
+                UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                        currentCandidate.getCrawlRequest())
+                        .setException(ex)
+                        .build();
 
-                // If the request has been redirected, a new crawl request should be created for the redirected URL
-                if (!responseUrl.toString().equals(currentRequestUrlAsString)) {
-                    CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
-                    frontier.feedRequest(redirectedCrawlRequest, false);
-
-                    continue;
-                }
-
-                // Check if the content of the response is HTML
-                if (isContentHtml(httpHeadResponse)) {
-                    boolean timedOut = false;
-
-                    try {
-                        // Open the URL in the browser
-                        webDriver.get(currentRequestUrlAsString);
-                    } catch (TimeoutException ex) {
-                        timedOut = true;
-                    }
-
-                    HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                            currentCandidate.getCrawlRequest())
-                            .setHttpHeadResponse(httpHeadResponse)
-                            .setWebDriver(webDriver)
-                            .build();
-
-                    // Check if the request has timed out
-                    if (!timedOut) {
-                        onResponseComplete(htmlResponse);
-                    } else {
-                        onResponseTimeout(htmlResponse);
-                    }
-                } else {
-                    // URLs that point to non-HTML content should not be opened in the browser
-
-                    NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                            currentCandidate.getCrawlRequest())
-                            .setHttpHeadResponse(httpHeadResponse)
-                            .build();
-
-                    onNonHtmlResponse(nonHtmlResponse);
-                }
-
-                TimeUnit.MILLISECONDS.sleep(config.getDelayBetweenRequests().toMillis());
+                onUnsuccessfulRequest(unsuccessfulRequest);
+                continue;
             }
 
-            onFinish();
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        } finally {
-            // Always close the WebDriver
-            webDriver.quit();
+            // If the request has been redirected, a new crawl request should be created for the redirected URL
+            if (!responseUrl.toString().equals(currentRequestUrlAsString)) {
+                CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
+                crawlFrontier.feedRequest(redirectedCrawlRequest, false);
 
-            stopCrawling = false;
-            isStopped = true;
+                continue;
+            }
+
+            // Check if the content of the response is HTML
+            if (isContentHtml(httpHeadResponse)) {
+                boolean timedOut = false;
+
+                try {
+                    // Open the URL in the browser
+                    webDriver.get(currentRequestUrlAsString);
+                } catch (TimeoutException ex) {
+                    timedOut = true;
+                }
+
+                HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                        currentCandidate.getCrawlRequest())
+                        .setHttpHeadResponse(httpHeadResponse)
+                        .setWebDriver(webDriver)
+                        .build();
+
+                // Check if the request has timed out
+                if (!timedOut) {
+                    onResponseComplete(htmlResponse);
+                } else {
+                    onResponseTimeout(htmlResponse);
+                }
+            } else {
+                // URLs that point to non-HTML content should not be opened in the browser
+
+                NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                        currentCandidate.getCrawlRequest())
+                        .setHttpHeadResponse(httpHeadResponse)
+                        .build();
+
+                onNonHtmlResponse(nonHtmlResponse);
+            }
+
+            performDelay();
         }
+
+        onFinish();
     }
 
     /**
@@ -316,6 +323,18 @@ public abstract class BaseCrawler {
     private boolean isContentHtml(final HttpHeadResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
         return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
+    }
+
+    /**
+     * Delays the next request.
+     */
+    private void performDelay() {
+        try {
+            TimeUnit.MILLISECONDS.sleep(crawlDelay.getDelay());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            stopCrawling = true;
+        }
     }
 
     /**
