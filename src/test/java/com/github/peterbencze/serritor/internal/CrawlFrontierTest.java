@@ -404,7 +404,7 @@ public final class CrawlFrontierTest {
     @Test
     public void maxCrawlDepthTest() {
         // Set max crawl depth
-        config.setMaxCrawlDepth(MAX_CRAWL_DEPTH);
+        config.setMaximumCrawlDepth(MAX_CRAWL_DEPTH);
         
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();

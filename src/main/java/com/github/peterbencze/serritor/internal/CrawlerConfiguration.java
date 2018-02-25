@@ -150,7 +150,7 @@ public final class CrawlerConfiguration implements Serializable {
      *
      * @return The maximum crawl depth
      */
-    public int getMaxCrawlDepth() {
+    public int getMaximumCrawlDepth() {
         return maxCrawlDepth;
     }
 
@@ -159,7 +159,7 @@ public final class CrawlerConfiguration implements Serializable {
      *
      * @param maxCrawlDepth The maximum crawl depth, zero means no limit
      */
-    public void setMaxCrawlDepth(final int maxCrawlDepth) {
+    public void setMaximumCrawlDepth(final int maxCrawlDepth) {
         this.maxCrawlDepth = maxCrawlDepth;
     }
 

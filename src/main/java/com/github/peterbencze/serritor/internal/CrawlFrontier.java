@@ -96,7 +96,7 @@ public final class CrawlFrontier implements Serializable {
         CrawlCandidateBuilder builder;
 
         if (!isCrawlSeed) {
-            int crawlDepthLimit = config.getMaxCrawlDepth();
+            int crawlDepthLimit = config.getMaximumCrawlDepth();
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             // If a crawl depth limit is set, check if the candidate's crawl depth is less than or equal to the limit
