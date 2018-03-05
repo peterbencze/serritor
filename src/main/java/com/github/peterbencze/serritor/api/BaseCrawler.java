@@ -24,6 +24,7 @@ import com.github.peterbencze.serritor.internal.CrawlDelay;
 import com.github.peterbencze.serritor.internal.CrawlDelayFactory;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
+import com.github.peterbencze.serritor.internal.CrawlerConfigurator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -51,9 +52,10 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  * @author Peter Bencze
  */
 public abstract class BaseCrawler {
+    
+    protected final CrawlerConfigurator configurator;
 
-    // Allows the application to configure the crawler
-    protected final CrawlerConfiguration config;
+    private final CrawlerConfiguration configuration;
 
     // Indicates if the crawler is currently running or not
     private boolean isStopped;
@@ -68,12 +70,11 @@ public abstract class BaseCrawler {
 
     private CrawlFrontier crawlFrontier;
 
-    // Specifies which type of crawl delay to use
     private CrawlDelay crawlDelay;
 
     protected BaseCrawler() {
-        // Create a default configuration
-        config = new CrawlerConfiguration();
+        configuration = new CrawlerConfiguration();
+        configurator = new CrawlerConfigurator(configuration);
 
         // Indicate that the crawler is not running
         isStopped = true;
@@ -92,7 +93,7 @@ public abstract class BaseCrawler {
      * @param driver The WebDriver instance that will be used by the crawler
      */
     public final void start(final WebDriver driver) {
-        start(driver, new CrawlFrontier(config));
+        start(driver, new CrawlFrontier(configuration));
     }
 
     /**
@@ -115,8 +116,8 @@ public abstract class BaseCrawler {
 
             crawlFrontier = frontierToUse;
 
-            CrawlDelayFactory crawlDelayFactory = new CrawlDelayFactory(config, (JavascriptExecutor) driver);
-            crawlDelay = crawlDelayFactory.getInstanceOf(config.getCrawlDelayStrategy());
+            CrawlDelayFactory crawlDelayFactory = new CrawlDelayFactory(configuration, (JavascriptExecutor) driver);
+            crawlDelay = crawlDelayFactory.getInstanceOf(configuration.getCrawlDelayStrategy());
 
             run();
         } finally {

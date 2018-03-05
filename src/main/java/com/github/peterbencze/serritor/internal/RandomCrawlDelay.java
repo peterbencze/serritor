@@ -35,8 +35,8 @@ public final class RandomCrawlDelay implements CrawlDelay {
      * specifies the minimum and maximum delay.
      */
     public RandomCrawlDelay(final CrawlerConfiguration config) {
-        origin = config.getMinimumCrawlDelayInMillis();
-        bound = config.getMaximumCrawlDelayInMillis() + 1;
+        origin = config.getMinimumCrawlDelayDurationInMillis();
+        bound = config.getMaximumCrawlDelayDurationInMillis() + 1;
     }
 
     /**

@@ -24,9 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Provides an interface to configure the crawler.
+ * This class contains the settings of the crawler.
  *
- * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public final class CrawlerConfiguration implements Serializable {
@@ -47,21 +46,22 @@ public final class CrawlerConfiguration implements Serializable {
     private boolean filterOffsiteRequests;
     private int maxCrawlDepth;
     private CrawlDelayStrategy crawlDelayStrategy;
-    private long fixedCrawlDelayInMillis;
-    private long minCrawlDelayInMillis;
-    private long maxCrawlDelayInMillis;
+    private long fixedCrawlDelayDurationInMillis;
+    private long minCrawlDelayDurationInMillis;
+    private long maxCrawlDelayDurationInMillis;
 
     public CrawlerConfiguration() {
-        // Default configuration
+        // Initialize configuration with default values
+
         crawlSeeds = new ArrayList<>();
         crawlStrategy = DEFAULT_CRAWL_STRATEGY;
         filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
         filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
         maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
         crawlDelayStrategy = DEFAULT_CRAWL_DELAY;
-        fixedCrawlDelayInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
-        minCrawlDelayInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
-        maxCrawlDelayInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
+        fixedCrawlDelayDurationInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
+        minCrawlDelayDurationInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
+        maxCrawlDelayDurationInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
     }
 
     /**
@@ -76,19 +76,11 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Appends a crawl request to the list of crawl seeds.
      *
-     * @param request The crawl request
+     * @param request The <code>CrawlRequest</code> instance which represents
+     * the crawl seed
      */
     public void addCrawlSeed(final CrawlRequest request) {
         crawlSeeds.add(request);
-    }
-
-    /**
-     * Appends a list of crawl requests to the list of crawl seeds.
-     *
-     * @param requests The list of crawl requests
-     */
-    public void addCrawlSeeds(final List<CrawlRequest> requests) {
-        crawlSeeds.addAll(requests);
     }
 
     /**
@@ -101,7 +93,9 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Sets the crawl strategy of the crawler.
+     * Sets the crawl strategy to be used by the crawler. Breadth-first strategy
+     * orders crawl requests by the lowest crawl depth, whereas depth-first
+     * orders them by the highest crawl depth.
      *
      * @param crawlStrategy The crawl strategy
      */
@@ -112,16 +106,17 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Indicates if duplicate request filtering is enabled or not.
      *
-     * @return True if it is enabled, false otherwise
+     * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
     public boolean isDuplicateRequestFilteringEnabled() {
         return filterDuplicateRequests;
     }
 
     /**
-     * Sets duplicate request filtering.
+     * Enables or disables duplicate request filtering.
      *
-     * @param filterDuplicateRequests True means enabled, false means disabled
+     * @param filterDuplicateRequests <code>true</code> means enabled,
+     * <code>false</code> means disabled
      */
     public void setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
         this.filterDuplicateRequests = filterDuplicateRequests;
@@ -130,16 +125,17 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Indicates if offsite request filtering is enabled or not.
      *
-     * @return True if it is enabled, false otherwise
+     * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
     public boolean isOffsiteRequestFilteringEnabled() {
         return filterOffsiteRequests;
     }
 
     /**
-     * Sets offsite request filtering.
+     * Enables or disables offsite request filtering.
      *
-     * @param filterOffsiteRequests True means enabled, false means disabled
+     * @param filterOffsiteRequests <code>true</code> means enabled,
+     * <code>false</code> means disabled
      */
     public void setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
         this.filterOffsiteRequests = filterOffsiteRequests;
@@ -155,9 +151,10 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Sets the maximum possible crawl depth.
+     * Sets the maximum possible crawl depth. It should be a non-negative number
+     * where 0 means there is no limit.
      *
-     * @param maxCrawlDepth The maximum crawl depth, zero means no limit
+     * @param maxCrawlDepth The maximum crawl depth
      */
     public void setMaximumCrawlDepth(final int maxCrawlDepth) {
         this.maxCrawlDepth = maxCrawlDepth;
@@ -175,7 +172,7 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the crawl delay strategy used by the crawler.
      *
-     * @return The crawl delay type
+     * @return The crawl delay strategy
      */
     public CrawlDelayStrategy getCrawlDelayStrategy() {
         return crawlDelayStrategy;
@@ -184,14 +181,11 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Sets the exact duration of delay between each request.
      *
-     * @param fixedCrawlDelayDuration The duration of delay
+     * @param fixedCrawlDelayDurationInMillis The duration of delay in
+     * milliseconds
      */
-    public void setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
-        try {
-            fixedCrawlDelayInMillis = fixedCrawlDelayDuration.toMillis();
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("The duration is too large.");
-        }
+    public void setFixedCrawlDelayDurationInMillis(final long fixedCrawlDelayDurationInMillis) {
+        this.fixedCrawlDelayDurationInMillis = fixedCrawlDelayDurationInMillis;
     }
 
     /**
@@ -199,30 +193,18 @@ public final class CrawlerConfiguration implements Serializable {
      *
      * @return The duration of delay in milliseconds
      */
-    public long getFixedCrawlDelayInMillis() {
-        return fixedCrawlDelayInMillis;
+    public long getFixedCrawlDelayDurationInMillis() {
+        return fixedCrawlDelayDurationInMillis;
     }
 
     /**
      * Sets the minimum duration of delay between each request.
      *
-     * @param minCrawlDelayDuration The minimum duration of delay
+     * @param minCrawlDelayDurationInMillis The minimum duration of delay in
+     * milliseconds
      */
-    public void setMinimumCrawlDelayDuration(final Duration minCrawlDelayDuration) {
-        if (minCrawlDelayDuration.isNegative()) {
-            throw new IllegalArgumentException("The minimum crawl delay should be positive.");
-        }
-
-        try {
-            long delayInMillis = minCrawlDelayDuration.toMillis();
-            if (delayInMillis >= maxCrawlDelayInMillis) {
-                throw new IllegalArgumentException("The minimum crawl delay should be less than the maximum.");
-            }
-
-            minCrawlDelayInMillis = delayInMillis;
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("The duration is too large.");
-        }
+    public void setMinimumCrawlDelayDurationInMillis(final long minCrawlDelayDurationInMillis) {
+        this.minCrawlDelayDurationInMillis = minCrawlDelayDurationInMillis;
     }
 
     /**
@@ -230,26 +212,18 @@ public final class CrawlerConfiguration implements Serializable {
      *
      * @return The minimum duration of delay in milliseconds
      */
-    public long getMinimumCrawlDelayInMillis() {
-        return minCrawlDelayInMillis;
+    public long getMinimumCrawlDelayDurationInMillis() {
+        return minCrawlDelayDurationInMillis;
     }
 
     /**
      * Sets the maximum duration of delay between each request.
      *
-     * @param maxCrawlDelayDuration The maximum duration of delay
+     * @param maxCrawlDelayDurationInMillis The maximum duration of delay in
+     * milliseconds
      */
-    public void setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
-        try {
-            long delayInMillis = maxCrawlDelayDuration.toMillis();
-            if (delayInMillis <= minCrawlDelayInMillis) {
-                throw new IllegalArgumentException("The maximum crawl delay should be higher than the minimum.");
-            }
-
-            maxCrawlDelayInMillis = delayInMillis;
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("The duration is too large.");
-        }
+    public void setMaximumCrawlDelayDuration(final long maxCrawlDelayDurationInMillis) {
+        this.maxCrawlDelayDurationInMillis = maxCrawlDelayDurationInMillis;
     }
 
     /**
@@ -257,7 +231,7 @@ public final class CrawlerConfiguration implements Serializable {
      *
      * @return The maximum duration of delay in milliseconds
      */
-    public long getMaximumCrawlDelayInMillis() {
-        return maxCrawlDelayInMillis;
+    public long getMaximumCrawlDelayDurationInMillis() {
+        return maxCrawlDelayDurationInMillis;
     }
 }

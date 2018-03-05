@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test cases for CrawlFrontier.
+ * Test cases for <code>CrawlFrontier</code>.
  *
  * @author Krisztian Mozsi
  * @author Peter Bencze
@@ -67,7 +67,7 @@ public final class CrawlFrontierTest {
     private static final CrawlRequest CHILD_URL_0_CRAWL_REQUEST;
     private static final CrawlRequest CHILD_URL_1_CRAWL_REQUEST;
     private static final CrawlRequest CHILD_URL_2_CRAWL_REQUEST;
-    
+
     // Child URL path
     private static final String CHILD_URL_PATH = "/child";
 
@@ -79,7 +79,7 @@ public final class CrawlFrontierTest {
 
     // Offsite URL crawl request
     private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST;
-    
+
     // Max crawl depth
     private static final int MAX_CRAWL_DEPTH = 1;
 
@@ -132,10 +132,11 @@ public final class CrawlFrontierTest {
 
     @Before
     public void initialize() {
-        // Create configuration
         config = new CrawlerConfiguration();
+
         config.setOffsiteRequestFiltering(true);
-        config.addCrawlSeeds(Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST));
+        Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST)
+                .forEach(config::addCrawlSeed);
 
         // Create frontier
         frontier = new CrawlFrontier(config);
@@ -400,27 +401,27 @@ public final class CrawlFrontierTest {
         // There should be no more candidates left at this point
         assertFalse(frontier.hasNextCandidate());
     }
-    
+
     @Test
     public void maxCrawlDepthTest() {
         // Set max crawl depth
         config.setMaximumCrawlDepth(MAX_CRAWL_DEPTH);
-        
+
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
-        
+
         // Feed a child request, its crawl depth will be 1
         frontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
-        
+
         // Get the crawl candidate of the previously added child URL
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
-        
+
         // Check its crawl depth, it should be less than or equal to the limit
         assertTrue(nextCandidate.getCrawlDepth() <= MAX_CRAWL_DEPTH);
-        
+
         // Feed another child request, its crawl depth will be 2 which is above the limit
         frontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
-        
+
         // There should be no more candidates at this point
         assertFalse(frontier.hasNextCandidate());
     }

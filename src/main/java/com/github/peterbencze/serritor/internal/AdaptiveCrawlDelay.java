@@ -39,8 +39,8 @@ public final class AdaptiveCrawlDelay implements CrawlDelay {
      * capable of executing JavaScript.
      */
     public AdaptiveCrawlDelay(final CrawlerConfiguration config, final JavascriptExecutor javascriptExecutor) {
-        minDelayInMillis = config.getMinimumCrawlDelayInMillis();
-        maxDelayInMillis = config.getMaximumCrawlDelayInMillis();
+        minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
+        maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
         this.javascriptExecutor = javascriptExecutor;
     }
 

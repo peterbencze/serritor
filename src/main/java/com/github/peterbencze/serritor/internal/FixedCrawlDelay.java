@@ -31,7 +31,7 @@ public final class FixedCrawlDelay implements CrawlDelay {
      * @param config A <code>CrawlerConfiguration</code> instance which specifies the fixed delay
      */
     public FixedCrawlDelay(final CrawlerConfiguration config) {
-        delayInMillis = config.getFixedCrawlDelayInMillis();
+        delayInMillis = config.getFixedCrawlDelayDurationInMillis();
     }
 
     /**
