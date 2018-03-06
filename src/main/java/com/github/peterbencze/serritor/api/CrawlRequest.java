@@ -26,7 +26,6 @@ import java.util.Optional;
  * future. The reason why it is not sure that it will be processed is because it
  * might get filtered out by one of the enabled filters.
  *
- * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public final class CrawlRequest implements Serializable {
@@ -80,7 +79,7 @@ public final class CrawlRequest implements Serializable {
     }
 
     public static final class CrawlRequestBuilder {
-        
+
         private static final int DEFAULT_PRIORITY = 0;
 
         private final URL requestUrl;
@@ -90,10 +89,11 @@ public final class CrawlRequest implements Serializable {
         private Serializable metadata;
 
         /**
-         * Constructs a CrawlRequestBuilder instance that can be used to create
-         * CrawRequest instances.
+         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
+         * used to create CrawRequest instances.
          *
-         * @param requestUrl The request's URL given as a URL instance
+         * @param requestUrl The request's URL given as a <code>URL</code>
+         * instance
          */
         public CrawlRequestBuilder(final URL requestUrl) {
             this.requestUrl = requestUrl;
@@ -112,10 +112,11 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Constructs a CrawlRequestBuilder instance that can be used to create
-         * CrawRequest instances.
+         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
+         * used to create <code>CrawRequest</code> instances.
          *
-         * @param requestUrl The request's URL given as a String instance
+         * @param requestUrl The request's URL given as a <code>String</code>
+         * instance
          */
         public CrawlRequestBuilder(final String requestUrl) {
             this(getUrlFromString(requestUrl));
@@ -126,7 +127,7 @@ public final class CrawlRequest implements Serializable {
          *
          * @param priority The priority of the request (higher number means
          * higher priority)
-         * @return The builder instance
+         * @return The <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setPriority(final int priority) {
             this.priority = priority;
@@ -138,7 +139,7 @@ public final class CrawlRequest implements Serializable {
          * when the crawler processed the request.
          *
          * @param metadata The metadata associated with the request
-         * @return The builder instance
+         * @return The <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
             this.metadata = metadata;
@@ -146,21 +147,21 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Builds the specified CrawlRequest instance.
+         * Builds the configured <code>CrawlRequest</code> instance.
          *
-         * @return The specified CrawlRequest instance
+         * @return The configured <code>CrawlRequest</code> instance
          */
         public CrawlRequest build() {
             return new CrawlRequest(this);
         }
 
         /**
-         * Constructs a URL instance based on the specified URL string. Since
-         * call to this must be the first statement in a constructor, this
-         * method is necessary for the conversion to be made.
+         * Constructs a <code>URL</code> instance based on the specified URL
+         * string. Since call to this must be the first statement in a
+         * constructor, this method is necessary for the conversion to be made.
          *
-         * @param requestUrl The request URL as String
-         * @return The request URL
+         * @param requestUrl The request URL as <code>String</code>
+         * @return The <code>URL</code> instance
          */
         private static URL getUrlFromString(final String requestUrl) {
             try {

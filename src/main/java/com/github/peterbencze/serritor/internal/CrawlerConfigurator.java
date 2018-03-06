@@ -27,12 +27,12 @@ import java.util.List;
  *
  * @author Peter Bencze
  */
-public class CrawlerConfigurator {
+public final class CrawlerConfigurator {
 
-    private final CrawlerConfiguration config;
+    private final CrawlerConfiguration configuration;
 
-    public CrawlerConfigurator(CrawlerConfiguration config) {
-        this.config = config;
+    public CrawlerConfigurator(CrawlerConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     /**
@@ -42,7 +42,7 @@ public class CrawlerConfigurator {
      * the crawl seed
      */
     public void addCrawlSeed(final CrawlRequest request) {
-        config.addCrawlSeed(Preconditions.checkNotNull(request));
+        configuration.addCrawlSeed(Preconditions.checkNotNull(request));
     }
 
     /**
@@ -63,7 +63,7 @@ public class CrawlerConfigurator {
      * @param crawlStrategy The crawl strategy
      */
     public void setCrawlStrategy(final CrawlStrategy crawlStrategy) {
-        config.setCrawlStrategy(Preconditions.checkNotNull(crawlStrategy));
+        configuration.setCrawlStrategy(Preconditions.checkNotNull(crawlStrategy));
     }
 
     /**
@@ -73,7 +73,7 @@ public class CrawlerConfigurator {
      * <code>false</code> means disabled
      */
     public void setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
-        config.setDuplicateRequestFiltering(filterDuplicateRequests);
+        configuration.setDuplicateRequestFiltering(filterDuplicateRequests);
     }
 
     /**
@@ -83,7 +83,7 @@ public class CrawlerConfigurator {
      * <code>false</code> means disabled
      */
     public void setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
-        config.setOffsiteRequestFiltering(filterOffsiteRequests);
+        configuration.setOffsiteRequestFiltering(filterOffsiteRequests);
     }
 
     /**
@@ -95,7 +95,7 @@ public class CrawlerConfigurator {
     public void setMaximumCrawlDepth(final int maxCrawlDepth) {
         Preconditions.checkArgument(maxCrawlDepth >= 0, "The maximum crawl depth cannot be negative.");
 
-        config.setMaximumCrawlDepth(maxCrawlDepth);
+        configuration.setMaximumCrawlDepth(maxCrawlDepth);
     }
 
     /**
@@ -104,7 +104,7 @@ public class CrawlerConfigurator {
      * @param crawlDelayStrategy The crawl delay strategy
      */
     public void setCrawlDelayStrategy(final CrawlDelayStrategy crawlDelayStrategy) {
-        config.setCrawlDelayStrategy(Preconditions.checkNotNull(crawlDelayStrategy));
+        configuration.setCrawlDelayStrategy(Preconditions.checkNotNull(crawlDelayStrategy));
     }
 
     /**
@@ -113,7 +113,7 @@ public class CrawlerConfigurator {
      * @param fixedCrawlDelayDuration The duration of delay
      */
     public void setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
-        config.setFixedCrawlDelayDurationInMillis(fixedCrawlDelayDuration.toMillis());
+        configuration.setFixedCrawlDelayDurationInMillis(fixedCrawlDelayDuration.toMillis());
     }
 
     /**
@@ -125,11 +125,11 @@ public class CrawlerConfigurator {
         Preconditions.checkArgument(!minCrawlDelayDuration.isNegative(), "The minimum crawl delay cannot be negative.");
 
         long minCrawlDelayDurationInMillis = minCrawlDelayDuration.toMillis();
-        long maxCrawlDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
+        long maxCrawlDelayInMillis = configuration.getMaximumCrawlDelayDurationInMillis();
 
         Preconditions.checkArgument(minCrawlDelayDurationInMillis < maxCrawlDelayInMillis, "The minimum crawl delay should be less than the maximum.");
 
-        config.setMinimumCrawlDelayDurationInMillis(minCrawlDelayDurationInMillis);
+        configuration.setMinimumCrawlDelayDurationInMillis(minCrawlDelayDurationInMillis);
     }
 
     /**
@@ -138,11 +138,11 @@ public class CrawlerConfigurator {
      * @param maxCrawlDelayDuration The maximum duration of delay
      */
     public void setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
-        long minCrawlDelayDurationInMillis = config.getMinimumCrawlDelayDurationInMillis();
+        long minCrawlDelayDurationInMillis = configuration.getMinimumCrawlDelayDurationInMillis();
         long maxCrawlDelayDurationInMillis = maxCrawlDelayDuration.toMillis();
 
         Preconditions.checkArgument(maxCrawlDelayDurationInMillis > minCrawlDelayDurationInMillis, "The maximum crawl delay should be higher than the minimum.");
 
-        config.setMaximumCrawlDelayDuration(maxCrawlDelayDurationInMillis);
+        configuration.setMaximumCrawlDelayDuration(maxCrawlDelayDurationInMillis);
     }
 }

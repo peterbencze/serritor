@@ -85,7 +85,7 @@ public final class CrawlCandidate implements Serializable {
     /**
      * Returns the crawl request from which this candidate was constructed.
      *
-     * @return The crawl request
+     * @return The <code>CrawlRequest</code> instance
      */
     public CrawlRequest getCrawlRequest() {
         return crawlRequest;

@@ -46,9 +46,9 @@ public final class HtmlResponse extends CallbackParameter {
     }
 
     /**
-     * Returns the WebDriver instance for the browser.
+     * Returns the <code>WebDriver</code> instance for the browser.
      *
-     * @return The WebDriver instance
+     * @return The <code>WebDriver</code> instance
      */
     public WebDriver getWebDriver() {
         return webDriver;

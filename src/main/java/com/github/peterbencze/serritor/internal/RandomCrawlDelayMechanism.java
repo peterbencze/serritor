@@ -18,25 +18,25 @@ package com.github.peterbencze.serritor.internal;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A type of crawl delay in which case the duration is randomized between the
+ * A crawl delay mechanism in which case the duration is randomized between the
  * specified minimum and maximum range.
  *
  * @author Peter Bencze
  */
-public final class RandomCrawlDelay implements CrawlDelay {
+public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
 
-    private final long origin;
-    private final long bound;
+    private final long lowerLimit;
+    private final long upperLimit;
 
     /**
-     * Constructs a new <code>RandomCrawlDelay</code> instance.
+     * Constructs a new <code>RandomCrawlDelayMechanism</code> instance.
      *
-     * @param config A <code>CrawlerConfiguration</code> instance which
+     * @param configuration The <code>CrawlerConfiguration</code> instance which
      * specifies the minimum and maximum delay.
      */
-    public RandomCrawlDelay(final CrawlerConfiguration config) {
-        origin = config.getMinimumCrawlDelayDurationInMillis();
-        bound = config.getMaximumCrawlDelayDurationInMillis() + 1;
+    public RandomCrawlDelayMechanism(final CrawlerConfiguration configuration) {
+        lowerLimit = configuration.getMinimumCrawlDelayDurationInMillis();
+        upperLimit = configuration.getMaximumCrawlDelayDurationInMillis() + 1;
     }
 
     /**
@@ -47,6 +47,6 @@ public final class RandomCrawlDelay implements CrawlDelay {
      */
     @Override
     public long getDelay() {
-        return ThreadLocalRandom.current().nextLong(origin, bound);
+        return ThreadLocalRandom.current().nextLong(lowerLimit, upperLimit);
     }
 }

@@ -35,9 +35,10 @@ public final class UnsuccessfulRequest extends CallbackParameter {
     }
 
     /**
-     * Returns the exception that was thrown.
+     * Returns the exception that was thrown while trying to fulfill the
+     * request.
      *
-     * @return The thrown exception
+     * @return The <code>IOException</code> instance
      */
     public IOException getException() {
         return exception;

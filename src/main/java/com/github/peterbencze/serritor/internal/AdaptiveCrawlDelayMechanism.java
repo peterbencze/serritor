@@ -18,30 +18,30 @@ package com.github.peterbencze.serritor.internal;
 import org.openqa.selenium.JavascriptExecutor;
 
 /**
- * A type of crawl delay, in which case the delay corresponds to the page
- * loading time, if it's between the specified range, otherwise the minimum or
+ * A crawl delay mechanism, in which case the delay corresponds to the page
+ * loading time, if it is between the specified range, otherwise the minimum or
  * maximum duration is used.
  *
  * @author Peter Bencze
  */
-public final class AdaptiveCrawlDelay implements CrawlDelay {
+public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
 
     private final long minDelayInMillis;
     private final long maxDelayInMillis;
-    private final JavascriptExecutor javascriptExecutor;
+    private final JavascriptExecutor jsExecutor;
 
     /**
-     * Constructs a new <code>AdaptiveCrawlDelay</code> instance.
+     * Constructs a new <code>AdaptiveCrawlDelayMechanism</code> instance.
      *
-     * @param config A <code>CrawlerConfiguration</code> instance which
+     * @param configuration The <code>CrawlerConfiguration</code> instance which
      * specifies the minimum and maximum delay.
-     * @param javascriptExecutor A <code>WebDriver</code> instance which is
-     * capable of executing JavaScript.
+     * @param jsExecutor The <code>WebDriver</code> instance which is capable of
+     * executing JavaScript.
      */
-    public AdaptiveCrawlDelay(final CrawlerConfiguration config, final JavascriptExecutor javascriptExecutor) {
-        minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
-        maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
-        this.javascriptExecutor = javascriptExecutor;
+    public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration configuration, final JavascriptExecutor jsExecutor) {
+        minDelayInMillis = configuration.getMinimumCrawlDelayDurationInMillis();
+        maxDelayInMillis = configuration.getMaximumCrawlDelayDurationInMillis();
+        this.jsExecutor = jsExecutor;
     }
 
     /**
@@ -51,7 +51,7 @@ public final class AdaptiveCrawlDelay implements CrawlDelay {
      * <code>false</code> otherwise
      */
     public boolean isBrowserCompatible() {
-        return (boolean) javascriptExecutor.executeScript("return ('performance' in window) && ('timing' in window.performance)");
+        return (boolean) jsExecutor.executeScript("return ('performance' in window) && ('timing' in window.performance)");
     }
 
     /**
@@ -64,7 +64,7 @@ public final class AdaptiveCrawlDelay implements CrawlDelay {
      */
     @Override
     public long getDelay() {
-        long delayInMillis = (long) javascriptExecutor.executeScript("return performance.timing.loadEventEnd - performance.timing.navigationStart;");
+        long delayInMillis = (long) jsExecutor.executeScript("return performance.timing.loadEventEnd - performance.timing.navigationStart;");
 
         if (delayInMillis < minDelayInMillis) {
             return minDelayInMillis;

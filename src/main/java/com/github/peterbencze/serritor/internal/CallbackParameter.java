@@ -57,7 +57,7 @@ public abstract class CallbackParameter {
     /**
      * Returns the crawl request that was processed by the crawler.
      *
-     * @return The processed crawl request
+     * @return The processed <code>CrawlRequest</code> instance
      */
     public final CrawlRequest getCrawlRequest() {
         return crawlRequest;

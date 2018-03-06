@@ -39,7 +39,7 @@ public final class HttpHeadResponse {
      * Checks if a certain header is present in this message.
      *
      * @param name The name of the header
-     * @return True if it is present, false otherwise
+     * @return <code>true</code> if present, <code>false</code> otherwise
      */
     public boolean containsHeader(final String name) {
         return response.containsHeader(name);
@@ -48,7 +48,7 @@ public final class HttpHeadResponse {
     /**
      * Returns all the headers of this response.
      *
-     * @return All the headers
+     * @return The array of headers
      */
     public Header[] getAllHeaders() {
         return response.getAllHeaders();
@@ -68,7 +68,7 @@ public final class HttpHeadResponse {
      * Returns all the headers with a specified name of this response.
      *
      * @param name The name of the headers
-     * @return All the headers
+     * @return The array of headers
      */
     public Header[] getHeaders(final String name) {
         return response.getHeaders(name);

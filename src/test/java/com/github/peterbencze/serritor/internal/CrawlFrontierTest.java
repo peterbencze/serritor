@@ -30,7 +30,6 @@ import org.junit.Test;
 /**
  * Test cases for <code>CrawlFrontier</code>.
  *
- * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public final class CrawlFrontierTest {

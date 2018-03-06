@@ -19,12 +19,14 @@ import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
+import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.CrawlDelay;
-import com.github.peterbencze.serritor.internal.CrawlDelayFactory;
+import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
 import com.github.peterbencze.serritor.internal.CrawlerConfigurator;
+import com.github.peterbencze.serritor.internal.FixedCrawlDelayMechanism;
+import com.github.peterbencze.serritor.internal.RandomCrawlDelayMechanism;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -52,7 +54,7 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  * @author Peter Bencze
  */
 public abstract class BaseCrawler {
-    
+
     protected final CrawlerConfigurator configurator;
 
     private final CrawlerConfiguration configuration;
@@ -70,7 +72,7 @@ public abstract class BaseCrawler {
 
     private CrawlFrontier crawlFrontier;
 
-    private CrawlDelay crawlDelay;
+    private CrawlDelayMechanism crawlDelayMechanism;
 
     protected BaseCrawler() {
         configuration = new CrawlerConfiguration();
@@ -88,9 +90,11 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler using the browser specified by the WebDriver instance.
+     * Starts the crawler using the browser specified by the
+     * <code>WebDriver</code> instance.
      *
-     * @param driver The WebDriver instance that will be used by the crawler
+     * @param driver The <code>WebDriver</code> instance that will be used by
+     * the crawler
      */
     public final void start(final WebDriver driver) {
         start(driver, new CrawlFrontier(configuration));
@@ -99,7 +103,8 @@ public abstract class BaseCrawler {
     /**
      * Constructs all the necessary objects and runs the crawler.
      *
-     * @param frontierToUse Crawl frontier to be used by the crawler.
+     * @param frontierToUse The <code>CrawlFrontier</code> instance to be used
+     * by the crawler.
      */
     private void start(final WebDriver driver, final CrawlFrontier frontierToUse) {
         try {
@@ -109,15 +114,10 @@ public abstract class BaseCrawler {
             }
 
             isStopped = false;
-
             httpClient = HttpClientBuilder.create().build();
-
             webDriver = driver;
-
             crawlFrontier = frontierToUse;
-
-            CrawlDelayFactory crawlDelayFactory = new CrawlDelayFactory(configuration, (JavascriptExecutor) driver);
-            crawlDelay = crawlDelayFactory.getInstanceOf(configuration.getCrawlDelayStrategy());
+            crawlDelayMechanism = createCrawlDelayMechanism();
 
             run();
         } finally {
@@ -132,8 +132,9 @@ public abstract class BaseCrawler {
     /**
      * Saves the current state of the crawler to the specified output stream.
      *
-     * @param out The output stream to use
-     * @throws IOException Any exception thrown by the underlying OutputStream.
+     * @param out The <code>OutputStream</code> instance to use
+     * @throws IOException Any exception thrown by the underlying
+     * <code>OutputStream</code>.
      */
     public final void saveState(final OutputStream out) throws IOException {
         // Check if the crawler has been started, otherwise we have nothing to save
@@ -149,8 +150,8 @@ public abstract class BaseCrawler {
     /**
      * Resumes a previously saved state using HtmlUnit headless browser.
      *
-     * @param in The input stream to use
-     * @throws IOException Any of the usual Input/Output related exceptions.
+     * @param in The <code>InputStream</code> instance to use
+     * @throws IOException Any of the usual input/output related exceptions.
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
@@ -162,9 +163,10 @@ public abstract class BaseCrawler {
      * Resumes a previously saved state using the browser specified by the
      * WebDriver instance.
      *
-     * @param driver The WebDriver instance that will be used by the crawler
-     * @param in The input stream to use
-     * @throws IOException Any of the usual Input/Output related exceptions.
+     * @param driver The <code>WebDriver</code> instance to be used by the
+     * crawler
+     * @param in The <code>InputStream</code> instance to use
+     * @throws IOException Any of the usual input/output related exceptions.
      * @throws ClassNotFoundException Class of a serialized object cannot be
      * found.
      */
@@ -198,7 +200,7 @@ public abstract class BaseCrawler {
      * {@link CrawlerConfiguration#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
      * for adding crawl seeds.
      *
-     * @param request The crawl request
+     * @param request The <code>CrawlRequest</code> instance
      */
     protected final void crawl(final CrawlRequest request) {
         // Check if the crawler is running
@@ -212,7 +214,7 @@ public abstract class BaseCrawler {
     /**
      * Passes multiple crawl requests to the crawl frontier.
      *
-     * @param requests The list of crawl requests
+     * @param requests The list of <code>CrawlRequest</code> instances
      */
     protected final void crawl(final List<CrawlRequest> requests) {
         requests.stream().forEach(this::crawl);
@@ -319,11 +321,35 @@ public abstract class BaseCrawler {
      * Indicates if the content of the response is HTML or not.
      *
      * @param httpHeadResponse The HTTP HEAD response
-     * @return True if the content is HTML, false otherwise
+     * @return <code>true</code> if the content is HTML, <code>false</code>
+     * otherwise
      */
-    private boolean isContentHtml(final HttpHeadResponse httpHeadResponse) {
+    private static boolean isContentHtml(final HttpHeadResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
         return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
+    }
+
+    /**
+     * Constructs the crawl delay mechanism specified in the configuration.
+     *
+     * @return The crawl delay mechanism
+     */
+    private CrawlDelayMechanism createCrawlDelayMechanism() {
+        switch (configuration.getCrawlDelayStrategy()) {
+            case FIXED:
+                return new FixedCrawlDelayMechanism(configuration);
+            case RANDOM:
+                return new RandomCrawlDelayMechanism(configuration);
+            case ADAPTIVE:
+                AdaptiveCrawlDelayMechanism adaptiveCrawlDelay = new AdaptiveCrawlDelayMechanism(configuration, (JavascriptExecutor) webDriver);
+                if (!adaptiveCrawlDelay.isBrowserCompatible()) {
+                    throw new UnsupportedOperationException("The Navigation Timing API is not supported by the browser.");
+                }
+
+                return adaptiveCrawlDelay;
+        }
+
+        throw new IllegalArgumentException("Unsupported crawl delay strategy.");
     }
 
     /**
@@ -331,7 +357,7 @@ public abstract class BaseCrawler {
      */
     private void performDelay() {
         try {
-            TimeUnit.MILLISECONDS.sleep(crawlDelay.getDelay());
+            TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             stopCrawling = true;
