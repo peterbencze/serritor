@@ -29,13 +29,12 @@ import com.github.peterbencze.serritor.internal.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.RandomCrawlDelayMechanism;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -133,29 +132,23 @@ public abstract class BaseCrawler {
      * Saves the current state of the crawler to the specified output stream.
      *
      * @param out The <code>OutputStream</code> instance to use
-     * @throws IOException Any exception thrown by the underlying
-     * <code>OutputStream</code>.
      */
-    public final void saveState(final OutputStream out) throws IOException {
-        // Check if the crawler has been started, otherwise we have nothing to save
+    public final void saveState(final OutputStream out) {
+        // Check if the crawler has been started at least once, otherwise we have nothing to save
         if (crawlFrontier == null) {
             throw new IllegalStateException("No state to save.");
         }
 
-        // Save the frontier's current state
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
-        objectOutputStream.writeObject(crawlFrontier);
+        // Save the crawl frontier's current state
+        SerializationUtils.serialize(crawlFrontier, out);
     }
 
     /**
      * Resumes a previously saved state using HtmlUnit headless browser.
      *
      * @param in The <code>InputStream</code> instance to use
-     * @throws IOException Any of the usual input/output related exceptions.
-     * @throws ClassNotFoundException Class of a serialized object cannot be
-     * found.
      */
-    public final void resumeState(final InputStream in) throws IOException, ClassNotFoundException {
+    public final void resumeState(final InputStream in) {
         resumeState(new HtmlUnitDriver(true), in);
     }
 
@@ -166,13 +159,10 @@ public abstract class BaseCrawler {
      * @param driver The <code>WebDriver</code> instance to be used by the
      * crawler
      * @param in The <code>InputStream</code> instance to use
-     * @throws IOException Any of the usual input/output related exceptions.
-     * @throws ClassNotFoundException Class of a serialized object cannot be
-     * found.
      */
-    public final void resumeState(final WebDriver driver, final InputStream in) throws IOException, ClassNotFoundException {
-        ObjectInputStream objectInputStream = new ObjectInputStream(in);
-        CrawlFrontier frontierToUse = (CrawlFrontier) objectInputStream.readObject();
+    public final void resumeState(final WebDriver driver, final InputStream in) {
+        // Re-create crawl frontier from the saved state
+        CrawlFrontier frontierToUse = SerializationUtils.deserialize(in);
 
         start(driver, frontierToUse);
     }
