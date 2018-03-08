@@ -36,13 +36,13 @@ public class CrawlDomainTest {
     @Test
     public void testEquals() {
         // A crawl domain should be equal with itself
-        Assert.assertTrue(CRAWL_DOMAIN_0.equals(CRAWL_DOMAIN_0));
+        Assert.assertEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_0);
         
         // Crawl domains with the same domain should be equal
-        Assert.assertTrue(CRAWL_DOMAIN_0.equals(CRAWL_DOMAIN_1));
+        Assert.assertEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_1);
         
         // Crawl domains with different domains should not be equal
-        Assert.assertFalse(CRAWL_DOMAIN_0.equals(CRAWL_DOMAIN_2));
+        Assert.assertNotEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_2);
     }
     
     @Test
