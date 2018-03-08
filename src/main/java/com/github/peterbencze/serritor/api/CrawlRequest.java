@@ -16,6 +16,8 @@
 package com.github.peterbencze.serritor.api;
 
 import com.google.common.net.InternetDomainName;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,13 +33,14 @@ import java.util.Optional;
 public final class CrawlRequest implements Serializable {
 
     private final URL requestUrl;
-    private final String topPrivateDomain;
     private final int priority;
     private final Serializable metadata;
+    
+    private transient InternetDomainName domain;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {
         requestUrl = builder.requestUrl;
-        topPrivateDomain = builder.topPrivateDomain;
+        domain = builder.domain;
         priority = builder.priority;
         metadata = builder.metadata;
     }
@@ -52,12 +55,12 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
-     * Returns the top private domain of the request's URL.
+     * Returns the domain of the request's URL.
      *
-     * @return The top private domain of the URL
+     * @return The domain of the request URL
      */
-    public String getTopPrivateDomain() {
-        return topPrivateDomain;
+    public InternetDomainName getDomain() {
+        return domain;
     }
 
     /**
@@ -83,8 +86,8 @@ public final class CrawlRequest implements Serializable {
         private static final int DEFAULT_PRIORITY = 0;
 
         private final URL requestUrl;
-
-        private String topPrivateDomain;
+        private final InternetDomainName domain;
+        
         private int priority;
         private Serializable metadata;
 
@@ -98,14 +101,8 @@ public final class CrawlRequest implements Serializable {
         public CrawlRequestBuilder(final URL requestUrl) {
             this.requestUrl = requestUrl;
 
-            // Extract the top private domain from the request URL
-            try {
-                topPrivateDomain = InternetDomainName.from(requestUrl.getHost())
-                        .topPrivateDomain()
-                        .toString();
-            } catch (IllegalStateException ex) {
-                throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the given request URL (\"%s\").", requestUrl), ex);
-            }
+            // Extract the domain from the request URL
+            domain = InternetDomainName.from(requestUrl.getHost());
 
             // Set default priority
             priority = DEFAULT_PRIORITY;
@@ -167,8 +164,14 @@ public final class CrawlRequest implements Serializable {
             try {
                 return new URL(requestUrl);
             } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException(String.format("The given request URL (\"%s\") is malformed.", requestUrl), ex);
+                throw new IllegalArgumentException(String.format("The URL (\"%s\") is malformed.", requestUrl), ex);
             }
         }
+    }
+
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        domain = InternetDomainName.from(requestUrl.getHost());
     }
 }

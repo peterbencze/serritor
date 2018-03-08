@@ -16,6 +16,7 @@
 package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlRequest;
+import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.URL;
 
@@ -56,12 +57,12 @@ public final class CrawlCandidate implements Serializable {
     }
 
     /**
-     * Returns the top private domain of the candidate's URL.
+     * Returns the domain of the candidate's URL.
      *
-     * @return The top private domain of the URL
+     * @return The domain of the candidate URL
      */
-    public String getTopPrivateDomain() {
-        return crawlRequest.getTopPrivateDomain();
+    public InternetDomainName getDomain() {
+        return crawlRequest.getDomain();
     }
 
     /**

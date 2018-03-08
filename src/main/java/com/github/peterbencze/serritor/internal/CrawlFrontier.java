@@ -40,7 +40,7 @@ public final class CrawlFrontier implements Serializable {
 
     private final CrawlerConfiguration configuration;
 
-    private final Set<String> allowedDomains;
+    private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<String> urlFingerprints;
 
     private final Queue<CrawlCandidate> candidates;
@@ -50,7 +50,8 @@ public final class CrawlFrontier implements Serializable {
     public CrawlFrontier(final CrawlerConfiguration configuration) {
         this.configuration = configuration;
 
-        allowedDomains = new HashSet<>();
+        allowedCrawlDomains = configuration.getAllowedCrawlDomains();
+        
         urlFingerprints = new HashSet<>();
 
         // Construct a priority queue according to the crawl strategy specified in the configuration
@@ -72,24 +73,32 @@ public final class CrawlFrontier implements Serializable {
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
         if (configuration.isOffsiteRequestFilteringEnabled()) {
-            if (isCrawlSeed) {
-                allowedDomains.add(request.getTopPrivateDomain());
-            } else {
-                if (!allowedDomains.contains(request.getTopPrivateDomain())) {
-                    return;
+            // Check if the request's domain is in the allowed crawl domains
+            
+            boolean inCrawlDomain = false;
+            
+            for (CrawlDomain allowedCrawlDomain : allowedCrawlDomains) {
+                if (allowedCrawlDomain.contains(request.getDomain())) {
+                    inCrawlDomain = true;
+                    break;
                 }
+            }
+            
+            if (!inCrawlDomain) {
+                return;
             }
         }
 
         if (configuration.isDuplicateRequestFilteringEnabled()) {
+            // Check if the URL has already been crawled
+            
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
 
-            // Check if the URL has already been crawled
+            
             if (urlFingerprints.contains(urlFingerprint)) {
                 return;
             }
 
-            // If not, add its fingerprint to the set of URL fingerprints
             urlFingerprints.add(urlFingerprint);
         }
 

@@ -19,6 +19,7 @@ import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
 import com.google.common.base.Preconditions;
+import com.google.common.net.InternetDomainName;
 import java.time.Duration;
 import java.util.List;
 
@@ -33,6 +34,28 @@ public final class CrawlerConfigurator {
 
     public CrawlerConfigurator(CrawlerConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    /**
+     * Appends an internet domain to the list of allowed crawl domains.
+     *
+     * @param allowedCrawlDomain A well-formed internet domain name
+     */
+    public void addAllowedCrawlDomain(final String allowedCrawlDomain) {
+        InternetDomainName domain = InternetDomainName.from(allowedCrawlDomain);
+
+        Preconditions.checkArgument(domain.isUnderPublicSuffix(), String.format("The domain (\"%s\") is not under public suffix.", allowedCrawlDomain));
+
+        configuration.addAllowedCrawlDomain(new CrawlDomain(domain));
+    }
+
+    /**
+     * Appends a list of internet domains to the list of allowed crawl domains.
+     *
+     * @param allowedCrawlDomains A list of well-formed internet domain names
+     */
+    public void addAllowedCrawlDomains(final List<String> allowedCrawlDomains) {
+        allowedCrawlDomains.forEach(this::addAllowedCrawlDomain);
     }
 
     /**

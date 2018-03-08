@@ -21,7 +21,9 @@ import com.github.peterbencze.serritor.api.CrawlStrategy;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class contains the settings of the crawler.
@@ -39,6 +41,7 @@ public final class CrawlerConfiguration implements Serializable {
     private static final long DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS = Duration.ofSeconds(1).toMillis();
     private static final long DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS = Duration.ofMinutes(1).toMillis();
 
+    private final Set<CrawlDomain> allowedCrawlDomains;
     private final List<CrawlRequest> crawlSeeds;
 
     private CrawlStrategy crawlStrategy;
@@ -53,6 +56,7 @@ public final class CrawlerConfiguration implements Serializable {
     public CrawlerConfiguration() {
         // Initialize configuration with default values
 
+        allowedCrawlDomains = new HashSet<>();
         crawlSeeds = new ArrayList<>();
         crawlStrategy = DEFAULT_CRAWL_STRATEGY;
         filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
@@ -62,6 +66,25 @@ public final class CrawlerConfiguration implements Serializable {
         fixedCrawlDelayDurationInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
         minCrawlDelayDurationInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
         maxCrawlDelayDurationInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
+    }
+
+    /**
+     * Returns the set of allowed crawl domains.
+     *
+     * @return The set of allowed crawl domains
+     */
+    public Set<CrawlDomain> getAllowedCrawlDomains() {
+        return allowedCrawlDomains;
+    }
+
+    /**
+     * Appends a crawl domain to the list of allowed ones.
+     *
+     * @param allowedCrawlDomain The <code>CrawlDomain</code> instance which
+     * represents the allowed crawl domain
+     */
+    public void addAllowedCrawlDomain(CrawlDomain allowedCrawlDomain) {
+        allowedCrawlDomains.add(allowedCrawlDomain);
     }
 
     /**

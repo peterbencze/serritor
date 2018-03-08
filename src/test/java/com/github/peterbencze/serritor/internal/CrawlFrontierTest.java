@@ -18,6 +18,7 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
+import com.google.common.net.InternetDomainName;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -33,6 +34,10 @@ import org.junit.Test;
  * @author Peter Bencze
  */
 public final class CrawlFrontierTest {
+
+    // Allowed crawl domains
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_0 = new CrawlDomain(InternetDomainName.from("root_url_0.com"));
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_1 = new CrawlDomain(InternetDomainName.from("root_url_1.com"));
 
     // Root URLs
     private static final URL ROOT_URL_0;
@@ -126,19 +131,25 @@ public final class CrawlFrontierTest {
                 .build();
     }
 
-    private CrawlerConfiguration config;
+    private CrawlerConfiguration configuration;
     private CrawlFrontier frontier;
 
     @Before
     public void initialize() {
-        config = new CrawlerConfiguration();
+        configuration = new CrawlerConfiguration();
 
-        config.setOffsiteRequestFiltering(true);
+        configuration.setOffsiteRequestFiltering(true);
+
+        // Add allowed crawl domains
+        Arrays.asList(ALLOWED_CRAWL_DOMAIN_0, ALLOWED_CRAWL_DOMAIN_1)
+                .forEach(configuration::addAllowedCrawlDomain);
+
+        // Add crawl seeds
         Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST)
-                .forEach(config::addCrawlSeed);
+                .forEach(configuration::addCrawlSeed);
 
         // Create frontier
-        frontier = new CrawlFrontier(config);
+        frontier = new CrawlFrontier(configuration);
     }
 
     @Test
@@ -216,7 +227,7 @@ public final class CrawlFrontierTest {
     @Test
     public void getNextRequestWithoutDuplicateRequestFilterTest() {
         // Turn off duplicate request filtering
-        config.setDuplicateRequestFiltering(false);
+        configuration.setDuplicateRequestFiltering(false);
 
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
@@ -234,7 +245,7 @@ public final class CrawlFrontierTest {
     @Test
     public void getNextRequestWithoutOffsiteRequestFilterTest() {
         // Turn off offsite request filtering
-        config.setOffsiteRequestFiltering(false);
+        configuration.setOffsiteRequestFiltering(false);
 
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
@@ -326,8 +337,8 @@ public final class CrawlFrontierTest {
     @Test
     public void getNextRequestDepthFirstTest() {
         // Set the crawl strategy to depth-first
-        config.setCrawlStrategy(CrawlStrategy.DEPTH_FIRST);
-        frontier = new CrawlFrontier(config);
+        configuration.setCrawlStrategy(CrawlStrategy.DEPTH_FIRST);
+        frontier = new CrawlFrontier(configuration);
 
         // Get the crawl candidate of root URL 1
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
@@ -404,7 +415,7 @@ public final class CrawlFrontierTest {
     @Test
     public void maxCrawlDepthTest() {
         // Set max crawl depth
-        config.setMaximumCrawlDepth(MAX_CRAWL_DEPTH);
+        configuration.setMaximumCrawlDepth(MAX_CRAWL_DEPTH);
 
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
