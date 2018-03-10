@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
-import static java.util.Comparator.reverseOrder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -187,10 +186,10 @@ public final class CrawlFrontier implements Serializable {
         switch (configuration.getCrawlStrategy()) {
             case BREADTH_FIRST:
                 return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth)
-                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, Comparator.reverseOrder()));
             case DEPTH_FIRST:
-                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth, reverseOrder())
-                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
+                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth, Comparator.reverseOrder())
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, Comparator.reverseOrder()));
         }
 
         throw new IllegalArgumentException("Unsupported crawl strategy.");
