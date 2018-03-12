@@ -195,7 +195,7 @@ public abstract class BaseCrawler {
      * @param requests The list of <code>CrawlRequest</code> instances
      */
     protected final void crawl(final List<CrawlRequest> requests) {
-        requests.stream().forEach(this::crawl);
+        requests.forEach(this::crawl);
     }
 
     /**

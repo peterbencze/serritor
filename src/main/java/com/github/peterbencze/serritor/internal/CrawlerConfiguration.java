@@ -20,9 +20,7 @@ import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,7 +40,7 @@ public final class CrawlerConfiguration implements Serializable {
     private static final long DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS = Duration.ofMinutes(1).toMillis();
 
     private final Set<CrawlDomain> allowedCrawlDomains;
-    private final List<CrawlRequest> crawlSeeds;
+    private final Set<CrawlRequest> crawlSeeds;
 
     private CrawlStrategy crawlStrategy;
     private boolean filterDuplicateRequests;
@@ -57,7 +55,7 @@ public final class CrawlerConfiguration implements Serializable {
         // Initialize configuration with default values
 
         allowedCrawlDomains = new HashSet<>();
-        crawlSeeds = new ArrayList<>();
+        crawlSeeds = new HashSet<>();
         crawlStrategy = DEFAULT_CRAWL_STRATEGY;
         filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
         filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
@@ -88,16 +86,16 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Returns the list of crawl seeds.
+     * Returns the set of crawl seeds.
      *
-     * @return The list of crawl seeds
+     * @return The set of crawl seeds
      */
-    public List<CrawlRequest> getCrawlSeeds() {
+    public Set<CrawlRequest> getCrawlSeeds() {
         return crawlSeeds;
     }
 
     /**
-     * Appends a crawl request to the list of crawl seeds.
+     * Appends a crawl request to the set of crawl seeds.
      *
      * @param request The <code>CrawlRequest</code> instance which represents
      * the crawl seed

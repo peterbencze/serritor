@@ -57,7 +57,7 @@ public final class CrawlFrontier implements Serializable {
         candidates = createPriorityQueue();
 
         // Feed initial crawl requests (seeds)
-        configuration.getCrawlSeeds().stream()
+        configuration.getCrawlSeeds()
                 .forEach((CrawlRequest request) -> {
                     feedRequest(request, true);
                 });

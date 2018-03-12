@@ -59,7 +59,7 @@ public final class CrawlerConfigurator {
     }
 
     /**
-     * Appends a crawl request to the list of crawl seeds.
+     * Appends a crawl request to the set of crawl seeds.
      *
      * @param request The <code>CrawlRequest</code> instance which represents
      * the crawl seed
@@ -71,7 +71,7 @@ public final class CrawlerConfigurator {
     }
 
     /**
-     * Appends a list of crawl requests to the list of crawl seeds.
+     * Appends a list of crawl requests to the set of crawl seeds.
      *
      * @param requests The list of <code>CrawlRequest</code> instances which
      * represent the crawl seeds
