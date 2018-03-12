@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -107,20 +108,17 @@ public abstract class BaseCrawler {
      */
     private void start(final WebDriver driver, final CrawlFrontier frontierToUse) {
         try {
-            // Check if the crawler is running
-            if (!isStopped) {
-                throw new IllegalStateException("The crawler is already started.");
-            }
+            Validate.validState(isStopped, "The crawler is already started.");
 
             isStopped = false;
             httpClient = HttpClientBuilder.create().build();
-            webDriver = driver;
+            webDriver = Validate.notNull(driver, "The webdriver cannot be null.");
             crawlFrontier = frontierToUse;
             crawlDelayMechanism = createCrawlDelayMechanism();
 
             run();
         } finally {
-            // Always close the WebDriver
+            // Always close the browser
             webDriver.quit();
 
             stopCrawling = false;
@@ -135,9 +133,7 @@ public abstract class BaseCrawler {
      */
     public final void saveState(final OutputStream out) {
         // Check if the crawler has been started at least once, otherwise we have nothing to save
-        if (crawlFrontier == null) {
-            throw new IllegalStateException("No state to save.");
-        }
+        Validate.validState(crawlFrontier != null, "Cannot save state at this point. The crawler should be started first.");
 
         // Save the crawl frontier's current state
         SerializationUtils.serialize(crawlFrontier, out);
@@ -171,14 +167,8 @@ public abstract class BaseCrawler {
      * Stops the crawler.
      */
     public final void stop() {
-        // Check if the crawler is running
-        if (isStopped) {
-            throw new IllegalStateException("The crawler is not started.");
-        }
-
-        if (stopCrawling) {
-            throw new IllegalStateException("Stop has already been called.");
-        }
+        Validate.validState(!isStopped, "The crawler is not started.");
+        Validate.validState(!stopCrawling, "The stop method has already been called.");
 
         // Indicate that the crawling should be stopped
         stopCrawling = true;
@@ -193,10 +183,8 @@ public abstract class BaseCrawler {
      * @param request The <code>CrawlRequest</code> instance
      */
     protected final void crawl(final CrawlRequest request) {
-        // Check if the crawler is running
-        if (isStopped) {
-            throw new IllegalStateException("The crawler is not started. Maybe you meant to add this request as a crawl seed?");
-        }
+        Validate.notNull(request, "The request cannot be null.");
+        Validate.validState(!isStopped, "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
 
         crawlFrontier.feedRequest(request, false);
     }

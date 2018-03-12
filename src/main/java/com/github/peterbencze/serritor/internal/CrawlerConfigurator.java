@@ -18,10 +18,10 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
-import com.google.common.base.Preconditions;
 import com.google.common.net.InternetDomainName;
 import java.time.Duration;
 import java.util.List;
+import org.apache.commons.lang3.Validate;
 
 /**
  * This class provides an interface for the user to configure the crawler.
@@ -44,7 +44,7 @@ public final class CrawlerConfigurator {
     public void addAllowedCrawlDomain(final String allowedCrawlDomain) {
         InternetDomainName domain = InternetDomainName.from(allowedCrawlDomain);
 
-        Preconditions.checkArgument(domain.isUnderPublicSuffix(), String.format("The domain (\"%s\") is not under public suffix.", allowedCrawlDomain));
+        Validate.isTrue(domain.isUnderPublicSuffix(), String.format("The domain (\"%s\") is not under public suffix.", allowedCrawlDomain));
 
         configuration.addAllowedCrawlDomain(new CrawlDomain(domain));
     }
@@ -65,7 +65,9 @@ public final class CrawlerConfigurator {
      * the crawl seed
      */
     public void addCrawlSeed(final CrawlRequest request) {
-        configuration.addCrawlSeed(Preconditions.checkNotNull(request));
+        Validate.notNull(request, "The request cannot be null.");
+        
+        configuration.addCrawlSeed(request);
     }
 
     /**
@@ -83,10 +85,12 @@ public final class CrawlerConfigurator {
      * orders crawl requests by the lowest crawl depth, whereas depth-first
      * orders them by the highest crawl depth.
      *
-     * @param crawlStrategy The crawl strategy
+     * @param strategy The crawl strategy
      */
-    public void setCrawlStrategy(final CrawlStrategy crawlStrategy) {
-        configuration.setCrawlStrategy(Preconditions.checkNotNull(crawlStrategy));
+    public void setCrawlStrategy(final CrawlStrategy strategy) {
+        Validate.notNull(strategy, "The strategy cannot be null.");
+        
+        configuration.setCrawlStrategy(strategy);
     }
 
     /**
@@ -116,7 +120,7 @@ public final class CrawlerConfigurator {
      * @param maxCrawlDepth The maximum crawl depth
      */
     public void setMaximumCrawlDepth(final int maxCrawlDepth) {
-        Preconditions.checkArgument(maxCrawlDepth >= 0, "The maximum crawl depth cannot be negative.");
+        Validate.isTrue(maxCrawlDepth >= 0, "The maximum crawl depth cannot be negative.");
 
         configuration.setMaximumCrawlDepth(maxCrawlDepth);
     }
@@ -124,10 +128,12 @@ public final class CrawlerConfigurator {
     /**
      * Sets the crawl delay strategy to be used by the crawler.
      *
-     * @param crawlDelayStrategy The crawl delay strategy
+     * @param strategy The crawl delay strategy
      */
-    public void setCrawlDelayStrategy(final CrawlDelayStrategy crawlDelayStrategy) {
-        configuration.setCrawlDelayStrategy(Preconditions.checkNotNull(crawlDelayStrategy));
+    public void setCrawlDelayStrategy(final CrawlDelayStrategy strategy) {
+        Validate.notNull(strategy, "The strategy cannot be null.");
+        
+        configuration.setCrawlDelayStrategy(strategy);
     }
 
     /**
@@ -136,6 +142,8 @@ public final class CrawlerConfigurator {
      * @param fixedCrawlDelayDuration The duration of delay
      */
     public void setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
+        Validate.notNull(fixedCrawlDelayDuration, "The duration cannot be null.");
+        
         configuration.setFixedCrawlDelayDurationInMillis(fixedCrawlDelayDuration.toMillis());
     }
 
@@ -145,12 +153,13 @@ public final class CrawlerConfigurator {
      * @param minCrawlDelayDuration The minimum duration of delay
      */
     public void setMinimumCrawlDelayDuration(final Duration minCrawlDelayDuration) {
-        Preconditions.checkArgument(!minCrawlDelayDuration.isNegative(), "The minimum crawl delay cannot be negative.");
+        Validate.notNull(minCrawlDelayDuration, "The duration cannot be null.");
+        Validate.isTrue(!minCrawlDelayDuration.isNegative(), "The minimum crawl delay cannot be negative.");
 
         long minCrawlDelayDurationInMillis = minCrawlDelayDuration.toMillis();
         long maxCrawlDelayInMillis = configuration.getMaximumCrawlDelayDurationInMillis();
 
-        Preconditions.checkArgument(minCrawlDelayDurationInMillis < maxCrawlDelayInMillis, "The minimum crawl delay should be less than the maximum.");
+        Validate.isTrue(minCrawlDelayDurationInMillis < maxCrawlDelayInMillis, "The minimum crawl delay should be less than the maximum.");
 
         configuration.setMinimumCrawlDelayDurationInMillis(minCrawlDelayDurationInMillis);
     }
@@ -161,10 +170,12 @@ public final class CrawlerConfigurator {
      * @param maxCrawlDelayDuration The maximum duration of delay
      */
     public void setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
+        Validate.notNull(maxCrawlDelayDuration, "The duration cannot be null.");
+        
         long minCrawlDelayDurationInMillis = configuration.getMinimumCrawlDelayDurationInMillis();
         long maxCrawlDelayDurationInMillis = maxCrawlDelayDuration.toMillis();
 
-        Preconditions.checkArgument(maxCrawlDelayDurationInMillis > minCrawlDelayDurationInMillis, "The maximum crawl delay should be higher than the minimum.");
+        Validate.isTrue(maxCrawlDelayDurationInMillis > minCrawlDelayDurationInMillis, "The maximum crawl delay should be higher than the minimum.");
 
         configuration.setMaximumCrawlDelayDuration(maxCrawlDelayDurationInMillis);
     }
