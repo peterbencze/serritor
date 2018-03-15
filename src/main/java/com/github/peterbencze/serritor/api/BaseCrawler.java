@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.SerializationUtils;
@@ -208,11 +207,11 @@ public abstract class BaseCrawler {
             // Get the next crawl candidate from the queue
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
 
-            URL currentCandidateUrl = currentCandidate.getCandidateUrl();
+            URI currentCandidateUrl = currentCandidate.getCandidateUrl();
             String currentRequestUrlAsString = currentCandidateUrl.toString();
 
             HttpHeadResponse httpHeadResponse;
-            URL responseUrl = currentCandidateUrl;
+            URI responseUrl = currentCandidateUrl;
 
             try {
                 HttpClientContext context = HttpClientContext.create();
@@ -223,7 +222,7 @@ public abstract class BaseCrawler {
                 // If the request has been redirected, get the final URL
                 List<URI> redirectLocations = context.getRedirectLocations();
                 if (redirectLocations != null) {
-                    responseUrl = redirectLocations.get(redirectLocations.size() - 1).toURL();
+                    responseUrl = redirectLocations.get(redirectLocations.size() - 1);
                 }
             } catch (IOException ex) {
                 UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
@@ -289,7 +288,7 @@ public abstract class BaseCrawler {
      * @param destinationUrl The URL to crawl
      * @return The HTTP HEAD response
      */
-    private HttpHeadResponse getHttpHeadResponse(final URL destinationUrl, final HttpClientContext context) throws IOException {
+    private HttpHeadResponse getHttpHeadResponse(final URI destinationUrl, final HttpClientContext context) throws IOException {
         HttpHead headRequest = new HttpHead(destinationUrl.toString());
         HttpResponse response = httpClient.execute(headRequest, context);
         return new HttpHeadResponse(response);

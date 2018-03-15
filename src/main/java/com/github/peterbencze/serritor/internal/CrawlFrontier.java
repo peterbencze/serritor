@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.internal.CrawlCandidate.CrawlCandidateBuilder;
 import java.io.Serializable;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -148,7 +148,7 @@ public final class CrawlFrontier implements Serializable {
      * @param url The URL that the fingerprint will be created for
      * @return The fingerprint of the URL
      */
-    private static String createFingerprintForUrl(final URL url) {
+    private static String createFingerprintForUrl(final URI url) {
         // First, we start off with the host only
         StringBuilder truncatedUrl = new StringBuilder(url.getHost());
 

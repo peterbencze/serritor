@@ -19,8 +19,7 @@ import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
 import com.google.common.net.InternetDomainName;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,12 +35,12 @@ import org.junit.Test;
 public final class CrawlFrontierTest {
 
     // Allowed crawl domains
-    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_0 = new CrawlDomain(InternetDomainName.from("root_url_0.com"));
-    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_1 = new CrawlDomain(InternetDomainName.from("root_url_1.com"));
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_0 = new CrawlDomain(InternetDomainName.from("root-url-0.com"));
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_1 = new CrawlDomain(InternetDomainName.from("root-url-1.com"));
 
     // Root URLs
-    private static final URL ROOT_URL_0;
-    private static final URL ROOT_URL_1;
+    private static final URI ROOT_URL_0 = URI.create("http://root-url-0.com");
+    private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com");
 
     // Root URL crawl depth
     private static final int ROOT_URL_CRAWL_DEPTH = 0;
@@ -51,13 +50,16 @@ public final class CrawlFrontierTest {
     private static final int ROOT_URL_1_PRIORITY = 1;
 
     // Root URL crawl requests
-    private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST;
-    private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST;
+    private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_0).setPriority(ROOT_URL_0_PRIORITY).build();
+    private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_1).setPriority(ROOT_URL_1_PRIORITY).build();
+
+    // Child URL path
+    private static final String CHILD_URL_PATH = "/child";
 
     // Child URLs
-    private static final URL CHILD_URL_0;
-    private static final URL CHILD_URL_1;
-    private static final URL CHILD_URL_2;
+    private static final URI CHILD_URL_0 = URI.create(String.format("http://root-url-0.com%s-0.html", CHILD_URL_PATH));
+    private static final URI CHILD_URL_1 = URI.create(String.format("http://root-url-0.com%s-1.html", CHILD_URL_PATH));
+    private static final URI CHILD_URL_2 = URI.create(String.format("http://root-url-1.com%s-0.html", CHILD_URL_PATH));
 
     // Child URL crawl depth
     private static final int CHILD_URL_CRAWL_DEPTH = 1;
@@ -68,68 +70,21 @@ public final class CrawlFrontierTest {
     private static final int CHILD_URL_2_PRIORITY = 1;
 
     // Child URL crawl requests  
-    private static final CrawlRequest CHILD_URL_0_CRAWL_REQUEST;
-    private static final CrawlRequest CHILD_URL_1_CRAWL_REQUEST;
-    private static final CrawlRequest CHILD_URL_2_CRAWL_REQUEST;
-
-    // Child URL path
-    private static final String CHILD_URL_PATH = "/child";
+    private static final CrawlRequest CHILD_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_0).setPriority(CHILD_URL_0_PRIORITY).build();
+    private static final CrawlRequest CHILD_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_1).setPriority(CHILD_URL_1_PRIORITY).build();
+    private static final CrawlRequest CHILD_URL_2_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_2).setPriority(CHILD_URL_2_PRIORITY).build();
 
     // Offsite URL
-    private static final URL OFFSITE_URL;
+    private static final URI OFFSITE_URL = URI.create("http://offsite-url.com");
 
     // Offsite URL priority
     private static final int OFFSITE_URL_PRIORITY = 0;
 
     // Offsite URL crawl request
-    private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST;
+    private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST = new CrawlRequestBuilder(OFFSITE_URL).setPriority(OFFSITE_URL_PRIORITY).build();
 
     // Max crawl depth
     private static final int MAX_CRAWL_DEPTH = 1;
-
-    static {
-        try {
-            // Initialization of root URLs
-            ROOT_URL_0 = new URL("http://root_url_0.com");
-            ROOT_URL_1 = new URL("http://root_url_1.com");
-
-            // Initialization of child URLs
-            CHILD_URL_0 = new URL(String.format("http://root_url_0.com%s_0.html", CHILD_URL_PATH));
-            CHILD_URL_1 = new URL(String.format("http://root_url_0.com%s_1.html", CHILD_URL_PATH));
-
-            CHILD_URL_2 = new URL(String.format("http://root_url_1.com%s_0.html", CHILD_URL_PATH));
-
-            // Initialization of the offsite URL
-            OFFSITE_URL = new URL("http://offsite_url.com");
-        } catch (MalformedURLException ex) {
-            throw new Error(ex);
-        }
-
-        // Initialize crawl requests
-        ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_0)
-                .setPriority(ROOT_URL_0_PRIORITY)
-                .build();
-
-        ROOT_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_1)
-                .setPriority(ROOT_URL_1_PRIORITY)
-                .build();
-
-        CHILD_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_0)
-                .setPriority(CHILD_URL_0_PRIORITY)
-                .build();
-
-        CHILD_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_1)
-                .setPriority(CHILD_URL_1_PRIORITY)
-                .build();
-
-        CHILD_URL_2_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_2)
-                .setPriority(CHILD_URL_2_PRIORITY)
-                .build();
-
-        OFFSITE_URL_CRAWL_REQUEST = new CrawlRequestBuilder(OFFSITE_URL)
-                .setPriority(OFFSITE_URL_PRIORITY)
-                .build();
-    }
 
     private CrawlerConfiguration configuration;
     private CrawlFrontier frontier;

@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * Represents a candidate for crawling that will be surely processed by the
@@ -28,7 +28,7 @@ import java.net.URL;
  */
 public final class CrawlCandidate implements Serializable {
 
-    private final URL refererUrl;
+    private final URI refererUrl;
     private final int crawlDepth;
     private final CrawlRequest crawlRequest;
 
@@ -43,7 +43,7 @@ public final class CrawlCandidate implements Serializable {
      *
      * @return The URL of the referer
      */
-    public URL getRefererUrl() {
+    public URI getRefererUrl() {
         return refererUrl;
     }
 
@@ -52,7 +52,7 @@ public final class CrawlCandidate implements Serializable {
      *
      * @return The URL of the candidate
      */
-    public URL getCandidateUrl() {
+    public URI getCandidateUrl() {
         return crawlRequest.getRequestUrl();
     }
 
@@ -96,14 +96,14 @@ public final class CrawlCandidate implements Serializable {
 
         private final CrawlRequest crawlRequest;
 
-        private URL refererUrl;
+        private URI refererUrl;
         private int crawlDepth;
 
         public CrawlCandidateBuilder(final CrawlRequest request) {
             crawlRequest = request;
         }
 
-        public CrawlCandidateBuilder setRefererUrl(final URL refererUrl) {
+        public CrawlCandidateBuilder setRefererUrl(final URI refererUrl) {
             this.refererUrl = refererUrl;
             return this;
         }

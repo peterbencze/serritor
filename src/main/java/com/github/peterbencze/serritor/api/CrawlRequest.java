@@ -19,8 +19,7 @@ import com.google.common.net.InternetDomainName;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Optional;
 
 /**
@@ -32,7 +31,7 @@ import java.util.Optional;
  */
 public final class CrawlRequest implements Serializable {
 
-    private final URL requestUrl;
+    private final URI requestUrl;
     private final int priority;
     private final Serializable metadata;
     
@@ -50,7 +49,7 @@ public final class CrawlRequest implements Serializable {
      *
      * @return The URL of the request
      */
-    public URL getRequestUrl() {
+    public URI getRequestUrl() {
         return requestUrl;
     }
 
@@ -85,7 +84,7 @@ public final class CrawlRequest implements Serializable {
 
         private static final int DEFAULT_PRIORITY = 0;
 
-        private final URL requestUrl;
+        private final URI requestUrl;
         private final InternetDomainName domain;
         
         private int priority;
@@ -98,7 +97,7 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl The request's URL given as a <code>URL</code>
          * instance
          */
-        public CrawlRequestBuilder(final URL requestUrl) {
+        public CrawlRequestBuilder(final URI requestUrl) {
             this.requestUrl = requestUrl;
 
             // Extract the domain from the request URL
@@ -116,7 +115,7 @@ public final class CrawlRequest implements Serializable {
          * instance
          */
         public CrawlRequestBuilder(final String requestUrl) {
-            this(getUrlFromString(requestUrl));
+            this(URI.create(requestUrl));
         }
 
         /**
@@ -150,22 +149,6 @@ public final class CrawlRequest implements Serializable {
          */
         public CrawlRequest build() {
             return new CrawlRequest(this);
-        }
-
-        /**
-         * Constructs a <code>URL</code> instance based on the specified URL
-         * string. Since call to this must be the first statement in a
-         * constructor, this method is necessary for the conversion to be made.
-         *
-         * @param requestUrl The request URL as <code>String</code>
-         * @return The <code>URL</code> instance
-         */
-        private static URL getUrlFromString(final String requestUrl) {
-            try {
-                return new URL(requestUrl);
-            } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException(String.format("The URL (\"%s\") is malformed.", requestUrl), ex);
-            }
         }
     }
 

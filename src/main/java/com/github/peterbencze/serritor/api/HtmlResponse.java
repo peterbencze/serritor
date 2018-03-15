@@ -16,7 +16,7 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
-import java.net.URL;
+import java.net.URI;
 import org.openqa.selenium.WebDriver;
 
 /**
@@ -59,7 +59,7 @@ public final class HtmlResponse extends CallbackParameter {
         private HttpHeadResponse httpHeadResponse;
         private WebDriver webDriver;
 
-        public HtmlResponseBuilder(final URL refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
+        public HtmlResponseBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             super(refererUrl, crawlDepth, crawlRequest);
         }
 
