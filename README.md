@@ -65,7 +65,7 @@ public class MyCrawler extends BaseCrawler {
     }
 }
 ```
-That's it! In just a few lines you can make a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver, so you can use all the features that are provided by Selenium.
+That's it! In just a few lines you can make a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver instance, so you can use all the features that are provided by Selenium.
 
 By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourceforge.net/):
 ```java
