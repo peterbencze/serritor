@@ -18,10 +18,9 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.internal.CrawlCandidate.CrawlCandidateBuilder;
 import java.io.Serializable;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
-import static java.util.Comparator.reverseOrder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -35,30 +34,30 @@ import org.apache.commons.codec.digest.DigestUtils;
  * crawling.
  *
  * @author Peter Bencze
- * @author Krisztian Mozsi
  */
 public final class CrawlFrontier implements Serializable {
 
-    private final CrawlerConfiguration config;
+    private final CrawlerConfiguration configuration;
 
-    private final Set<String> allowedDomains;
+    private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<String> urlFingerprints;
 
     private final Queue<CrawlCandidate> candidates;
 
     private CrawlCandidate currentCandidate;
 
-    public CrawlFrontier(final CrawlerConfiguration config) {
-        this.config = config;
+    public CrawlFrontier(final CrawlerConfiguration configuration) {
+        this.configuration = configuration;
 
-        allowedDomains = new HashSet<>();
+        allowedCrawlDomains = configuration.getAllowedCrawlDomains();
+        
         urlFingerprints = new HashSet<>();
 
-        // Construct a priority queue according to the crawling strategy specified in the configuration
-        candidates = getPriorityQueue();
+        // Construct a priority queue according to the crawl strategy specified in the configuration
+        candidates = createPriorityQueue();
 
         // Feed initial crawl requests (seeds)
-        config.getCrawlSeeds().stream()
+        configuration.getCrawlSeeds()
                 .forEach((CrawlRequest request) -> {
                     feedRequest(request, true);
                 });
@@ -67,36 +66,45 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Feeds a crawl request to the frontier.
      *
-     * @param request The request to be fed
-     * @param isCrawlSeed True if the request is a crawl seed, false otherwise
+     * @param request The <code>CrawlRequest</code> instance to be fed
+     * @param isCrawlSeed <code>true</code> if the request is a crawl seed,
+     * <code>false</code> otherwise
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
-        if (config.isOffsiteRequestFilteringEnabled()) {
-            if (isCrawlSeed) {
-                allowedDomains.add(request.getTopPrivateDomain());
-            } else {
-                if (!allowedDomains.contains(request.getTopPrivateDomain())) {
-                    return;
+        if (configuration.isOffsiteRequestFilteringEnabled()) {
+            // Check if the request's domain is in the allowed crawl domains
+            
+            boolean inCrawlDomain = false;
+            
+            for (CrawlDomain allowedCrawlDomain : allowedCrawlDomains) {
+                if (allowedCrawlDomain.contains(request.getDomain())) {
+                    inCrawlDomain = true;
+                    break;
                 }
+            }
+            
+            if (!inCrawlDomain) {
+                return;
             }
         }
 
-        if (config.isDuplicateRequestFilteringEnabled()) {
-            String urlFingerprint = getFingerprintForUrl(request.getRequestUrl());
-
+        if (configuration.isDuplicateRequestFilteringEnabled()) {
             // Check if the URL has already been crawled
+            
+            String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
+
+            
             if (urlFingerprints.contains(urlFingerprint)) {
                 return;
             }
 
-            // If not, add its fingerprint to the set of URL fingerprints
             urlFingerprints.add(urlFingerprint);
         }
 
         CrawlCandidateBuilder builder;
 
         if (!isCrawlSeed) {
-            int crawlDepthLimit = config.getMaxCrawlDepth();
+            int crawlDepthLimit = configuration.getMaximumCrawlDepth();
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             // If a crawl depth limit is set, check if the candidate's crawl depth is less than or equal to the limit
@@ -117,7 +125,8 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Indicates if there are any candidates left in the queue.
      *
-     * @return True if there are candidates in the queue, false otherwise
+     * @return <code>true</code> if there are candidates in the queue,
+     * <code>false</code> otherwise
      */
     public boolean hasNextCandidate() {
         return !candidates.isEmpty();
@@ -126,7 +135,7 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Gets the next candidate from the queue.
      *
-     * @return The next candidate
+     * @return The next <code>CrawlCandidate</code> instance
      */
     public CrawlCandidate getNextCandidate() {
         currentCandidate = candidates.poll();
@@ -139,7 +148,7 @@ public final class CrawlFrontier implements Serializable {
      * @param url The URL that the fingerprint will be created for
      * @return The fingerprint of the URL
      */
-    private String getFingerprintForUrl(final URL url) {
+    private static String createFingerprintForUrl(final URI url) {
         // First, we start off with the host only
         StringBuilder truncatedUrl = new StringBuilder(url.getHost());
 
@@ -170,19 +179,19 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Creates a new priority queue using the specified strategy.
      *
-     * @return A new PriorityQueue instance for CrawlRequests using the given
-     * comparator
+     * @return The <code>PriorityQueue</code> instance for crawl requests using
+     * the given comparator
      */
-    private PriorityQueue<CrawlCandidate> getPriorityQueue() {
-        switch (config.getCrawlingStrategy()) {
+    private PriorityQueue<CrawlCandidate> createPriorityQueue() {
+        switch (configuration.getCrawlStrategy()) {
             case BREADTH_FIRST:
                 return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth)
-                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, Comparator.reverseOrder()));
             case DEPTH_FIRST:
-                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth, reverseOrder())
-                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, reverseOrder()));
+                return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth, Comparator.reverseOrder())
+                        .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, Comparator.reverseOrder()));
         }
 
-        throw new IllegalArgumentException("Unsupported crawling strategy.");
+        throw new IllegalArgumentException("Unsupported crawl strategy.");
     }
 }

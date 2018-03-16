@@ -1,5 +1,5 @@
 /* 
- * Copyright 2017 Peter Bencze.
+ * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.github.peterbencze.serritor.api;
 
 /**
- * Available strategies that can be used while crawling.
- *
+ * Available crawl delay strategies that can be used by the crawler.
+ * 
  * @author Peter Bencze
  */
-public enum CrawlingStrategy {
-
-    BREADTH_FIRST,
-    DEPTH_FIRST
+public enum CrawlDelayStrategy {
+    
+    FIXED,
+    ADAPTIVE,
+    RANDOM
 }

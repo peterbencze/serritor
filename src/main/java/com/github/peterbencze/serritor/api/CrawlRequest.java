@@ -16,9 +16,10 @@
 package com.github.peterbencze.serritor.api;
 
 import com.google.common.net.InternetDomainName;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Optional;
 
 /**
@@ -26,19 +27,19 @@ import java.util.Optional;
  * future. The reason why it is not sure that it will be processed is because it
  * might get filtered out by one of the enabled filters.
  *
- * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public final class CrawlRequest implements Serializable {
 
-    private final URL requestUrl;
-    private final String topPrivateDomain;
+    private final URI requestUrl;
     private final int priority;
     private final Serializable metadata;
+    
+    private transient InternetDomainName domain;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {
         requestUrl = builder.requestUrl;
-        topPrivateDomain = builder.topPrivateDomain;
+        domain = builder.domain;
         priority = builder.priority;
         metadata = builder.metadata;
     }
@@ -48,17 +49,17 @@ public final class CrawlRequest implements Serializable {
      *
      * @return The URL of the request
      */
-    public URL getRequestUrl() {
+    public URI getRequestUrl() {
         return requestUrl;
     }
 
     /**
-     * Returns the top private domain of the request's URL.
+     * Returns the domain of the request's URL.
      *
-     * @return The top private domain of the URL
+     * @return The domain of the request URL
      */
-    public String getTopPrivateDomain() {
-        return topPrivateDomain;
+    public InternetDomainName getDomain() {
+        return domain;
     }
 
     /**
@@ -81,42 +82,40 @@ public final class CrawlRequest implements Serializable {
 
     public static final class CrawlRequestBuilder {
 
-        private final URL requestUrl;
+        private static final int DEFAULT_PRIORITY = 0;
 
-        private String topPrivateDomain;
+        private final URI requestUrl;
+        private final InternetDomainName domain;
+        
         private int priority;
         private Serializable metadata;
 
         /**
-         * Constructs a CrawlRequestBuilder instance that can be used to create
-         * CrawRequest instances.
+         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
+         * used to create CrawRequest instances.
          *
-         * @param requestUrl The request's URL given as a URL instance
+         * @param requestUrl The request's URL given as a <code>URL</code>
+         * instance
          */
-        public CrawlRequestBuilder(final URL requestUrl) {
+        public CrawlRequestBuilder(final URI requestUrl) {
             this.requestUrl = requestUrl;
 
-            // Extract the top private domain from the request URL
-            try {
-                topPrivateDomain = InternetDomainName.from(requestUrl.getHost())
-                        .topPrivateDomain()
-                        .toString();
-            } catch (IllegalStateException ex) {
-                throw new IllegalArgumentException(String.format("The top private domain cannot be extracted from the given request URL (\"%s\").", requestUrl), ex);
-            }
+            // Extract the domain from the request URL
+            domain = InternetDomainName.from(requestUrl.getHost());
 
-            // Default priority is 0
-            priority = 0;
+            // Set default priority
+            priority = DEFAULT_PRIORITY;
         }
 
         /**
-         * Constructs a CrawlRequestBuilder instance that can be used to create
-         * CrawRequest instances.
+         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
+         * used to create <code>CrawRequest</code> instances.
          *
-         * @param requestUrl The request's URL given as a String instance
+         * @param requestUrl The request's URL given as a <code>String</code>
+         * instance
          */
         public CrawlRequestBuilder(final String requestUrl) {
-            this(getUrlFromString(requestUrl));
+            this(URI.create(requestUrl));
         }
 
         /**
@@ -124,7 +123,7 @@ public final class CrawlRequest implements Serializable {
          *
          * @param priority The priority of the request (higher number means
          * higher priority)
-         * @return The builder instance
+         * @return The <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setPriority(final int priority) {
             this.priority = priority;
@@ -136,7 +135,7 @@ public final class CrawlRequest implements Serializable {
          * when the crawler processed the request.
          *
          * @param metadata The metadata associated with the request
-         * @return The builder instance
+         * @return The <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
             this.metadata = metadata;
@@ -144,28 +143,18 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Builds the specified CrawlRequest instance.
+         * Builds the configured <code>CrawlRequest</code> instance.
          *
-         * @return The specified CrawlRequest instance
+         * @return The configured <code>CrawlRequest</code> instance
          */
         public CrawlRequest build() {
             return new CrawlRequest(this);
         }
+    }
 
-        /**
-         * Constructs a URL instance based on the specified URL string. Since
-         * call to this must be the first statement in a constructor, this
-         * method is necessary for the conversion to be made.
-         *
-         * @param requestUrl The request URL as String
-         * @return The request URL
-         */
-        private static URL getUrlFromString(final String requestUrl) {
-            try {
-                return new URL(requestUrl);
-            } catch (MalformedURLException ex) {
-                throw new IllegalArgumentException(String.format("The given request URL (\"%s\") is malformed.", requestUrl), ex);
-            }
-        }
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        domain = InternetDomainName.from(requestUrl.getHost());
     }
 }

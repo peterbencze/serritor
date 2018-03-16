@@ -11,7 +11,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.2.1</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -27,24 +27,31 @@ BaseCrawler provides a skeletal implementation of a crawler to minimize the effo
 ```java
 public class MyCrawler extends BaseCrawler {
 
+    private final UrlFinder urlFinder;
+
     public MyCrawler() {
         // Enable offsite request filtering
-        config.setOffsiteRequestFiltering(true);
+        configurator.setOffsiteRequestFiltering(true);
+
+        // Specify the allowed crawl domain
+        configurator.addAllowedCrawlDomain("example.com");
 
         // Add a crawl seed, this is where the crawling starts
         CrawlRequest request = new CrawlRequestBuilder("http://example.com").build();
-        config.addCrawlSeed(request);
+        configurator.addCrawlSeed(request);
+
+        // Extract URLs from links on the crawled page
+        urlFinder = new UrlFinderBuilder(Pattern.compile(".+")).build();
     }
 
     @Override
     protected void onResponseComplete(final HtmlResponse response) {
-        // Crawl every link that can be found on the page
-        response.getWebDriver().findElements(By.tagName("a"))
+        // Crawl every URL that match the given pattern
+        urlFinder.findUrlsInResponse(response)
                 .stream()
-                .forEach((WebElement link) -> {
-                    CrawlRequest request = new CrawlRequestBuilder(link.getAttribute("href")).build();
-                    crawl(request);
-                });
+                .map(CrawlRequestBuilder::new)
+                .map(CrawlRequestBuilder::build)
+                .forEach(this::crawl);
     }
 
     @Override
@@ -58,7 +65,7 @@ public class MyCrawler extends BaseCrawler {
     }
 }
 ```
-That's it! In just a few lines you can make a crawler that extracts and crawls every URL it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver, so you can use all the features that are provided by Selenium.
+That's it! In just a few lines you can make a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the WebDriver instance, so you can use all the features that are provided by Selenium.
 
 By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourceforge.net/):
 ```java

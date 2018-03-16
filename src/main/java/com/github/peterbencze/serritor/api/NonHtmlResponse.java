@@ -16,7 +16,7 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * Represents a non-HTML response.
@@ -42,11 +42,11 @@ public final class NonHtmlResponse extends CallbackParameter {
         return httpHeadResponse;
     }
 
-    public static final class NonHtmlResponseBuilder extends CallbackParameterBuilder<NonHtmlResponseBuilder> {
+    public static final class NonHtmlResponseBuilder extends CallbackParameterBuilder {
 
         private HttpHeadResponse httpHeadResponse;
 
-        public NonHtmlResponseBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+        public NonHtmlResponseBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             super(refererUrl, crawlDepth, crawlRequest);
         }
 

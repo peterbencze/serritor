@@ -17,9 +17,9 @@ package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
-import com.github.peterbencze.serritor.api.CrawlingStrategy;
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.github.peterbencze.serritor.api.CrawlStrategy;
+import com.google.common.net.InternetDomainName;
+import java.net.URI;
 import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -28,16 +28,19 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test cases for CrawlFrontier.
+ * Test cases for <code>CrawlFrontier</code>.
  *
- * @author Krisztian Mozsi
  * @author Peter Bencze
  */
 public final class CrawlFrontierTest {
 
+    // Allowed crawl domains
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_0 = new CrawlDomain(InternetDomainName.from("root-url-0.com"));
+    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_1 = new CrawlDomain(InternetDomainName.from("root-url-1.com"));
+
     // Root URLs
-    private static final URL ROOT_URL_0;
-    private static final URL ROOT_URL_1;
+    private static final URI ROOT_URL_0 = URI.create("http://root-url-0.com");
+    private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com");
 
     // Root URL crawl depth
     private static final int ROOT_URL_CRAWL_DEPTH = 0;
@@ -47,13 +50,16 @@ public final class CrawlFrontierTest {
     private static final int ROOT_URL_1_PRIORITY = 1;
 
     // Root URL crawl requests
-    private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST;
-    private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST;
+    private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_0).setPriority(ROOT_URL_0_PRIORITY).build();
+    private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_1).setPriority(ROOT_URL_1_PRIORITY).build();
+
+    // Child URL path
+    private static final String CHILD_URL_PATH = "/child";
 
     // Child URLs
-    private static final URL CHILD_URL_0;
-    private static final URL CHILD_URL_1;
-    private static final URL CHILD_URL_2;
+    private static final URI CHILD_URL_0 = URI.create(String.format("http://root-url-0.com%s-0.html", CHILD_URL_PATH));
+    private static final URI CHILD_URL_1 = URI.create(String.format("http://root-url-0.com%s-1.html", CHILD_URL_PATH));
+    private static final URI CHILD_URL_2 = URI.create(String.format("http://root-url-1.com%s-0.html", CHILD_URL_PATH));
 
     // Child URL crawl depth
     private static final int CHILD_URL_CRAWL_DEPTH = 1;
@@ -64,81 +70,41 @@ public final class CrawlFrontierTest {
     private static final int CHILD_URL_2_PRIORITY = 1;
 
     // Child URL crawl requests  
-    private static final CrawlRequest CHILD_URL_0_CRAWL_REQUEST;
-    private static final CrawlRequest CHILD_URL_1_CRAWL_REQUEST;
-    private static final CrawlRequest CHILD_URL_2_CRAWL_REQUEST;
-    
-    // Child URL path
-    private static final String CHILD_URL_PATH = "/child";
+    private static final CrawlRequest CHILD_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_0).setPriority(CHILD_URL_0_PRIORITY).build();
+    private static final CrawlRequest CHILD_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_1).setPriority(CHILD_URL_1_PRIORITY).build();
+    private static final CrawlRequest CHILD_URL_2_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_2).setPriority(CHILD_URL_2_PRIORITY).build();
 
     // Offsite URL
-    private static final URL OFFSITE_URL;
+    private static final URI OFFSITE_URL = URI.create("http://offsite-url.com");
 
     // Offsite URL priority
     private static final int OFFSITE_URL_PRIORITY = 0;
 
     // Offsite URL crawl request
-    private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST;
-    
+    private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST = new CrawlRequestBuilder(OFFSITE_URL).setPriority(OFFSITE_URL_PRIORITY).build();
+
     // Max crawl depth
     private static final int MAX_CRAWL_DEPTH = 1;
 
-    static {
-        try {
-            // Initialization of root URLs
-            ROOT_URL_0 = new URL("http://root_url_0.com");
-            ROOT_URL_1 = new URL("http://root_url_1.com");
-
-            // Initialization of child URLs
-            CHILD_URL_0 = new URL(String.format("http://root_url_0.com%s_0.html", CHILD_URL_PATH));
-            CHILD_URL_1 = new URL(String.format("http://root_url_0.com%s_1.html", CHILD_URL_PATH));
-
-            CHILD_URL_2 = new URL(String.format("http://root_url_1.com%s_0.html", CHILD_URL_PATH));
-
-            // Initialization of the offsite URL
-            OFFSITE_URL = new URL("http://offsite_url.com");
-        } catch (MalformedURLException ex) {
-            throw new Error(ex);
-        }
-
-        // Initialize crawl requests
-        ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_0)
-                .setPriority(ROOT_URL_0_PRIORITY)
-                .build();
-
-        ROOT_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_1)
-                .setPriority(ROOT_URL_1_PRIORITY)
-                .build();
-
-        CHILD_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_0)
-                .setPriority(CHILD_URL_0_PRIORITY)
-                .build();
-
-        CHILD_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_1)
-                .setPriority(CHILD_URL_1_PRIORITY)
-                .build();
-
-        CHILD_URL_2_CRAWL_REQUEST = new CrawlRequestBuilder(CHILD_URL_2)
-                .setPriority(CHILD_URL_2_PRIORITY)
-                .build();
-
-        OFFSITE_URL_CRAWL_REQUEST = new CrawlRequestBuilder(OFFSITE_URL)
-                .setPriority(OFFSITE_URL_PRIORITY)
-                .build();
-    }
-
-    private CrawlerConfiguration config;
+    private CrawlerConfiguration configuration;
     private CrawlFrontier frontier;
 
     @Before
     public void initialize() {
-        // Create configuration
-        config = new CrawlerConfiguration();
-        config.setOffsiteRequestFiltering(true);
-        config.addCrawlSeeds(Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST));
+        configuration = new CrawlerConfiguration();
+
+        configuration.setOffsiteRequestFiltering(true);
+
+        // Add allowed crawl domains
+        Arrays.asList(ALLOWED_CRAWL_DOMAIN_0, ALLOWED_CRAWL_DOMAIN_1)
+                .forEach(configuration::addAllowedCrawlDomain);
+
+        // Add crawl seeds
+        Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST)
+                .forEach(configuration::addCrawlSeed);
 
         // Create frontier
-        frontier = new CrawlFrontier(config);
+        frontier = new CrawlFrontier(configuration);
     }
 
     @Test
@@ -216,7 +182,7 @@ public final class CrawlFrontierTest {
     @Test
     public void getNextRequestWithoutDuplicateRequestFilterTest() {
         // Turn off duplicate request filtering
-        config.setDuplicateRequestFiltering(false);
+        configuration.setDuplicateRequestFiltering(false);
 
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
@@ -234,7 +200,7 @@ public final class CrawlFrontierTest {
     @Test
     public void getNextRequestWithoutOffsiteRequestFilterTest() {
         // Turn off offsite request filtering
-        config.setOffsiteRequestFiltering(false);
+        configuration.setOffsiteRequestFiltering(false);
 
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
@@ -325,9 +291,9 @@ public final class CrawlFrontierTest {
 
     @Test
     public void getNextRequestDepthFirstTest() {
-        // Set the crawling strategy to depth-first
-        config.setCrawlingStrategy(CrawlingStrategy.DEPTH_FIRST);
-        frontier = new CrawlFrontier(config);
+        // Set the crawl strategy to depth-first
+        configuration.setCrawlStrategy(CrawlStrategy.DEPTH_FIRST);
+        frontier = new CrawlFrontier(configuration);
 
         // Get the crawl candidate of root URL 1
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
@@ -400,27 +366,27 @@ public final class CrawlFrontierTest {
         // There should be no more candidates left at this point
         assertFalse(frontier.hasNextCandidate());
     }
-    
+
     @Test
     public void maxCrawlDepthTest() {
         // Set max crawl depth
-        config.setMaxCrawlDepth(MAX_CRAWL_DEPTH);
-        
+        configuration.setMaximumCrawlDepth(MAX_CRAWL_DEPTH);
+
         // Clear the crawl candidate queue of the frontier
         clearCrawlCandidateQueue();
-        
+
         // Feed a child request, its crawl depth will be 1
         frontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
-        
+
         // Get the crawl candidate of the previously added child URL
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
-        
+
         // Check its crawl depth, it should be less than or equal to the limit
         assertTrue(nextCandidate.getCrawlDepth() <= MAX_CRAWL_DEPTH);
-        
+
         // Feed another child request, its crawl depth will be 2 which is above the limit
         frontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
-        
+
         // There should be no more candidates at this point
         assertFalse(frontier.hasNextCandidate());
     }

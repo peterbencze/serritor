@@ -17,7 +17,7 @@ package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 /**
  * Represents an unsuccessful request.
@@ -35,19 +35,20 @@ public final class UnsuccessfulRequest extends CallbackParameter {
     }
 
     /**
-     * Returns the exception that was thrown.
+     * Returns the exception that was thrown while trying to fulfill the
+     * request.
      *
-     * @return The thrown exception
+     * @return The <code>IOException</code> instance
      */
     public IOException getException() {
         return exception;
     }
 
-    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder<UnsuccessfulRequestBuilder> {
+    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder {
 
         private IOException exception;
 
-        public UnsuccessfulRequestBuilder(URL refererUrl, int crawlDepth, CrawlRequest crawlRequest) {
+        public UnsuccessfulRequestBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             super(refererUrl, crawlDepth, crawlRequest);
         }
 

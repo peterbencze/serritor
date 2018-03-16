@@ -16,7 +16,7 @@
 package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlRequest;
-import java.net.URL;
+import java.net.URI;
 import java.util.Optional;
 
 /**
@@ -27,7 +27,7 @@ import java.util.Optional;
 public abstract class CallbackParameter {
 
     private final int crawlDepth;
-    private final URL refererUrl;
+    private final URI refererUrl;
     private final CrawlRequest crawlRequest;
 
     protected CallbackParameter(final CallbackParameterBuilder builder) {
@@ -41,7 +41,7 @@ public abstract class CallbackParameter {
      *
      * @return The referer URL
      */
-    public final Optional<URL> getRefererUrl() {
+    public final Optional<URI> getRefererUrl() {
         return Optional.ofNullable(refererUrl);
     }
 
@@ -57,19 +57,19 @@ public abstract class CallbackParameter {
     /**
      * Returns the crawl request that was processed by the crawler.
      *
-     * @return The processed crawl request
+     * @return The processed <code>CrawlRequest</code> instance
      */
     public final CrawlRequest getCrawlRequest() {
         return crawlRequest;
     }
 
-    public static abstract class CallbackParameterBuilder<T extends CallbackParameterBuilder<T>> {
+    public static abstract class CallbackParameterBuilder {
 
-        private final URL refererUrl;
+        private final URI refererUrl;
         private final int crawlDepth;
         private final CrawlRequest crawlRequest;
 
-        public CallbackParameterBuilder(final URL refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
+        public CallbackParameterBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
             this.refererUrl = refererUrl;
             this.crawlDepth = crawlDepth;
             this.crawlRequest = crawlRequest;
