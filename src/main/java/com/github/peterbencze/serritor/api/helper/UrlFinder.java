@@ -17,11 +17,14 @@ package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.HtmlResponse;
 import com.google.common.collect.Sets;
+import com.google.common.net.InternetDomainName;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,15 +44,17 @@ public final class UrlFinder {
     private final Set<Pattern> urlPatterns;
     private final Set<By> locatingMechanisms;
     private final Set<String> attributes;
+    private final Function<String, Boolean> validator;
 
     private UrlFinder(final UrlFinderBuilder builder) {
         urlPatterns = builder.urlPatterns;
         locatingMechanisms = builder.locatingMechanisms;
         attributes = builder.attributes;
+        validator = builder.validator;
     }
 
     /**
-     * Returns a list of (unvalidated) URLs found in the response's HTML source.
+     * Returns a list of validated URLs found in the response's HTML source.
      *
      * @param response The <code>HtmlResponse</code> instance
      * @return The list of found URLs
@@ -78,7 +83,7 @@ public final class UrlFinder {
     }
 
     /**
-     * Returns a list of (unvalidated) URLs found in the attribute's value.
+     * Returns a list of validated URLs found in the attribute's value.
      *
      * @param attributeValue The value of the attribute
      * @return The list of found URLs
@@ -92,7 +97,7 @@ public final class UrlFinder {
                     while (urlPatternMatcher.find()) {
                         String foundUrl = urlPatternMatcher.group();
 
-                        if (StringUtils.isNotBlank(foundUrl)) {
+                        if (validator.apply(foundUrl)) {
                             foundUrls.add(foundUrl);
                         }
                     }
@@ -107,6 +112,7 @@ public final class UrlFinder {
 
         private Set<By> locatingMechanisms;
         private Set<String> attributes;
+        private Function<String, Boolean> validator;
 
         /**
          * Constructs a <code>UrlFinderBuilder</code> instance that can be used
@@ -131,6 +137,7 @@ public final class UrlFinder {
             this.urlPatterns = Sets.newHashSet(urlPatterns);
             locatingMechanisms = Sets.newHashSet(By.tagName("a"));
             attributes = Sets.newHashSet("href");
+            validator = this::isValidUrl;
         }
 
         /**
@@ -139,9 +146,10 @@ public final class UrlFinder {
          *
          * @param locatingMechanism The <code>By</code> locating mechanism
          * instance
+         * @return The <code>UrlFinderBuilder</code> instance
          */
-        public void setLocatingMechanism(final By locatingMechanism) {
-            setLocatingMechanisms(Arrays.asList(locatingMechanism));
+        public UrlFinderBuilder setLocatingMechanism(final By locatingMechanism) {
+            return setLocatingMechanisms(Arrays.asList(locatingMechanism));
         }
 
         /**
@@ -150,31 +158,49 @@ public final class UrlFinder {
          *
          * @param locatingMechanisms The list of <code>By</code> locating
          * mechanism instances
+         * @return The <code>UrlFinderBuilder</code> instance
          */
-        public void setLocatingMechanisms(final List<By> locatingMechanisms) {
+        public UrlFinderBuilder setLocatingMechanisms(final List<By> locatingMechanisms) {
             Validate.noNullElements(locatingMechanisms, "Locating mechanisms cannot be null.");
 
             this.locatingMechanisms = Sets.newHashSet(locatingMechanisms);
+            return this;
         }
 
         /**
          * Sets which attributes to search for URLs.
          *
          * @param attributes The list of attribute names
+         * @return The <code>UrlFinderBuilder</code> instance
          */
-        public void setAttributes(final List<String> attributes) {
+        public UrlFinderBuilder setAttributes(final List<String> attributes) {
             Validate.noNullElements(attributes, "Attributes cannot be null.");
 
             this.attributes = Sets.newHashSet(attributes);
+            return this;
         }
 
         /**
          * Sets which attribute to search for URLs.
          *
          * @param attribute The name of the attribute
+         * @return The <code>UrlFinderBuilder</code> instance
          */
-        public void setAttribute(final String attribute) {
-            setAttributes(Arrays.asList(attribute));
+        public UrlFinderBuilder setAttribute(final String attribute) {
+            return setAttributes(Arrays.asList(attribute));
+        }
+
+        /**
+         * Sets a function to be used for validating found URLs.
+         *
+         * @param validator The validator function
+         * @return The <code>UrlFinderBuilder</code> instance
+         */
+        public UrlFinderBuilder setValidator(final Function<String, Boolean> validator) {
+            Validate.notNull(validator, "The validator function cannot be null.");
+
+            this.validator = validator;
+            return this;
         }
 
         /**
@@ -184,6 +210,21 @@ public final class UrlFinder {
          */
         public UrlFinder build() {
             return new UrlFinder(this);
+        }
+
+        /**
+         * The default URL validator function.
+         *
+         * @param url The URL to be validated
+         * @return <code>true</code> if the URL is valid, <code>false</code>
+         * otherwise
+         */
+        private boolean isValidUrl(final String url) {
+            try {
+                return InternetDomainName.isValid(URI.create(url).getHost());
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
         }
     }
 }
