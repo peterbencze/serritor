@@ -95,7 +95,7 @@ public final class UrlFinder {
                 .map((Pattern urlPattern) -> urlPattern.matcher(attributeValue))
                 .forEach((Matcher urlPatternMatcher) -> {
                     while (urlPatternMatcher.find()) {
-                        String foundUrl = urlPatternMatcher.group();
+                        String foundUrl = urlPatternMatcher.group().trim();
 
                         if (validator.apply(foundUrl)) {
                             foundUrls.add(foundUrl);
@@ -107,6 +107,10 @@ public final class UrlFinder {
     }
 
     public static final class UrlFinderBuilder {
+        
+        private static final Set<By> DEFAULT_LOCATING_MECHANISMS = Sets.newHashSet(By.tagName("a"));
+        private static final Set<String> DEFAULT_ATTRIBUTES = Sets.newHashSet("href");
+        private static final Function<String, Boolean> DEFAULT_VALIDATOR = UrlFinderBuilder::isValidUrl;
 
         private final Set<Pattern> urlPatterns;
 
@@ -135,9 +139,9 @@ public final class UrlFinder {
             Validate.noNullElements(urlPatterns, "URL patterns cannot be null.");
 
             this.urlPatterns = Sets.newHashSet(urlPatterns);
-            locatingMechanisms = Sets.newHashSet(By.tagName("a"));
-            attributes = Sets.newHashSet("href");
-            validator = this::isValidUrl;
+            locatingMechanisms = DEFAULT_LOCATING_MECHANISMS;
+            attributes = DEFAULT_ATTRIBUTES;
+            validator = DEFAULT_VALIDATOR;
         }
 
         /**
@@ -219,7 +223,7 @@ public final class UrlFinder {
          * @return <code>true</code> if the URL is valid, <code>false</code>
          * otherwise
          */
-        private boolean isValidUrl(final String url) {
+        private static boolean isValidUrl(final String url) {
             try {
                 return InternetDomainName.isValid(URI.create(url).getHost());
             } catch (IllegalArgumentException e) {
