@@ -16,7 +16,6 @@
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.HtmlResponse;
-import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
 import com.github.peterbencze.serritor.api.helper.UrlFinder.UrlFinderBuilder;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +33,7 @@ import org.openqa.selenium.WebElement;
  *
  * @author Peter Bencze
  */
-public class UrlFinderTest {
+public final class UrlFinderTest {
     
     private static final Pattern URL_PATTERN = Pattern.compile(".+valid-url.+");
     private static final String ATTRIBUTE = "href";
@@ -42,43 +41,43 @@ public class UrlFinderTest {
     private static final String VALID_URL = "http://valid-url.com";
     private static final String INVALID_URL = "invalid-url";
     private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
-
+    
+    private WebDriver mockedDriver;
+    private HtmlResponse mockedResponse;
+    private WebElement mockedElementWithValidUrl;
+    private WebElement mockedElementWithInvalidUrlFormat;
+    private WebElement mockedElementWithInvalidDomain; 
     private UrlFinder urlFinder;
-    private HtmlResponse mockResponse;
-    private WebDriver mockDriver;
-    private WebElement mockElementWithValidUrl;
-    private WebElement mockElementWithInvalidUrlFormat;
-    private WebElement mockElementWithInvalidDomain;
 
     @Before
     public void initialize() {
-        urlFinder = new UrlFinderBuilder(URL_PATTERN).build();
+        mockedResponse = Mockito.mock(HtmlResponse.class);
         
-        // Create mocks
-        mockDriver = Mockito.mock(WebDriver.class);
+        mockedDriver = Mockito.mock(WebDriver.class);
+        Mockito.when(mockedResponse.getWebDriver())
+                .thenReturn(mockedDriver);     
         
-        // Cannot mock because of the final modifier
-        mockResponse = new HtmlResponseBuilder(null, 0, null).setWebDriver(mockDriver).build();
+        mockedElementWithValidUrl = Mockito.mock(WebElement.class);
+        Mockito.when(mockedElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
+                .thenReturn(VALID_URL); 
         
-        mockElementWithValidUrl = Mockito.mock(WebElement.class);
-        Mockito.when(mockElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(VALID_URL);
+        mockedElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
+        Mockito.when(mockedElementWithInvalidUrlFormat.getAttribute(Mockito.eq(ATTRIBUTE)))
+                .thenReturn(INVALID_URL); 
         
-        mockElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
-        Mockito.when(mockElementWithInvalidUrlFormat.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(INVALID_URL);
-        
-        mockElementWithInvalidDomain = Mockito.mock(WebElement.class);
-        Mockito.when(mockElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
+        mockedElementWithInvalidDomain = Mockito.mock(WebElement.class);
+        Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(URL_WITH_INVALID_DOMAIN);
-        
-        List<WebElement> elementList = Arrays.asList(mockElementWithValidUrl, mockElementWithInvalidUrlFormat, mockElementWithInvalidDomain);         
-        Mockito.when(mockDriver.findElements(By.tagName(TAG_NAME)))
+
+        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);         
+        Mockito.when(mockedDriver.findElements(By.tagName(TAG_NAME)))
                 .thenReturn(elementList);
+        
+        urlFinder = new UrlFinderBuilder(URL_PATTERN).build();
     }
 
     @Test
-    public void findUrlsInResponseTest() {
-        Assert.assertEquals(Arrays.asList(VALID_URL), urlFinder.findUrlsInResponse(mockResponse));
+    public void testFindUrlsInResponse() {
+        Assert.assertEquals(Arrays.asList(VALID_URL), urlFinder.findUrlsInResponse(mockedResponse));
     }
 }

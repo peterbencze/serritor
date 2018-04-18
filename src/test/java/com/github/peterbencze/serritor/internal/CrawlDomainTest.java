@@ -24,10 +24,12 @@ import org.junit.Test;
  * 
  * @author Peter Bencze
  */
-public class CrawlDomainTest {
+public final class CrawlDomainTest {
     
     private static final InternetDomainName DOMAIN = InternetDomainName.from("test.com");
     private static final InternetDomainName SUBDOMAIN = InternetDomainName.from("sub.test.com");
+    
+    private static final int DOMAIN_PARTS_HASHCODE = DOMAIN.parts().hashCode();
     
     private static final CrawlDomain CRAWL_DOMAIN_0 = new CrawlDomain(DOMAIN);
     private static final CrawlDomain CRAWL_DOMAIN_1 = new CrawlDomain(DOMAIN);
@@ -43,6 +45,11 @@ public class CrawlDomainTest {
         
         // Crawl domains with different domains should not be equal
         Assert.assertNotEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_2);
+    }
+    
+    @Test
+    public void testHashCode() {
+        Assert.assertEquals(DOMAIN_PARTS_HASHCODE, CRAWL_DOMAIN_0.hashCode());
     }
     
     @Test
