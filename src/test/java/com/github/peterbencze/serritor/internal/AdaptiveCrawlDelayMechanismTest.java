@@ -16,6 +16,7 @@
 package com.github.peterbencze.serritor.internal;
 
 
+import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import java.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;

@@ -23,7 +23,6 @@ import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
-import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
 import com.github.peterbencze.serritor.internal.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.RandomCrawlDelayMechanism;
 import java.io.IOException;

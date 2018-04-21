@@ -15,6 +15,7 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import org.openqa.selenium.JavascriptExecutor;
 
 /**

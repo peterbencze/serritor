@@ -15,7 +15,8 @@
  */
 package com.github.peterbencze.serritor.internal;
 
-import com.github.peterbencze.serritor.internal.CrawlerConfiguration.CrawlerConfigurationBuilder;
+import com.github.peterbencze.serritor.api.CrawlerConfiguration;
+import com.github.peterbencze.serritor.api.CrawlerConfiguration.CrawlerConfigurationBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

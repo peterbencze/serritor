@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
+import com.github.peterbencze.serritor.internal.CrawlDomain;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.time.Duration;
