@@ -31,12 +31,12 @@ public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Constructs a new <code>RandomCrawlDelayMechanism</code> instance.
      *
-     * @param configuration The <code>CrawlerConfiguration</code> instance which
+     * @param config The <code>CrawlerConfiguration</code> instance which
      * specifies the minimum and maximum delay.
      */
-    public RandomCrawlDelayMechanism(final CrawlerConfiguration configuration) {
-        lowerLimit = configuration.getMinimumCrawlDelayDurationInMillis();
-        upperLimit = configuration.getMaximumCrawlDelayDurationInMillis() + 1;
+    public RandomCrawlDelayMechanism(final CrawlerConfiguration config) {
+        lowerLimit = config.getMinimumCrawlDelayDurationInMillis();
+        upperLimit = config.getMaximumCrawlDelayDurationInMillis() + 1;
     }
 
     /**

@@ -28,11 +28,11 @@ public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Constructs a new <code>FixedCrawlDelayMechanism</code> instance.
      *
-     * @param configuration The <code>CrawlerConfiguration</code> instance which
+     * @param config The <code>CrawlerConfiguration</code> instance which
      * specifies the fixed delay duration.
      */
-    public FixedCrawlDelayMechanism(final CrawlerConfiguration configuration) {
-        this.delayInMillis = configuration.getFixedCrawlDelayDurationInMillis();
+    public FixedCrawlDelayMechanism(final CrawlerConfiguration config) {
+        this.delayInMillis = config.getFixedCrawlDelayDurationInMillis();
     }
 
     /**

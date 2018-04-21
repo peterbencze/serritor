@@ -37,7 +37,7 @@ import org.apache.commons.codec.digest.DigestUtils;
  */
 public final class CrawlFrontier implements Serializable {
 
-    private final CrawlerConfiguration configuration;
+    private final CrawlerConfiguration config;
 
     private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<String> urlFingerprints;
@@ -46,10 +46,10 @@ public final class CrawlFrontier implements Serializable {
 
     private CrawlCandidate currentCandidate;
 
-    public CrawlFrontier(final CrawlerConfiguration configuration) {
-        this.configuration = configuration;
+    public CrawlFrontier(final CrawlerConfiguration config) {
+        this.config = config;
 
-        allowedCrawlDomains = configuration.getAllowedCrawlDomains();
+        allowedCrawlDomains = config.getAllowedCrawlDomains();
         
         urlFingerprints = new HashSet<>();
 
@@ -57,7 +57,7 @@ public final class CrawlFrontier implements Serializable {
         candidates = createPriorityQueue();
 
         // Feed initial crawl requests (seeds)
-        configuration.getCrawlSeeds()
+        config.getCrawlSeeds()
                 .forEach((CrawlRequest request) -> {
                     feedRequest(request, true);
                 });
@@ -71,7 +71,7 @@ public final class CrawlFrontier implements Serializable {
      * <code>false</code> otherwise
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
-        if (configuration.isOffsiteRequestFilteringEnabled()) {
+        if (config.isOffsiteRequestFilteringEnabled()) {
             // Check if the request's domain is in the allowed crawl domains
             
             boolean inCrawlDomain = false;
@@ -88,7 +88,7 @@ public final class CrawlFrontier implements Serializable {
             }
         }
 
-        if (configuration.isDuplicateRequestFilteringEnabled()) {
+        if (config.isDuplicateRequestFilteringEnabled()) {
             // Check if the URL has already been crawled
             
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
@@ -104,7 +104,7 @@ public final class CrawlFrontier implements Serializable {
         CrawlCandidateBuilder builder;
 
         if (!isCrawlSeed) {
-            int crawlDepthLimit = configuration.getMaximumCrawlDepth();
+            int crawlDepthLimit = config.getMaximumCrawlDepth();
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             // If a crawl depth limit is set, check if the candidate's crawl depth is less than or equal to the limit
@@ -183,7 +183,7 @@ public final class CrawlFrontier implements Serializable {
      * the given comparator
      */
     private PriorityQueue<CrawlCandidate> createPriorityQueue() {
-        switch (configuration.getCrawlStrategy()) {
+        switch (config.getCrawlStrategy()) {
             case BREADTH_FIRST:
                 return new PriorityQueue<>(Comparator.comparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth)
                         .thenComparing((Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority, Comparator.reverseOrder()));

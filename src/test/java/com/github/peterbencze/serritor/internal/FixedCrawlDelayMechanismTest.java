@@ -15,6 +15,7 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.internal.CrawlerConfiguration.CrawlerConfigurationBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,18 +28,18 @@ import org.mockito.Mockito;
  */
 public class FixedCrawlDelayMechanismTest {
     
-    private CrawlerConfiguration configuration;
+    private CrawlerConfiguration config;
     private FixedCrawlDelayMechanism crawlDelayMechanism;
     
     @Before
     public void initialize() {
-        configuration = Mockito.spy(new CrawlerConfiguration());
-        crawlDelayMechanism = new FixedCrawlDelayMechanism(configuration);
+        config = Mockito.spy(new CrawlerConfigurationBuilder().build());
+        crawlDelayMechanism = new FixedCrawlDelayMechanism(config);
     }
     
     @Test
     public void testGetDelay() {
         // The delay should be the same as in the configuration
-        Assert.assertEquals(configuration.getFixedCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(config.getFixedCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
     }
 }

@@ -36,21 +36,21 @@ public final class AdaptiveCrawlDelayMechanismTest {
     private static final long MAXIMUM_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(3).toMillis();
     private static final long HIGHER_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(4).toMillis();
     
-    private CrawlerConfiguration mockedConfiguration;
+    private CrawlerConfiguration mockedConfig;
     private JavascriptExecutor mockedJsExecutor;  
     private AdaptiveCrawlDelayMechanism crawlDelayMechanism;
     
     @Before
     public void initialize() {
-        mockedConfiguration = Mockito.mock(CrawlerConfiguration.class);
-        Mockito.when(mockedConfiguration.getMinimumCrawlDelayDurationInMillis())
+        mockedConfig = Mockito.mock(CrawlerConfiguration.class);
+        Mockito.when(mockedConfig.getMinimumCrawlDelayDurationInMillis())
                 .thenReturn(MINIMUM_DELAY_DURATION_IN_MILLIS);  
-        Mockito.when(mockedConfiguration.getMaximumCrawlDelayDurationInMillis())
+        Mockito.when(mockedConfig.getMaximumCrawlDelayDurationInMillis())
                 .thenReturn(MAXIMUM_DELAY_DURATION_IN_MILLIS);
         
         mockedJsExecutor = Mockito.mock(JavascriptExecutor.class);
         
-        crawlDelayMechanism = new AdaptiveCrawlDelayMechanism(mockedConfiguration, mockedJsExecutor);
+        crawlDelayMechanism = new AdaptiveCrawlDelayMechanism(mockedConfig, mockedJsExecutor);
     }
     
     @Test
@@ -60,7 +60,7 @@ public final class AdaptiveCrawlDelayMechanismTest {
                 .thenReturn(LOWER_DELAY_DURATION_IN_MILLIS);
         
         // The minimum delay should be returned
-        Assert.assertEquals(mockedConfiguration.getMinimumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(mockedConfig.getMinimumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
     }
     
     @Test
@@ -70,7 +70,7 @@ public final class AdaptiveCrawlDelayMechanismTest {
                 .thenReturn(HIGHER_DELAY_DURATION_IN_MILLIS);
         
         // The maximum delay should be returned
-        Assert.assertEquals(mockedConfiguration.getMaximumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(mockedConfig.getMaximumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
     }
     
     @Test

@@ -18,11 +18,11 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
-import com.google.common.collect.Sets;
-import com.google.common.net.InternetDomainName;
+import com.github.peterbencze.serritor.internal.CrawlerConfiguration.CrawlerConfigurationBuilder;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +36,9 @@ import org.mockito.Mockito;
 public final class CrawlFrontierTest {
 
     // Allowed crawl domains
-    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_0 = new CrawlDomain(InternetDomainName.from("root-url-0.com"));
-    private static final CrawlDomain ALLOWED_CRAWL_DOMAIN_1 = new CrawlDomain(InternetDomainName.from("root-url-1.com"));
-    private static final Set<CrawlDomain> ALLOWED_CRAWL_DOMAINS = Sets.newHashSet(ALLOWED_CRAWL_DOMAIN_0, ALLOWED_CRAWL_DOMAIN_1);
+    private static final String ALLOWED_CRAWL_DOMAIN_0 = "root-url-0.com";
+    private static final String ALLOWED_CRAWL_DOMAIN_1 = "root-url-1.com";
+    private static final List<String> ALLOWED_CRAWL_DOMAINS = Arrays.asList(ALLOWED_CRAWL_DOMAIN_0, ALLOWED_CRAWL_DOMAIN_1);
 
     // Root URLs
     private static final URI ROOT_URL_0 = URI.create("http://root-url-0.com?param1=foo&param2=bar#fragment");
@@ -56,7 +56,7 @@ public final class CrawlFrontierTest {
     private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_0).setPriority(ROOT_URL_0_PRIORITY).build();
     private static final CrawlRequest DUPLICATE_ROOT_URL_0_CRAWL_REQUEST = new CrawlRequestBuilder(DUPLICATE_ROOT_URL_0).build();
     private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST = new CrawlRequestBuilder(ROOT_URL_1).setPriority(ROOT_URL_1_PRIORITY).build();
-    private static final Set<CrawlRequest> CRAWL_SEEDS = Sets.newHashSet(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST);
+    private static final List<CrawlRequest> CRAWL_SEEDS = Arrays.asList(ROOT_URL_0_CRAWL_REQUEST, ROOT_URL_1_CRAWL_REQUEST);
 
     // Child URL path
     private static final String CHILD_URL_PATH = "/child";
@@ -91,26 +91,17 @@ public final class CrawlFrontierTest {
     // Max crawl depth
     private static final int MAX_CRAWL_DEPTH = 1;
 
-    private CrawlerConfiguration configuration;
+    private CrawlerConfiguration config;
     private CrawlFrontier frontier;
 
     @Before
     public void initialize() {
-        configuration = Mockito.spy(new CrawlerConfiguration());
+        config = Mockito.spy(new CrawlerConfigurationBuilder().setOffsiteRequestFiltering(true)
+                .addAllowedCrawlDomains(ALLOWED_CRAWL_DOMAINS)
+                .addCrawlSeeds(CRAWL_SEEDS)
+                .build());
 
-        // Enable offsite request filtering
-        Mockito.when(configuration.isOffsiteRequestFilteringEnabled())
-                .thenReturn(true);
-
-        // Add allowed crawl domains
-        Mockito.when(configuration.getAllowedCrawlDomains())
-                .thenReturn(ALLOWED_CRAWL_DOMAINS);
-
-        // Add crawl seeds
-        Mockito.when(configuration.getCrawlSeeds())
-                .thenReturn(CRAWL_SEEDS);
-
-        frontier = new CrawlFrontier(configuration);
+        frontier = new CrawlFrontier(config);
     }
 
     @Test
@@ -152,11 +143,11 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testHasNextCandidateWithEmptyQueue() {
-        Mockito.when(configuration.getCrawlSeeds())
+        Mockito.when(config.getCrawlSeeds())
                 .thenReturn(Collections.EMPTY_SET);
 
         // Create frontier without any crawl seeds
-        frontier = new CrawlFrontier(configuration);
+        frontier = new CrawlFrontier(config);
 
         // Check if there are any candidates in the queue, the method should return false
         Assert.assertFalse(frontier.hasNextCandidate());
@@ -176,7 +167,7 @@ public final class CrawlFrontierTest {
     @Test
     public void testDisabledDuplicateRequestFiltering() {
         // Disable duplicate request filtering
-        Mockito.when(configuration.isDuplicateRequestFilteringEnabled())
+        Mockito.when(config.isDuplicateRequestFilteringEnabled())
                 .thenReturn(false);
 
         // Clear the crawl candidate queue of the frontier
@@ -206,7 +197,7 @@ public final class CrawlFrontierTest {
     @Test
     public void testDisabledOffsiteRequestFiltering() {
         // Disable offsite request filtering
-        Mockito.when(configuration.isOffsiteRequestFilteringEnabled())
+        Mockito.when(config.isOffsiteRequestFilteringEnabled())
                 .thenReturn(false);
 
         // Clear the crawl candidate queue of the frontier
@@ -298,11 +289,11 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testGetNextCandidateUsingDepthFirstCrawlStrategy() {
-        Mockito.when(configuration.getCrawlStrategy())
+        Mockito.when(config.getCrawlStrategy())
                 .thenReturn(CrawlStrategy.DEPTH_FIRST);
 
         // Create frontier with depth-first crawl strategy
-        frontier = new CrawlFrontier(configuration);
+        frontier = new CrawlFrontier(config);
 
         // Get the crawl candidate of root URL 1
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
@@ -378,7 +369,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testCrawlDepthLimitation() {
-        Mockito.when(configuration.getMaximumCrawlDepth())
+        Mockito.when(config.getMaximumCrawlDepth())
                 .thenReturn(MAX_CRAWL_DEPTH);
 
         // Clear the crawl candidate queue of the frontier

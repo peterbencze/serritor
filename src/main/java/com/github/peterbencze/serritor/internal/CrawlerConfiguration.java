@@ -18,10 +18,13 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
+import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.Validate;
 
 /**
  * This class contains the settings of the crawler.
@@ -30,40 +33,28 @@ import java.util.Set;
  */
 public final class CrawlerConfiguration implements Serializable {
 
-    private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
-    private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
-    private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
-    private static final int DEFAULT_MAX_CRAWL_DEPTH = 0;
-    private static final CrawlDelayStrategy DEFAULT_CRAWL_DELAY = CrawlDelayStrategy.FIXED;
-    private static final long DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS = Duration.ZERO.toMillis();
-    private static final long DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS = Duration.ofSeconds(1).toMillis();
-    private static final long DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS = Duration.ofMinutes(1).toMillis();
-
     private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<CrawlRequest> crawlSeeds;
+    private final CrawlStrategy crawlStrategy;
+    private final boolean filterDuplicateRequests;
+    private final boolean filterOffsiteRequests;
+    private final int maxCrawlDepth;
+    private final CrawlDelayStrategy crawlDelayStrategy;
+    private final long fixedCrawlDelayDurationInMillis;
+    private final long minCrawlDelayDurationInMillis;
+    private final long maxCrawlDelayDurationInMillis;
 
-    private CrawlStrategy crawlStrategy;
-    private boolean filterDuplicateRequests;
-    private boolean filterOffsiteRequests;
-    private int maxCrawlDepth;
-    private CrawlDelayStrategy crawlDelayStrategy;
-    private long fixedCrawlDelayDurationInMillis;
-    private long minCrawlDelayDurationInMillis;
-    private long maxCrawlDelayDurationInMillis;
-
-    public CrawlerConfiguration() {
-        // Initialize configuration with default values
-
-        allowedCrawlDomains = new HashSet<>();
-        crawlSeeds = new HashSet<>();
-        crawlStrategy = DEFAULT_CRAWL_STRATEGY;
-        filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
-        filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
-        maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
-        crawlDelayStrategy = DEFAULT_CRAWL_DELAY;
-        fixedCrawlDelayDurationInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
-        minCrawlDelayDurationInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
-        maxCrawlDelayDurationInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
+    private CrawlerConfiguration(final CrawlerConfigurationBuilder builder) {
+        allowedCrawlDomains = builder.allowedCrawlDomains;
+        crawlSeeds = builder.crawlSeeds;
+        crawlStrategy = builder.crawlStrategy;
+        filterDuplicateRequests = builder.filterDuplicateRequests;
+        filterOffsiteRequests = builder.filterOffsiteRequests;
+        maxCrawlDepth = builder.maxCrawlDepth;
+        crawlDelayStrategy = builder.crawlDelayStrategy;
+        fixedCrawlDelayDurationInMillis = builder.fixedCrawlDelayDurationInMillis;
+        minCrawlDelayDurationInMillis = builder.minCrawlDelayDurationInMillis;
+        maxCrawlDelayDurationInMillis = builder.maxCrawlDelayDurationInMillis;
     }
 
     /**
@@ -76,32 +67,12 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Appends a crawl domain to the list of allowed ones.
-     *
-     * @param allowedCrawlDomain The <code>CrawlDomain</code> instance which
-     * represents the allowed crawl domain
-     */
-    public void addAllowedCrawlDomain(CrawlDomain allowedCrawlDomain) {
-        allowedCrawlDomains.add(allowedCrawlDomain);
-    }
-
-    /**
      * Returns the set of crawl seeds.
      *
      * @return The set of crawl seeds
      */
     public Set<CrawlRequest> getCrawlSeeds() {
         return crawlSeeds;
-    }
-
-    /**
-     * Appends a crawl request to the set of crawl seeds.
-     *
-     * @param request The <code>CrawlRequest</code> instance which represents
-     * the crawl seed
-     */
-    public void addCrawlSeed(final CrawlRequest request) {
-        crawlSeeds.add(request);
     }
 
     /**
@@ -114,33 +85,12 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Sets the crawl strategy to be used by the crawler. Breadth-first strategy
-     * orders crawl requests by the lowest crawl depth, whereas depth-first
-     * orders them by the highest crawl depth.
-     *
-     * @param crawlStrategy The crawl strategy
-     */
-    public void setCrawlStrategy(final CrawlStrategy crawlStrategy) {
-        this.crawlStrategy = crawlStrategy;
-    }
-
-    /**
      * Indicates if duplicate request filtering is enabled or not.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
     public boolean isDuplicateRequestFilteringEnabled() {
         return filterDuplicateRequests;
-    }
-
-    /**
-     * Enables or disables duplicate request filtering.
-     *
-     * @param filterDuplicateRequests <code>true</code> means enabled,
-     * <code>false</code> means disabled
-     */
-    public void setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
-        this.filterDuplicateRequests = filterDuplicateRequests;
     }
 
     /**
@@ -153,41 +103,12 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Enables or disables offsite request filtering.
-     *
-     * @param filterOffsiteRequests <code>true</code> means enabled,
-     * <code>false</code> means disabled
-     */
-    public void setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
-        this.filterOffsiteRequests = filterOffsiteRequests;
-    }
-
-    /**
      * Returns the maximum possible crawl depth.
      *
      * @return The maximum crawl depth
      */
     public int getMaximumCrawlDepth() {
         return maxCrawlDepth;
-    }
-
-    /**
-     * Sets the maximum possible crawl depth. It should be a non-negative number
-     * where 0 means there is no limit.
-     *
-     * @param maxCrawlDepth The maximum crawl depth
-     */
-    public void setMaximumCrawlDepth(final int maxCrawlDepth) {
-        this.maxCrawlDepth = maxCrawlDepth;
-    }
-
-    /**
-     * Sets the crawl delay strategy to be used by the crawler.
-     *
-     * @param crawlDelayStrategy The crawl delay strategy
-     */
-    public void setCrawlDelayStrategy(final CrawlDelayStrategy crawlDelayStrategy) {
-        this.crawlDelayStrategy = crawlDelayStrategy;
     }
 
     /**
@@ -200,32 +121,12 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Sets the exact duration of delay between each request.
-     *
-     * @param fixedCrawlDelayDurationInMillis The duration of delay in
-     * milliseconds
-     */
-    public void setFixedCrawlDelayDurationInMillis(final long fixedCrawlDelayDurationInMillis) {
-        this.fixedCrawlDelayDurationInMillis = fixedCrawlDelayDurationInMillis;
-    }
-
-    /**
      * Returns the exact duration of delay between each request.
      *
      * @return The duration of delay in milliseconds
      */
     public long getFixedCrawlDelayDurationInMillis() {
         return fixedCrawlDelayDurationInMillis;
-    }
-
-    /**
-     * Sets the minimum duration of delay between each request.
-     *
-     * @param minCrawlDelayDurationInMillis The minimum duration of delay in
-     * milliseconds
-     */
-    public void setMinimumCrawlDelayDurationInMillis(final long minCrawlDelayDurationInMillis) {
-        this.minCrawlDelayDurationInMillis = minCrawlDelayDurationInMillis;
     }
 
     /**
@@ -238,21 +139,226 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Sets the maximum duration of delay between each request.
-     *
-     * @param maxCrawlDelayDurationInMillis The maximum duration of delay in
-     * milliseconds
-     */
-    public void setMaximumCrawlDelayDuration(final long maxCrawlDelayDurationInMillis) {
-        this.maxCrawlDelayDurationInMillis = maxCrawlDelayDurationInMillis;
-    }
-
-    /**
      * Returns the maximum duration of delay between each request.
      *
      * @return The maximum duration of delay in milliseconds
      */
     public long getMaximumCrawlDelayDurationInMillis() {
         return maxCrawlDelayDurationInMillis;
+    }
+
+    public static final class CrawlerConfigurationBuilder {
+
+        private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
+        private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
+        private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
+        private static final int DEFAULT_MAX_CRAWL_DEPTH = 0;
+        private static final CrawlDelayStrategy DEFAULT_CRAWL_DELAY = CrawlDelayStrategy.FIXED;
+        private static final long DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS = Duration.ZERO.toMillis();
+        private static final long DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS = Duration.ofSeconds(1).toMillis();
+        private static final long DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS = Duration.ofMinutes(1).toMillis();
+
+        private final Set<CrawlDomain> allowedCrawlDomains;
+        private final Set<CrawlRequest> crawlSeeds;
+
+        private CrawlStrategy crawlStrategy;
+        private boolean filterDuplicateRequests;
+        private boolean filterOffsiteRequests;
+        private int maxCrawlDepth;
+        private CrawlDelayStrategy crawlDelayStrategy;
+        private long fixedCrawlDelayDurationInMillis;
+        private long minCrawlDelayDurationInMillis;
+        private long maxCrawlDelayDurationInMillis;
+
+        public CrawlerConfigurationBuilder() {
+            // Initialize with default values
+            allowedCrawlDomains = new HashSet<>();
+            crawlSeeds = new HashSet<>();
+            crawlStrategy = DEFAULT_CRAWL_STRATEGY;
+            filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
+            filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
+            maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
+            crawlDelayStrategy = DEFAULT_CRAWL_DELAY;
+            fixedCrawlDelayDurationInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
+            minCrawlDelayDurationInMillis = DEFAULT_MIN_CRAWL_DELAY_IN_MILLIS;
+            maxCrawlDelayDurationInMillis = DEFAULT_MAX_CRAWL_DELAY_IN_MILLIS;
+        }
+
+        /**
+         * Appends an internet domain to the list of allowed crawl domains.
+         *
+         * @param allowedCrawlDomain A well-formed internet domain name
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder addAllowedCrawlDomain(final String allowedCrawlDomain) {
+            InternetDomainName domain = InternetDomainName.from(allowedCrawlDomain);
+
+            Validate.isTrue(domain.isUnderPublicSuffix(), String.format("The domain (\"%s\") is not under public suffix.", allowedCrawlDomain));
+
+            allowedCrawlDomains.add(new CrawlDomain(domain));
+            return this;
+        }
+
+        /**
+         * Appends a list of internet domains to the list of allowed crawl
+         * domains.
+         *
+         * @param allowedCrawlDomains A list of well-formed internet domain
+         * names
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder addAllowedCrawlDomains(final List<String> allowedCrawlDomains) {
+            allowedCrawlDomains.forEach(this::addAllowedCrawlDomain);
+            return this;
+        }
+
+        /**
+         * Appends a crawl request to the set of crawl seeds.
+         *
+         * @param request The <code>CrawlRequest</code> instance which
+         * represents the crawl seed
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder addCrawlSeed(final CrawlRequest request) {
+            Validate.notNull(request, "The request cannot be null.");
+
+            crawlSeeds.add(request);
+            return this;
+        }
+
+        /**
+         * Appends a list of crawl requests to the set of crawl seeds.
+         *
+         * @param requests The list of <code>CrawlRequest</code> instances which
+         * represent the crawl seeds
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder addCrawlSeeds(final List<CrawlRequest> requests) {
+            requests.forEach(this::addCrawlSeed);
+            return this;
+        }
+
+        /**
+         * Sets the crawl strategy to be used by the crawler. Breadth-first
+         * strategy orders crawl requests by the lowest crawl depth, whereas
+         * depth-first orders them by the highest crawl depth.
+         *
+         * @param strategy The crawl strategy
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setCrawlStrategy(final CrawlStrategy strategy) {
+            Validate.notNull(strategy, "The strategy cannot be null.");
+
+            crawlStrategy = strategy;
+            return this;
+        }
+
+        /**
+         * Enables or disables duplicate request filtering.
+         *
+         * @param filterDuplicateRequests <code>true</code> means enabled,
+         * <code>false</code> means disabled
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
+            this.filterDuplicateRequests = filterDuplicateRequests;
+            return this;
+        }
+
+        /**
+         * Enables or disables offsite request filtering.
+         *
+         * @param filterOffsiteRequests <code>true</code> means enabled,
+         * <code>false</code> means disabled
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
+            this.filterOffsiteRequests = filterOffsiteRequests;
+            return this;
+        }
+
+        /**
+         * Sets the maximum possible crawl depth. It should be a non-negative
+         * number where 0 means there is no limit.
+         *
+         * @param maxCrawlDepth The maximum crawl depth
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setMaximumCrawlDepth(final int maxCrawlDepth) {
+            Validate.isTrue(maxCrawlDepth >= 0, "The maximum crawl depth cannot be negative.");
+
+            this.maxCrawlDepth = maxCrawlDepth;
+            return this;
+        }
+
+        /**
+         * Sets the crawl delay strategy to be used by the crawler.
+         *
+         * @param strategy The crawl delay strategy
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setCrawlDelayStrategy(final CrawlDelayStrategy strategy) {
+            Validate.notNull(strategy, "The strategy cannot be null.");
+
+            crawlDelayStrategy = strategy;
+            return this;
+        }
+
+        /**
+         * Sets the exact duration of delay between each request.
+         *
+         * @param fixedCrawlDelayDuration The duration of delay
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
+            Validate.notNull(fixedCrawlDelayDuration, "The duration cannot be null.");
+
+            fixedCrawlDelayDurationInMillis = fixedCrawlDelayDuration.toMillis();
+            return this;
+        }
+
+        /**
+         * Sets the minimum duration of delay between each request.
+         *
+         * @param minCrawlDelayDuration The minimum duration of delay
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setMinimumCrawlDelayDuration(final Duration minCrawlDelayDuration) {
+            Validate.notNull(minCrawlDelayDuration, "The duration cannot be null.");
+            Validate.isTrue(!minCrawlDelayDuration.isNegative(), "The minimum crawl delay cannot be negative.");
+
+            long minDelayDurationInMillis = minCrawlDelayDuration.toMillis();
+
+            Validate.isTrue(minDelayDurationInMillis < maxCrawlDelayDurationInMillis, "The minimum crawl delay should be less than the maximum.");
+
+            minCrawlDelayDurationInMillis = minDelayDurationInMillis;
+            return this;
+        }
+
+        /**
+         * Sets the maximum duration of delay between each request.
+         *
+         * @param maxCrawlDelayDuration The maximum duration of delay
+         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         */
+        public CrawlerConfigurationBuilder setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
+            Validate.notNull(maxCrawlDelayDuration, "The duration cannot be null.");
+
+            long maxDelayDurationInMillis = maxCrawlDelayDuration.toMillis();
+
+            Validate.isTrue(maxDelayDurationInMillis > minCrawlDelayDurationInMillis, "The maximum crawl delay should be higher than the minimum.");
+
+            maxCrawlDelayDurationInMillis = maxDelayDurationInMillis;
+            return this;
+        }
+
+        /**
+         * Builds the configured <code>CrawlerConfiguration</code> instance.
+         *
+         * @return The configured <code>CrawlerConfiguration</code> instance
+         */
+        public CrawlerConfiguration build() {
+            return new CrawlerConfiguration(this);
+        }
     }
 }

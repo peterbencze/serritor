@@ -33,14 +33,14 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Constructs a new <code>AdaptiveCrawlDelayMechanism</code> instance.
      *
-     * @param configuration The <code>CrawlerConfiguration</code> instance which
+     * @param config The <code>CrawlerConfiguration</code> instance which
      * specifies the minimum and maximum delay.
      * @param jsExecutor The <code>WebDriver</code> instance which is capable of
      * executing JavaScript.
      */
-    public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration configuration, final JavascriptExecutor jsExecutor) {
-        minDelayInMillis = configuration.getMinimumCrawlDelayDurationInMillis();
-        maxDelayInMillis = configuration.getMaximumCrawlDelayDurationInMillis();
+    public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration config, final JavascriptExecutor jsExecutor) {
+        minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
+        maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
         this.jsExecutor = jsExecutor;
     }
 
