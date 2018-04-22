@@ -171,7 +171,7 @@ public abstract class BaseCrawler {
     /**
      * Passes a crawl request to the crawl frontier. The crawler must be
      * running, otherwise use
-     * {@link CrawlerConfiguration#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
+     * {@link CrawlerConfiguration.CrawlerConfigurationBuilder#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
      * for adding crawl seeds.
      *
      * @param request The <code>CrawlRequest</code> instance
@@ -184,7 +184,10 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Passes multiple crawl requests to the crawl frontier.
+     * Passes multiple crawl requests to the crawl frontier. The crawler must be
+     * running, otherwise use
+     * {@link CrawlerConfiguration.CrawlerConfigurationBuilder#addCrawlSeeds(java.util.List)}
+     * for adding crawl seeds.
      *
      * @param requests The list of <code>CrawlRequest</code> instances
      */
