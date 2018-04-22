@@ -15,9 +15,6 @@
  */
 package com.github.peterbencze.serritor.api;
 
-import com.github.peterbencze.serritor.api.CrawlDelayStrategy;
-import com.github.peterbencze.serritor.api.CrawlRequest;
-import com.github.peterbencze.serritor.api.CrawlStrategy;
 import com.github.peterbencze.serritor.internal.CrawlDomain;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
