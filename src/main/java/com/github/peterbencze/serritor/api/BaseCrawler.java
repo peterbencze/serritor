@@ -23,8 +23,6 @@ import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
-import com.github.peterbencze.serritor.internal.CrawlerConfiguration;
-import com.github.peterbencze.serritor.internal.CrawlerConfigurator;
 import com.github.peterbencze.serritor.internal.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.RandomCrawlDelayMechanism;
 import java.io.IOException;
@@ -54,9 +52,7 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  */
 public abstract class BaseCrawler {
 
-    protected final CrawlerConfigurator configurator;
-
-    private final CrawlerConfiguration configuration;
+    private final CrawlerConfiguration config;
 
     // Indicates if the crawler is currently running or not
     private boolean isStopped;
@@ -73,9 +69,8 @@ public abstract class BaseCrawler {
 
     private CrawlDelayMechanism crawlDelayMechanism;
 
-    protected BaseCrawler() {
-        configuration = new CrawlerConfiguration();
-        configurator = new CrawlerConfigurator(configuration);
+    protected BaseCrawler(final CrawlerConfiguration config) {
+        this.config = config;
 
         // Indicate that the crawler is not running
         isStopped = true;
@@ -96,7 +91,7 @@ public abstract class BaseCrawler {
      * the crawler
      */
     public final void start(final WebDriver driver) {
-        start(driver, new CrawlFrontier(configuration));
+        start(driver, new CrawlFrontier(config));
     }
 
     /**
@@ -312,13 +307,13 @@ public abstract class BaseCrawler {
      * @return The crawl delay mechanism
      */
     private CrawlDelayMechanism createCrawlDelayMechanism() {
-        switch (configuration.getCrawlDelayStrategy()) {
+        switch (config.getCrawlDelayStrategy()) {
             case FIXED:
-                return new FixedCrawlDelayMechanism(configuration);
+                return new FixedCrawlDelayMechanism(config);
             case RANDOM:
-                return new RandomCrawlDelayMechanism(configuration);
+                return new RandomCrawlDelayMechanism(config);
             case ADAPTIVE:
-                AdaptiveCrawlDelayMechanism adaptiveCrawlDelay = new AdaptiveCrawlDelayMechanism(configuration, (JavascriptExecutor) webDriver);
+                AdaptiveCrawlDelayMechanism adaptiveCrawlDelay = new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
                 if (!adaptiveCrawlDelay.isBrowserCompatible()) {
                     throw new UnsupportedOperationException("The Navigation Timing API is not supported by the browser.");
                 }

@@ -15,6 +15,8 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlerConfiguration;
+
 /**
  * A crawl delay mechanism, in which case the delay is constant and equals to
  * the duration specified in the configuration.
@@ -28,11 +30,11 @@ public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Constructs a new <code>FixedCrawlDelayMechanism</code> instance.
      *
-     * @param configuration The <code>CrawlerConfiguration</code> instance which
+     * @param config The <code>CrawlerConfiguration</code> instance which
      * specifies the fixed delay duration.
      */
-    public FixedCrawlDelayMechanism(final CrawlerConfiguration configuration) {
-        this.delayInMillis = configuration.getFixedCrawlDelayDurationInMillis();
+    public FixedCrawlDelayMechanism(final CrawlerConfiguration config) {
+        this.delayInMillis = config.getFixedCrawlDelayDurationInMillis();
     }
 
     /**

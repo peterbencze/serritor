@@ -16,7 +16,10 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Represents a non-HTML response.
@@ -40,6 +43,16 @@ public final class NonHtmlResponse extends CallbackParameter {
      */
     public HttpHeadResponse getHttpHeadResponse() {
         return httpHeadResponse;
+    }
+    
+    /**
+     * Downloads the file specified by the request URL.
+     * 
+     * @param destination The destination <code>File</code> instance
+     * @throws IOException If the URL cannot be opened or I/O error occurs while downloading the file
+     */
+    public void downloadFile(final File destination) throws IOException {
+        FileUtils.copyURLToFile(getCrawlRequest().getRequestUrl().toURL(), destination);
     }
 
     public static final class NonHtmlResponseBuilder extends CallbackParameterBuilder {
