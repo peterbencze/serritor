@@ -15,9 +15,10 @@
  */
 package com.github.peterbencze.serritor.api;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import org.apache.http.Header;
-import org.apache.http.HeaderIterator;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
@@ -48,10 +49,10 @@ public final class HttpHeadResponse {
     /**
      * Returns all the headers of this response.
      *
-     * @return The array of headers
+     * @return The list of all the headers
      */
-    public Header[] getAllHeaders() {
-        return response.getAllHeaders();
+    public List<Header> getAllHeaders() {
+        return Arrays.asList(response.getAllHeaders());
     }
 
     /**
@@ -68,10 +69,10 @@ public final class HttpHeadResponse {
      * Returns all the headers with a specified name of this response.
      *
      * @param name The name of the headers
-     * @return The array of headers
+     * @return The list of headers with a specified name
      */
-    public Header[] getHeaders(final String name) {
-        return response.getHeaders(name);
+    public List<Header> getHeaders(final String name) {
+        return Arrays.asList(response.getHeaders(name));
     }
 
     /**
@@ -91,25 +92,6 @@ public final class HttpHeadResponse {
      */
     public ProtocolVersion getProtocolVersion() {
         return response.getProtocolVersion();
-    }
-
-    /**
-     * Returns an iterator of all the headers.
-     *
-     * @return An iterator of all the headers
-     */
-    public HeaderIterator headerIterator() {
-        return response.headerIterator();
-    }
-
-    /**
-     * Returns an iterator of the headers with a given name.
-     *
-     * @param name The name of the headers
-     * @return An iterator of the headers with a given name
-     */
-    public HeaderIterator headerIterator(final String name) {
-        return response.headerIterator(name);
     }
 
     /**
