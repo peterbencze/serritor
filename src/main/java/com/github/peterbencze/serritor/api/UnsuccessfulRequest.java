@@ -28,10 +28,19 @@ public final class UnsuccessfulRequest extends CallbackParameter {
 
     private final IOException exception;
 
-    private UnsuccessfulRequest(final UnsuccessfulRequestBuilder builder) {
-        super(builder);
+    /**
+     * Constructs a <code>UnsuccessfulRequest</code> instance.
+     *
+     * @param refererUrl The referer URL
+     * @param crawlDepth The current crawl depth
+     * @param crawlRequest The processed crawl request
+     * @param exception The exception that was thrown while trying to fulfill
+     * the request
+     */
+    public UnsuccessfulRequest(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest, final IOException exception) {
+        super(refererUrl, crawlDepth, crawlRequest);
 
-        exception = builder.exception;
+        this.exception = exception;
     }
 
     /**
@@ -42,24 +51,5 @@ public final class UnsuccessfulRequest extends CallbackParameter {
      */
     public IOException getException() {
         return exception;
-    }
-
-    public static final class UnsuccessfulRequestBuilder extends CallbackParameterBuilder {
-
-        private IOException exception;
-
-        public UnsuccessfulRequestBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-            super(refererUrl, crawlDepth, crawlRequest);
-        }
-
-        public UnsuccessfulRequestBuilder setException(final IOException exception) {
-            this.exception = exception;
-            return this;
-        }
-
-        @Override
-        public UnsuccessfulRequest build() {
-            return new UnsuccessfulRequest(this);
-        }
     }
 }

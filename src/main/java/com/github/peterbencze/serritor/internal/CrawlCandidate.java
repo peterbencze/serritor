@@ -19,6 +19,7 @@ import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Optional;
 
 /**
  * Represents a candidate for crawling that will be surely processed by the
@@ -81,6 +82,15 @@ public final class CrawlCandidate implements Serializable {
      */
     public int getPriority() {
         return crawlRequest.getPriority();
+    }
+    
+    /**
+     * Returns metadata associated with the request.
+     *
+     * @return The request's metadata
+     */
+    public Optional<Serializable> getMetadata() {
+        return crawlRequest.getMetadata();
     }
 
     /**

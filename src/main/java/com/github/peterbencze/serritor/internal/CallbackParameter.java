@@ -30,10 +30,17 @@ public abstract class CallbackParameter {
     private final URI refererUrl;
     private final CrawlRequest crawlRequest;
 
-    protected CallbackParameter(final CallbackParameterBuilder builder) {
-        crawlDepth = builder.crawlDepth;
-        refererUrl = builder.refererUrl;
-        crawlRequest = builder.crawlRequest;
+    /**
+     * Base constructor for the callback parameters.
+     * 
+     * @param refererUrl The referer URL
+     * @param crawlDepth The current crawl depth
+     * @param crawlRequest The processed crawl request
+     */
+    protected CallbackParameter(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
+        this.refererUrl = refererUrl;
+        this.crawlDepth = crawlDepth;
+        this.crawlRequest = crawlRequest;
     }
 
     /**
@@ -61,20 +68,5 @@ public abstract class CallbackParameter {
      */
     public final CrawlRequest getCrawlRequest() {
         return crawlRequest;
-    }
-
-    public static abstract class CallbackParameterBuilder {
-
-        private final URI refererUrl;
-        private final int crawlDepth;
-        private final CrawlRequest crawlRequest;
-
-        public CallbackParameterBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-            this.refererUrl = refererUrl;
-            this.crawlDepth = crawlDepth;
-            this.crawlRequest = crawlRequest;
-        }
-
-        public abstract CallbackParameter build();
     }
 }

@@ -26,23 +26,20 @@ import org.openqa.selenium.WebDriver;
  */
 public final class HtmlResponse extends CallbackParameter {
 
-    private final HttpHeadResponse httpHeadResponse;
     private final WebDriver webDriver;
 
-    private HtmlResponse(final HtmlResponseBuilder builder) {
-        super(builder);
-
-        httpHeadResponse = builder.httpHeadResponse;
-        webDriver = builder.webDriver;
-    }
-
     /**
-     * Returns the HTTP HEAD response.
-     *
-     * @return The HTTP HEAD response
+     * Constructs a <code>HtmlResponse</code> instance.
+     * 
+     * @param refererUrl The referer URL
+     * @param crawlDepth The current crawl depth
+     * @param crawlRequest The processed crawl request
+     * @param webDriver The <code>WebDriver</code> instance
      */
-    public HttpHeadResponse getHttpHeadResponse() {
-        return httpHeadResponse;
+    public HtmlResponse(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest, final WebDriver webDriver) {
+        super(refererUrl, crawlDepth, crawlRequest);
+
+        this.webDriver = webDriver;
     }
 
     /**
@@ -52,30 +49,5 @@ public final class HtmlResponse extends CallbackParameter {
      */
     public WebDriver getWebDriver() {
         return webDriver;
-    }
-
-    public static final class HtmlResponseBuilder extends CallbackParameterBuilder {
-
-        private HttpHeadResponse httpHeadResponse;
-        private WebDriver webDriver;
-
-        public HtmlResponseBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-            super(refererUrl, crawlDepth, crawlRequest);
-        }
-
-        public HtmlResponseBuilder setHttpHeadResponse(final HttpHeadResponse httpHeadResponse) {
-            this.httpHeadResponse = httpHeadResponse;
-            return this;
-        }
-
-        public HtmlResponseBuilder setWebDriver(final WebDriver webDriver) {
-            this.webDriver = webDriver;
-            return this;
-        }
-
-        @Override
-        public HtmlResponse build() {
-            return new HtmlResponse(this);
-        }
     }
 }

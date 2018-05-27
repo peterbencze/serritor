@@ -16,9 +16,6 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
-import com.github.peterbencze.serritor.api.HtmlResponse.HtmlResponseBuilder;
-import com.github.peterbencze.serritor.api.NonHtmlResponse.NonHtmlResponseBuilder;
-import com.github.peterbencze.serritor.api.UnsuccessfulRequest.UnsuccessfulRequestBuilder;
 import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
@@ -202,69 +199,56 @@ public abstract class BaseCrawler {
         onBegin();
 
         while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
-            // Get the next crawl candidate from the queue
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
-
-            URI currentCandidateUrl = currentCandidate.getCandidateUrl();
-            URI responseUrl = currentCandidateUrl;
+            URI candidateUrl = currentCandidate.getCandidateUrl();
+            URI refererUrl = currentCandidate.getRefererUrl();
+            int crawlDepth = currentCandidate.getCrawlDepth();
+            CrawlRequest crawlRequest = currentCandidate.getCrawlRequest();
+            URI responseUrl = candidateUrl;
             HttpClientContext context = HttpClientContext.create();
+            HttpResponse httpHeadResponse = null;
+            boolean isUnsuccessfulRequest = false;
 
             // Update the client's cookie store, so it will have the same state as the browser.
             updateClientCookieStore();
 
             try {
                 // Send an HTTP HEAD request to the current URL to determine its availability and content type
-                HttpHeadResponse httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
+                httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
+            } catch (IOException exception) {
+                onUnsuccessfulRequest(new UnsuccessfulRequest(refererUrl, crawlDepth, crawlRequest, exception));
+                isUnsuccessfulRequest = true;
+            }
 
-                // If the request has been redirected, get the final URL
+            if (!isUnsuccessfulRequest) {
                 List<URI> redirectLocations = context.getRedirectLocations();
                 if (redirectLocations != null) {
+                    // If the request has been redirected, get the final URL
                     responseUrl = redirectLocations.get(redirectLocations.size() - 1);
                 }
 
-                if (!responseUrl.equals(currentCandidateUrl)) {
+                if (!responseUrl.equals(candidateUrl)) {
                     // If the request has been redirected, a new crawl request should be created for the redirected URL
+
+                    CrawlRequestBuilder builder = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority());
+                    currentCandidate.getMetadata().ifPresent(builder::setMetadata);
                     
-                    CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
-                    crawlFrontier.feedRequest(redirectedCrawlRequest, false);
+                    crawlFrontier.feedRequest(builder.build(), false);
                 } else if (isContentHtml(httpHeadResponse)) {
-                    boolean isTimedOut = false;
+                    HtmlResponse response = new HtmlResponse(refererUrl, crawlDepth, crawlRequest, webDriver);
 
                     try {
                         // Open the URL in the browser
-                        webDriver.get(currentCandidateUrl.toString());
+                        webDriver.get(candidateUrl.toString());
                     } catch (TimeoutException exception) {
-                        isTimedOut = true;
+                        onResponseTimeout(response);
                     }
 
-                    HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                            currentCandidate.getCrawlRequest())
-                            .setHttpHeadResponse(httpHeadResponse)
-                            .setWebDriver(webDriver)
-                            .build();
-
-                    if (!isTimedOut) {
-                        onResponseComplete(htmlResponse);
-                    } else {
-                        onResponseTimeout(htmlResponse);
-                    }
+                    onResponseComplete(response);
                 } else {
                     // URLs that point to non-HTML content should not be opened in the browser
-
-                    NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                            currentCandidate.getCrawlRequest())
-                            .setHttpHeadResponse(httpHeadResponse)
-                            .build();
-
-                    onNonHtmlResponse(nonHtmlResponse);
+                    onNonHtmlResponse(new NonHtmlResponse(refererUrl, crawlDepth, crawlRequest));
                 }
-            } catch (IOException exception) {
-                UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                        currentCandidate.getCrawlRequest())
-                        .setException(exception)
-                        .build();
-
-                onUnsuccessfulRequest(unsuccessfulRequest);
             }
 
             performDelay();
@@ -279,10 +263,9 @@ public abstract class BaseCrawler {
      * @param destinationUrl The URL to crawl
      * @return The HTTP HEAD response
      */
-    private HttpHeadResponse getHttpHeadResponse(final URI destinationUrl, final HttpClientContext context) throws IOException {
+    private HttpResponse getHttpHeadResponse(final URI destinationUrl, final HttpClientContext context) throws IOException {
         HttpHead headRequest = new HttpHead(destinationUrl.toString());
-        HttpResponse response = httpClient.execute(headRequest, context);
-        return new HttpHeadResponse(response);
+        return httpClient.execute(headRequest, context);
     }
 
     /**
@@ -292,7 +275,7 @@ public abstract class BaseCrawler {
      * @return <code>true</code> if the content is HTML, <code>false</code>
      * otherwise
      */
-    private static boolean isContentHtml(final HttpHeadResponse httpHeadResponse) {
+    private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
         return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
     }

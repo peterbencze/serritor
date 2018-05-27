@@ -28,21 +28,15 @@ import org.apache.commons.io.FileUtils;
  */
 public final class NonHtmlResponse extends CallbackParameter {
 
-    private final HttpHeadResponse httpHeadResponse;
-
-    private NonHtmlResponse(final NonHtmlResponseBuilder builder) {
-        super(builder);
-
-        httpHeadResponse = builder.httpHeadResponse;
-    }
-
     /**
-     * Returns the HTTP HEAD response.
-     *
-     * @return The HTTP HEAD response
+     * Constructs a <code>NonHtmlResponse</code> instance.
+     * 
+     * @param refererUrl The referer URL
+     * @param crawlDepth The current crawl depth
+     * @param crawlRequest The processed crawl request
      */
-    public HttpHeadResponse getHttpHeadResponse() {
-        return httpHeadResponse;
+    public NonHtmlResponse(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
+        super(refererUrl, crawlDepth, crawlRequest);
     }
     
     /**
@@ -53,24 +47,5 @@ public final class NonHtmlResponse extends CallbackParameter {
      */
     public void downloadFile(final File destination) throws IOException {
         FileUtils.copyURLToFile(getCrawlRequest().getRequestUrl().toURL(), destination);
-    }
-
-    public static final class NonHtmlResponseBuilder extends CallbackParameterBuilder {
-
-        private HttpHeadResponse httpHeadResponse;
-
-        public NonHtmlResponseBuilder(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-            super(refererUrl, crawlDepth, crawlRequest);
-        }
-
-        public NonHtmlResponseBuilder setHttpHeadResponse(final HttpHeadResponse httpHeadResponse) {
-            this.httpHeadResponse = httpHeadResponse;
-            return this;
-        }
-
-        @Override
-        public NonHtmlResponse build() {
-            return new NonHtmlResponse(this);
-        }
     }
 }
