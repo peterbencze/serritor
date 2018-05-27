@@ -206,75 +206,65 @@ public abstract class BaseCrawler {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
 
             URI currentCandidateUrl = currentCandidate.getCandidateUrl();
-            String currentRequestUrlAsString = currentCandidateUrl.toString();
-
-            HttpHeadResponse httpHeadResponse;
             URI responseUrl = currentCandidateUrl;
+            HttpClientContext context = HttpClientContext.create();
+
+            // Update the client's cookie store, so it will have the same state as the browser.
+            updateClientCookieStore();
 
             try {
-                HttpClientContext context = HttpClientContext.create();
-
                 // Send an HTTP HEAD request to the current URL to determine its availability and content type
-                httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
+                HttpHeadResponse httpHeadResponse = getHttpHeadResponse(currentCandidateUrl, context);
 
                 // If the request has been redirected, get the final URL
                 List<URI> redirectLocations = context.getRedirectLocations();
                 if (redirectLocations != null) {
                     responseUrl = redirectLocations.get(redirectLocations.size() - 1);
                 }
-            } catch (IOException ex) {
+
+                if (!responseUrl.equals(currentCandidateUrl)) {
+                    // If the request has been redirected, a new crawl request should be created for the redirected URL
+                    
+                    CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
+                    crawlFrontier.feedRequest(redirectedCrawlRequest, false);
+                } else if (isContentHtml(httpHeadResponse)) {
+                    boolean isTimedOut = false;
+
+                    try {
+                        // Open the URL in the browser
+                        webDriver.get(currentCandidateUrl.toString());
+                    } catch (TimeoutException exception) {
+                        isTimedOut = true;
+                    }
+
+                    HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                            currentCandidate.getCrawlRequest())
+                            .setHttpHeadResponse(httpHeadResponse)
+                            .setWebDriver(webDriver)
+                            .build();
+
+                    if (!isTimedOut) {
+                        onResponseComplete(htmlResponse);
+                    } else {
+                        onResponseTimeout(htmlResponse);
+                    }
+                } else {
+                    // URLs that point to non-HTML content should not be opened in the browser
+
+                    NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
+                            currentCandidate.getCrawlRequest())
+                            .setHttpHeadResponse(httpHeadResponse)
+                            .build();
+
+                    onNonHtmlResponse(nonHtmlResponse);
+                }
+            } catch (IOException exception) {
                 UnsuccessfulRequest unsuccessfulRequest = new UnsuccessfulRequestBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
                         currentCandidate.getCrawlRequest())
-                        .setException(ex)
+                        .setException(exception)
                         .build();
 
                 onUnsuccessfulRequest(unsuccessfulRequest);
-                continue;
-            }
-
-            // If the request has been redirected, a new crawl request should be created for the redirected URL
-            if (!responseUrl.toString().equals(currentRequestUrlAsString)) {
-                CrawlRequest redirectedCrawlRequest = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority()).build();
-                crawlFrontier.feedRequest(redirectedCrawlRequest, false);
-
-                continue;
-            }
-
-            // Check if the content of the response is HTML
-            if (isContentHtml(httpHeadResponse)) {
-                boolean timedOut = false;
-
-                try {
-                    // Open the URL in the browser
-                    webDriver.get(currentRequestUrlAsString);
-                } catch (TimeoutException ex) {
-                    timedOut = true;
-                }
-
-                HtmlResponse htmlResponse = new HtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                        currentCandidate.getCrawlRequest())
-                        .setHttpHeadResponse(httpHeadResponse)
-                        .setWebDriver(webDriver)
-                        .build();
-
-                // Check if the request has timed out
-                if (!timedOut) {
-                    onResponseComplete(htmlResponse);
-                } else {
-                    onResponseTimeout(htmlResponse);
-                }
-
-                // Update the client's cookie store, so it will have the same state as the browser.
-                updateClientCookieStore();
-            } else {
-                // URLs that point to non-HTML content should not be opened in the browser
-
-                NonHtmlResponse nonHtmlResponse = new NonHtmlResponseBuilder(currentCandidate.getRefererUrl(), currentCandidate.getCrawlDepth(),
-                        currentCandidate.getCrawlRequest())
-                        .setHttpHeadResponse(httpHeadResponse)
-                        .build();
-
-                onNonHtmlResponse(nonHtmlResponse);
             }
 
             performDelay();
