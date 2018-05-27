@@ -32,13 +32,17 @@ import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.cookie.BasicClientCookie;
+import org.openqa.selenium.Cookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -54,19 +58,12 @@ public abstract class BaseCrawler {
 
     private final CrawlerConfiguration config;
 
-    // Indicates if the crawler is currently running or not
     private boolean isStopped;
-
-    // Indicates if the crawling should be stopped (used for cancelling the loop in the run method)
     private boolean stopCrawling;
-
-    // Used for sending HTTP HEAD requests and receiving associate responses
+    private BasicCookieStore cookieStore;
     private HttpClient httpClient;
-
     private WebDriver webDriver;
-
     private CrawlFrontier crawlFrontier;
-
     private CrawlDelayMechanism crawlDelayMechanism;
 
     protected BaseCrawler(final CrawlerConfiguration config) {
@@ -105,7 +102,10 @@ public abstract class BaseCrawler {
             Validate.validState(isStopped, "The crawler is already started.");
 
             isStopped = false;
-            httpClient = HttpClientBuilder.create().build();
+            cookieStore = new BasicCookieStore();
+            httpClient = HttpClientBuilder.create()
+                    .setDefaultCookieStore(cookieStore)
+                    .build();
             webDriver = Validate.notNull(driver, "The webdriver cannot be null.");
             crawlFrontier = frontierToUse;
             crawlDelayMechanism = createCrawlDelayMechanism();
@@ -263,6 +263,9 @@ public abstract class BaseCrawler {
                 } else {
                     onResponseTimeout(htmlResponse);
                 }
+
+                // Update the client's cookie store, so it will have the same state as the browser.
+                updateClientCookieStore();
             } else {
                 // URLs that point to non-HTML content should not be opened in the browser
 
@@ -337,6 +340,38 @@ public abstract class BaseCrawler {
             Thread.currentThread().interrupt();
             stopCrawling = true;
         }
+    }
+
+    /**
+     * Adds all the browser cookies for the current domain to the HTTP client's
+     * cookie store, replacing any existing equivalent ones.
+     */
+    private void updateClientCookieStore() {
+        webDriver.manage()
+                .getCookies()
+                .stream()
+                .map(BaseCrawler::convertBrowserCookie)
+                .forEach(cookieStore::addCookie);
+    }
+
+    /**
+     * Converts a browser cookie to a HTTP client one.
+     *
+     * @param browserCookie The browser cookie to be converted
+     * @return The converted HTTP client cookie
+     */
+    private static BasicClientCookie convertBrowserCookie(final Cookie browserCookie) {
+        BasicClientCookie clientCookie = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
+        clientCookie.setDomain(browserCookie.getDomain());
+        clientCookie.setPath(browserCookie.getPath());
+        clientCookie.setExpiryDate(browserCookie.getExpiry());
+        clientCookie.setSecure(browserCookie.isSecure());
+
+        if (browserCookie.isHttpOnly()) {
+            clientCookie.setAttribute("httponly", StringUtils.EMPTY);
+        }
+
+        return clientCookie;
     }
 
     /**
