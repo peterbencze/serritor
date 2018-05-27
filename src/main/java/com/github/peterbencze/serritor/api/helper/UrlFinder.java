@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -44,7 +44,7 @@ public final class UrlFinder {
     private final Set<Pattern> urlPatterns;
     private final Set<By> locatingMechanisms;
     private final Set<String> attributes;
-    private final Function<String, Boolean> validator;
+    private final Predicate<String> validator;
 
     private UrlFinder(final UrlFinderBuilder builder) {
         urlPatterns = builder.urlPatterns;
@@ -97,7 +97,7 @@ public final class UrlFinder {
                     while (urlPatternMatcher.find()) {
                         String foundUrl = urlPatternMatcher.group().trim();
 
-                        if (validator.apply(foundUrl)) {
+                        if (validator.test(foundUrl)) {
                             foundUrls.add(foundUrl);
                         }
                     }
@@ -110,13 +110,13 @@ public final class UrlFinder {
         
         private static final Set<By> DEFAULT_LOCATING_MECHANISMS = Sets.newHashSet(By.tagName("a"));
         private static final Set<String> DEFAULT_ATTRIBUTES = Sets.newHashSet("href");
-        private static final Function<String, Boolean> DEFAULT_VALIDATOR = UrlFinderBuilder::isValidUrl;
+        private static final Predicate<String> DEFAULT_VALIDATOR = UrlFinderBuilder::isValidUrl;
 
         private final Set<Pattern> urlPatterns;
 
         private Set<By> locatingMechanisms;
         private Set<String> attributes;
-        private Function<String, Boolean> validator;
+        private Predicate<String> validator;
 
         /**
          * Constructs a <code>UrlFinderBuilder</code> instance that can be used
@@ -195,12 +195,12 @@ public final class UrlFinder {
         }
 
         /**
-         * Sets a function to be used for validating found URLs.
+         * Sets a predicate to be used for validating found URLs.
          *
-         * @param validator The validator function
+         * @param validator The validator predicate
          * @return The <code>UrlFinderBuilder</code> instance
          */
-        public UrlFinderBuilder setValidator(final Function<String, Boolean> validator) {
+        public UrlFinderBuilder setValidator(final Predicate<String> validator) {
             Validate.notNull(validator, "The validator function cannot be null.");
 
             this.validator = validator;
