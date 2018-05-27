@@ -21,6 +21,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Optional;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Represents a crawl request that might be processed by the crawler in the
@@ -138,7 +139,7 @@ public final class CrawlRequest implements Serializable {
          * @return The <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
-            this.metadata = metadata;
+            this.metadata = Validate.notNull(metadata, "The metadata cannot be null.");
             return this;
         }
 
