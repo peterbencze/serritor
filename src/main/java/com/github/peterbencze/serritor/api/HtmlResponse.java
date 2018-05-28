@@ -16,7 +16,6 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
-import java.net.URI;
 import org.openqa.selenium.WebDriver;
 
 /**
@@ -29,23 +28,21 @@ public final class HtmlResponse extends CallbackParameter {
     private final WebDriver webDriver;
 
     /**
-     * Constructs a <code>HtmlResponse</code> instance.
-     * 
-     * @param refererUrl The referer URL
-     * @param crawlDepth The current crawl depth
-     * @param crawlRequest The processed crawl request
-     * @param webDriver The <code>WebDriver</code> instance
+     * Creates an {@link HtmlResponse} instance.
+     *
+     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
+     * @param webDriver The {@link WebDriver} instance
      */
-    public HtmlResponse(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest, final WebDriver webDriver) {
-        super(refererUrl, crawlDepth, crawlRequest);
+    public HtmlResponse(final CrawlCandidate crawlCandidate, final WebDriver webDriver) {
+        super(crawlCandidate);
 
         this.webDriver = webDriver;
     }
 
     /**
-     * Returns the <code>WebDriver</code> instance for the browser.
+     * Returns the {@link WebDriver} instance of the browser.
      *
-     * @return The <code>WebDriver</code> instance
+     * @return The {@link WebDriver} instance of the browser
      */
     public WebDriver getWebDriver() {
         return webDriver;

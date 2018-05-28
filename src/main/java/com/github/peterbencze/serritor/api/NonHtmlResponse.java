@@ -18,7 +18,6 @@ package com.github.peterbencze.serritor.api;
 import com.github.peterbencze.serritor.internal.CallbackParameter;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import org.apache.commons.io.FileUtils;
 
 /**
@@ -29,23 +28,22 @@ import org.apache.commons.io.FileUtils;
 public final class NonHtmlResponse extends CallbackParameter {
 
     /**
-     * Constructs a <code>NonHtmlResponse</code> instance.
-     * 
-     * @param refererUrl The referer URL
-     * @param crawlDepth The current crawl depth
-     * @param crawlRequest The processed crawl request
+     * Creates a {@link NonHtmlResponse} instance.
+     *
+     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
      */
-    public NonHtmlResponse(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-        super(refererUrl, crawlDepth, crawlRequest);
+    public NonHtmlResponse(final CrawlCandidate crawlCandidate) {
+        super(crawlCandidate);
     }
-    
+
     /**
      * Downloads the file specified by the request URL.
-     * 
-     * @param destination The destination <code>File</code> instance
-     * @throws IOException If the URL cannot be opened or I/O error occurs while downloading the file
+     *
+     * @param destination The destination {@link File} instance
+     * @throws IOException If the URL cannot be opened or I/O error occurs while
+     * downloading the file
      */
     public void downloadFile(final File destination) throws IOException {
-        FileUtils.copyURLToFile(getCrawlRequest().getRequestUrl().toURL(), destination);
+        FileUtils.copyURLToFile(getCrawlCandidate().getCandidateUrl().toURL(), destination);
     }
 }

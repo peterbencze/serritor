@@ -24,9 +24,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 
 /**
- * Represents a crawl request that might be processed by the crawler in the
- * future. The reason why it is not sure that it will be processed is because it
- * might get filtered out by one of the enabled filters.
+ * Represents a crawl request that may be completed by the crawler. If request
+ * filtering is enabled, it could get filtered out.
  *
  * @author Peter Bencze
  */
@@ -35,7 +34,7 @@ public final class CrawlRequest implements Serializable {
     private final URI requestUrl;
     private final int priority;
     private final Serializable metadata;
-    
+
     private transient InternetDomainName domain;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {
@@ -46,16 +45,16 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
-     * Returns the request's URL.
+     * Returns the request URL.
      *
-     * @return The URL of the request
+     * @return The request URL
      */
     public URI getRequestUrl() {
         return requestUrl;
     }
 
     /**
-     * Returns the domain of the request's URL.
+     * Returns the domain of the request URL.
      *
      * @return The domain of the request URL
      */
@@ -64,7 +63,7 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
-     * Returns the request's priority.
+     * Returns the priority of the request.
      *
      * @return The priority of the request
      */
@@ -73,30 +72,31 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
-     * Returns metadata associated with the request.
+     * Returns the metadata associated with the request.
      *
-     * @return The request's metadata
+     * @return The metadata associated with the request
      */
     public Optional<Serializable> getMetadata() {
         return Optional.ofNullable(metadata);
     }
 
+    /**
+     * Builds crawl requests which can be fed to the crawler.
+     */
     public static final class CrawlRequestBuilder {
 
         private static final int DEFAULT_PRIORITY = 0;
 
         private final URI requestUrl;
         private final InternetDomainName domain;
-        
+
         private int priority;
         private Serializable metadata;
 
         /**
-         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
-         * used to create CrawRequest instances.
+         * Creates a {@link CrawlRequestBuilder} instance.
          *
-         * @param requestUrl The request's URL given as a <code>URL</code>
-         * instance
+         * @param requestUrl The request URL
          */
         public CrawlRequestBuilder(final URI requestUrl) {
             this.requestUrl = requestUrl;
@@ -109,22 +109,20 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Constructs a <code>CrawlRequestBuilder</code> instance that can be
-         * used to create <code>CrawRequest</code> instances.
+         * Creates a {@link CrawlRequestBuilder} instance.
          *
-         * @param requestUrl The request's URL given as a <code>String</code>
-         * instance
+         * @param requestUrl The request URL
          */
         public CrawlRequestBuilder(final String requestUrl) {
             this(URI.create(requestUrl));
         }
 
         /**
-         * Sets the request's priority.
+         * Sets the priority of the request.
          *
          * @param priority The priority of the request (higher number means
          * higher priority)
-         * @return The <code>CrawlRequestBuilder</code> instance
+         * @return The {@link CrawlRequestBuilder} instance
          */
         public CrawlRequestBuilder setPriority(final int priority) {
             this.priority = priority;
@@ -132,11 +130,11 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Sets additional metadata for the request which can be later accessed
-         * when the crawler processed the request.
+         * Sets the metadata of the request which can be later accessed when the
+         * crawler completed the request.
          *
          * @param metadata The metadata associated with the request
-         * @return The <code>CrawlRequestBuilder</code> instance
+         * @return The {@link CrawlRequestBuilder} instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
             this.metadata = Validate.notNull(metadata, "The metadata cannot be null.");
@@ -144,9 +142,9 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Builds the configured <code>CrawlRequest</code> instance.
+         * Builds the configured {@link CrawlRequest} instance.
          *
-         * @return The configured <code>CrawlRequest</code> instance
+         * @return The configured {@link CrawlRequest} instance
          */
         public CrawlRequest build() {
             return new CrawlRequest(this);
@@ -155,7 +153,7 @@ public final class CrawlRequest implements Serializable {
 
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        
+
         domain = InternetDomainName.from(requestUrl.getHost());
     }
 }

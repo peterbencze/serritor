@@ -17,7 +17,6 @@ package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.internal.CallbackParameter;
 import java.io.IOException;
-import java.net.URI;
 
 /**
  * Represents an unsuccessful request.
@@ -29,25 +28,23 @@ public final class UnsuccessfulRequest extends CallbackParameter {
     private final IOException exception;
 
     /**
-     * Constructs a <code>UnsuccessfulRequest</code> instance.
+     * Creates an {@link UnsuccessfulRequest} instance.
      *
-     * @param refererUrl The referer URL
-     * @param crawlDepth The current crawl depth
-     * @param crawlRequest The processed crawl request
+     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
      * @param exception The exception that was thrown while trying to fulfill
      * the request
      */
-    public UnsuccessfulRequest(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest, final IOException exception) {
-        super(refererUrl, crawlDepth, crawlRequest);
+    public UnsuccessfulRequest(final CrawlCandidate crawlCandidate, final IOException exception) {
+        super(crawlCandidate);
 
         this.exception = exception;
     }
 
     /**
-     * Returns the exception that was thrown while trying to fulfill the
+     * Returns the exception which was thrown while trying to fulfill the
      * request.
      *
-     * @return The <code>IOException</code> instance
+     * @return The thrown {@link IOException} instance
      */
     public IOException getException() {
         return exception;

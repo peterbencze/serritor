@@ -15,58 +15,32 @@
  */
 package com.github.peterbencze.serritor.internal;
 
-import com.github.peterbencze.serritor.api.CrawlRequest;
-import java.net.URI;
-import java.util.Optional;
+import com.github.peterbencze.serritor.api.CrawlCandidate;
 
 /**
- * The base class from which all callback parameters inherit from.
+ * Base class from which all callback parameters inherit from.
  *
  * @author Peter Bencze
  */
 public abstract class CallbackParameter {
 
-    private final int crawlDepth;
-    private final URI refererUrl;
-    private final CrawlRequest crawlRequest;
+    private final CrawlCandidate crawlCandidate;
 
     /**
-     * Base constructor for the callback parameters.
-     * 
-     * @param refererUrl The referer URL
-     * @param crawlDepth The current crawl depth
-     * @param crawlRequest The processed crawl request
+     * Base constructor of callback parameters.
+     *
+     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
      */
-    protected CallbackParameter(final URI refererUrl, final int crawlDepth, final CrawlRequest crawlRequest) {
-        this.refererUrl = refererUrl;
-        this.crawlDepth = crawlDepth;
-        this.crawlRequest = crawlRequest;
+    protected CallbackParameter(final CrawlCandidate crawlCandidate) {
+        this.crawlCandidate = crawlCandidate;
     }
 
     /**
-     * Returns the referer URL.
+     * Returns the crawl candidate which was crawled by the crawler.
      *
-     * @return The referer URL
+     * @return The crawled {@link CrawlCandidate} instance
      */
-    public final Optional<URI> getRefererUrl() {
-        return Optional.ofNullable(refererUrl);
-    }
-
-    /**
-     * Returns the current crawl depth.
-     *
-     * @return The current crawl depth
-     */
-    public final int getCrawlDepth() {
-        return crawlDepth;
-    }
-
-    /**
-     * Returns the crawl request that was processed by the crawler.
-     *
-     * @return The processed <code>CrawlRequest</code> instance
-     */
-    public final CrawlRequest getCrawlRequest() {
-        return crawlRequest;
+    public final CrawlCandidate getCrawlCandidate() {
+        return crawlCandidate;
     }
 }

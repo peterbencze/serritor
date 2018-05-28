@@ -15,9 +15,10 @@
  */
 package com.github.peterbencze.serritor.internal;
 
+import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.CrawlRequest;
-import com.github.peterbencze.serritor.internal.CrawlCandidate.CrawlCandidateBuilder;
+import com.github.peterbencze.serritor.api.CrawlCandidate.CrawlCandidateBuilder;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Arrays;

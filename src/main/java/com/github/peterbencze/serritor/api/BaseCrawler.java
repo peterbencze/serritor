@@ -17,7 +17,6 @@ package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
-import com.github.peterbencze.serritor.internal.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.FixedCrawlDelayMechanism;
@@ -201,9 +200,6 @@ public abstract class BaseCrawler {
         while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             URI candidateUrl = currentCandidate.getCandidateUrl();
-            URI refererUrl = currentCandidate.getRefererUrl();
-            int crawlDepth = currentCandidate.getCrawlDepth();
-            CrawlRequest crawlRequest = currentCandidate.getCrawlRequest();
             URI responseUrl = candidateUrl;
             HttpClientContext context = HttpClientContext.create();
             HttpResponse httpHeadResponse = null;
@@ -216,7 +212,7 @@ public abstract class BaseCrawler {
                 // Send an HTTP HEAD request to the current URL to determine its availability and content type
                 httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
             } catch (IOException exception) {
-                onUnsuccessfulRequest(new UnsuccessfulRequest(refererUrl, crawlDepth, crawlRequest, exception));
+                onUnsuccessfulRequest(new UnsuccessfulRequest(currentCandidate, exception));
                 isUnsuccessfulRequest = true;
             }
 
@@ -232,10 +228,10 @@ public abstract class BaseCrawler {
 
                     CrawlRequestBuilder builder = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority());
                     currentCandidate.getMetadata().ifPresent(builder::setMetadata);
-                    
+
                     crawlFrontier.feedRequest(builder.build(), false);
                 } else if (isContentHtml(httpHeadResponse)) {
-                    HtmlResponse response = new HtmlResponse(refererUrl, crawlDepth, crawlRequest, webDriver);
+                    HtmlResponse response = new HtmlResponse(currentCandidate, webDriver);
 
                     try {
                         // Open the URL in the browser
@@ -247,7 +243,7 @@ public abstract class BaseCrawler {
                     onResponseComplete(response);
                 } else {
                     // URLs that point to non-HTML content should not be opened in the browser
-                    onNonHtmlResponse(new NonHtmlResponse(refererUrl, crawlDepth, crawlRequest));
+                    onNonHtmlResponse(new NonHtmlResponse(currentCandidate));
                 }
             }
 

@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.api;
 
-import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Optional;
 
 /**
- * Represents a candidate for crawling that will be surely processed by the
- * crawler.
+ * Represents a candidate to be crawled by the crawler.
  *
  * @author Peter Bencze
  */
@@ -33,14 +31,14 @@ public final class CrawlCandidate implements Serializable {
     private final int crawlDepth;
     private final CrawlRequest crawlRequest;
 
-    public CrawlCandidate(final CrawlCandidateBuilder builder) {
+    private CrawlCandidate(final CrawlCandidateBuilder builder) {
         this.crawlRequest = builder.crawlRequest;
         this.refererUrl = builder.refererUrl;
         this.crawlDepth = builder.crawlDepth;
     }
 
     /**
-     * Returns the referer's URL.
+     * Returns the referer URL.
      *
      * @return The URL of the referer
      */
@@ -49,7 +47,7 @@ public final class CrawlCandidate implements Serializable {
     }
 
     /**
-     * Returns the candidate's URL.
+     * Returns the candidate URL.
      *
      * @return The URL of the candidate
      */
@@ -58,7 +56,7 @@ public final class CrawlCandidate implements Serializable {
     }
 
     /**
-     * Returns the domain of the candidate's URL.
+     * Returns the domain of the candidate URL.
      *
      * @return The domain of the candidate URL
      */
@@ -69,7 +67,7 @@ public final class CrawlCandidate implements Serializable {
     /**
      * Returns the crawl depth of the candidate.
      *
-     * @return The crawl depth
+     * @return The crawl depth of the candidate
      */
     public int getCrawlDepth() {
         return crawlDepth;
@@ -78,30 +76,24 @@ public final class CrawlCandidate implements Serializable {
     /**
      * Returns the priority of the candidate.
      *
-     * @return The priority
+     * @return The priority of the candidate
      */
     public int getPriority() {
         return crawlRequest.getPriority();
     }
-    
+
     /**
-     * Returns metadata associated with the request.
+     * Returns the metadata associated with the candidate.
      *
-     * @return The request's metadata
+     * @return The metadata associated with the candidate
      */
     public Optional<Serializable> getMetadata() {
         return crawlRequest.getMetadata();
     }
 
     /**
-     * Returns the crawl request from which this candidate was constructed.
-     *
-     * @return The <code>CrawlRequest</code> instance
+     * Builds crawl candidates to be crawled by the crawler.
      */
-    public CrawlRequest getCrawlRequest() {
-        return crawlRequest;
-    }
-
     public static final class CrawlCandidateBuilder {
 
         private final CrawlRequest crawlRequest;
@@ -109,20 +101,43 @@ public final class CrawlCandidate implements Serializable {
         private URI refererUrl;
         private int crawlDepth;
 
+        /**
+         * Creates a {@link CrawlCandidateBuilder} instance.
+         *
+         * @param request The {@link CrawlRequest} instance from which this
+         * candidate is built
+         */
         public CrawlCandidateBuilder(final CrawlRequest request) {
             crawlRequest = request;
         }
 
+        /**
+         * Sets the referer URL.
+         *
+         * @param refererUrl The referer URL
+         * @return The {@link CrawlCandidateBuilder} instance
+         */
         public CrawlCandidateBuilder setRefererUrl(final URI refererUrl) {
             this.refererUrl = refererUrl;
             return this;
         }
 
+        /**
+         * Sets the crawl depth of the candidate.
+         *
+         * @param crawlDepth The crawl depth of the candidate
+         * @return The {@link CrawlCandidateBuilder} instance
+         */
         public CrawlCandidateBuilder setCrawlDepth(final int crawlDepth) {
             this.crawlDepth = crawlDepth;
             return this;
         }
 
+        /**
+         * Builds the configured {@link CrawlCandidate} instance.
+         *
+         * @return The configured {@link CrawlCandidate} instance
+         */
         public CrawlCandidate build() {
             return new CrawlCandidate(this);
         }
