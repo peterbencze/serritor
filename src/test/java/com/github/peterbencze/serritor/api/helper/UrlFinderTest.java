@@ -29,50 +29,50 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 /**
- * Test cases for <code>UrlFinder</code>.
+ * Test cases for {@link UrlFinder}.
  *
  * @author Peter Bencze
  */
 public final class UrlFinderTest {
-    
+
     private static final Pattern URL_PATTERN = Pattern.compile(".+valid-url.+");
     private static final String ATTRIBUTE = "href";
     private static final String TAG_NAME = "a";
     private static final String VALID_URL = "http://valid-url.com";
     private static final String INVALID_URL = "invalid-url";
     private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
-    
+
     private WebDriver mockedDriver;
     private PageLoadEvent mockedEvent;
     private WebElement mockedElementWithValidUrl;
     private WebElement mockedElementWithInvalidUrlFormat;
-    private WebElement mockedElementWithInvalidDomain; 
+    private WebElement mockedElementWithInvalidDomain;
     private UrlFinder urlFinder;
 
     @Before
     public void initialize() {
         mockedEvent = Mockito.mock(PageLoadEvent.class);
-        
+
         mockedDriver = Mockito.mock(WebDriver.class);
         Mockito.when(mockedEvent.getWebDriver())
-                .thenReturn(mockedDriver);     
-        
+                .thenReturn(mockedDriver);
+
         mockedElementWithValidUrl = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(VALID_URL); 
-        
+                .thenReturn(VALID_URL);
+
         mockedElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithInvalidUrlFormat.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(INVALID_URL); 
-        
+                .thenReturn(INVALID_URL);
+
         mockedElementWithInvalidDomain = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(URL_WITH_INVALID_DOMAIN);
 
-        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);         
+        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);
         Mockito.when(mockedDriver.findElements(By.tagName(TAG_NAME)))
                 .thenReturn(elementList);
-        
+
         urlFinder = new UrlFinderBuilder(URL_PATTERN).build();
     }
 

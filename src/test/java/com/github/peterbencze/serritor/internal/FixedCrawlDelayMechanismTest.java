@@ -23,21 +23,21 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Test cases for <code>FixedCrawlDelayMechanism</code>.
- * 
+ * Test cases for {@link FixedCrawlDelayMechanism}.
+ *
  * @author Peter Bencze
  */
 public class FixedCrawlDelayMechanismTest {
-    
+
     private CrawlerConfiguration config;
     private FixedCrawlDelayMechanism crawlDelayMechanism;
-    
+
     @Before
     public void initialize() {
         config = Mockito.spy(new CrawlerConfigurationBuilder().build());
         crawlDelayMechanism = new FixedCrawlDelayMechanism(config);
     }
-    
+
     @Test
     public void testGetDelay() {
         // The delay should be the same as in the configuration

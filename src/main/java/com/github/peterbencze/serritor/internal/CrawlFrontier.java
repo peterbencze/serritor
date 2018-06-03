@@ -16,9 +16,9 @@
 package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.api.CrawlerConfiguration;
-import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlCandidate.CrawlCandidateBuilder;
+import com.github.peterbencze.serritor.api.CrawlRequest;
+import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Arrays;
@@ -32,8 +32,7 @@ import java.util.function.Function;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
- * Provides an interface for the crawler to manage crawl requests while
- * crawling.
+ * Manages crawl requests and provides crawl candidates to the crawler.
  *
  * @author Peter Bencze
  */
@@ -48,11 +47,16 @@ public final class CrawlFrontier implements Serializable {
 
     private CrawlCandidate currentCandidate;
 
+    /**
+     * Creates a {@link CrawlFrontier} instance.
+     *
+     * @param config the crawler configuration
+     */
     public CrawlFrontier(final CrawlerConfiguration config) {
         this.config = config;
 
         allowedCrawlDomains = config.getAllowedCrawlDomains();
-        
+
         urlFingerprints = new HashSet<>();
 
         // Construct a priority queue according to the crawl strategy specified in the configuration
@@ -68,23 +72,22 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Feeds a crawl request to the frontier.
      *
-     * @param request The <code>CrawlRequest</code> instance to be fed
-     * @param isCrawlSeed <code>true</code> if the request is a crawl seed,
-     * <code>false</code> otherwise
+     * @param request the crawl request
+     * @param isCrawlSeed indicates if the request is a crawl seed
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
         if (config.isOffsiteRequestFilteringEnabled()) {
             // Check if the request's domain is in the allowed crawl domains
-            
+
             boolean inCrawlDomain = false;
-            
+
             for (CrawlDomain allowedCrawlDomain : allowedCrawlDomains) {
                 if (allowedCrawlDomain.contains(request.getDomain())) {
                     inCrawlDomain = true;
                     break;
                 }
             }
-            
+
             if (!inCrawlDomain) {
                 return;
             }
@@ -92,10 +95,9 @@ public final class CrawlFrontier implements Serializable {
 
         if (config.isDuplicateRequestFilteringEnabled()) {
             // Check if the URL has already been crawled
-            
+
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
 
-            
             if (urlFingerprints.contains(urlFingerprint)) {
                 return;
             }
@@ -135,9 +137,9 @@ public final class CrawlFrontier implements Serializable {
     }
 
     /**
-     * Gets the next candidate from the queue.
+     * Returns the next crawl candidate from the queue.
      *
-     * @return The next <code>CrawlCandidate</code> instance
+     * @return the next crawl candidate from the queue
      */
     public CrawlCandidate getNextCandidate() {
         currentCandidate = candidates.poll();
@@ -147,11 +149,11 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Creates the fingerprint of the given URL.
      *
-     * @param url The URL that the fingerprint will be created for
-     * @return The fingerprint of the URL
+     * @param url the URL for which the fingerprint is created
+     * @return the fingerprint of the URL
      */
     private static String createFingerprintForUrl(final URI url) {
-        // First, we start off with the host only
+        // We start off with the host only
         StringBuilder truncatedUrl = new StringBuilder(url.getHost());
 
         // If there is a path in the URL, we append it after the host
@@ -174,15 +176,15 @@ public final class CrawlFrontier implements Serializable {
                     .forEachOrdered(truncatedUrl::append);
         }
 
-        // Finally, create the SHA-256 hash
         return DigestUtils.sha256Hex(truncatedUrl.toString());
     }
 
     /**
-     * Creates a new priority queue using the specified strategy.
+     * Creates a priority queue using the strategy specified in the
+     * configuration.
      *
-     * @return The <code>PriorityQueue</code> instance for crawl requests using
-     * the given comparator
+     * @return the priority queue using the strategy specified in the
+     * configuration
      */
     private PriorityQueue<CrawlCandidate> createPriorityQueue() {
         switch (config.getCrawlStrategy()) {

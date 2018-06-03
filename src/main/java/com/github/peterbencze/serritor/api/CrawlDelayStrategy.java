@@ -16,7 +16,8 @@
 package com.github.peterbencze.serritor.api;
 
 /**
- * Available crawl delay strategies that can be used by the crawler.
+ * Available crawl delay strategies which define how the delay between each
+ * request is determined.
  * 
  * @author Peter Bencze
  */

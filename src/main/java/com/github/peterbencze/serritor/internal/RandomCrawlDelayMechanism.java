@@ -30,10 +30,10 @@ public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
     private final long upperLimit;
 
     /**
-     * Constructs a new <code>RandomCrawlDelayMechanism</code> instance.
+     * Creates a {@link RandomCrawlDelayMechanism} instance.
      *
-     * @param config The <code>CrawlerConfiguration</code> instance which
-     * specifies the minimum and maximum delay.
+     * @param config the crawler configuration which specifies the minimum and
+     * maximum delay.
      */
     public RandomCrawlDelayMechanism(final CrawlerConfiguration config) {
         lowerLimit = config.getMinimumCrawlDelayDurationInMillis();
@@ -44,7 +44,7 @@ public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
      * Returns a random delay between the minimum and maximum range specified in
      * the configuration.
      *
-     * @return The delay in milliseconds
+     * @return the delay in milliseconds
      */
     @Override
     public long getDelay() {

@@ -16,7 +16,8 @@
 package com.github.peterbencze.serritor.api;
 
 /**
- * Available strategies that can be used while crawling.
+ * Available crawl strategies that define the order in which crawl requests are
+ * processed.
  *
  * @author Peter Bencze
  */

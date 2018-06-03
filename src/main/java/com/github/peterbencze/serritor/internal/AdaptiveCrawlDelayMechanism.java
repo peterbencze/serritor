@@ -32,12 +32,12 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     private final JavascriptExecutor jsExecutor;
 
     /**
-     * Constructs a new <code>AdaptiveCrawlDelayMechanism</code> instance.
+     * Creates an {@link AdaptiveCrawlDelayMechanism} instance.
      *
-     * @param config The <code>CrawlerConfiguration</code> instance which
-     * specifies the minimum and maximum delay.
-     * @param jsExecutor The <code>WebDriver</code> instance which is capable of
-     * executing JavaScript.
+     * @param config the crawler configuration which specifies the minimum and
+     * maximum delay
+     * @param jsExecutor the {@link WebDriver} instance which is capable of
+     * executing JavaScript
      */
     public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration config, final JavascriptExecutor jsExecutor) {
         minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
@@ -61,7 +61,7 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
      * than the minimum, it returns the minimum delay. If the calculated delay
      * is higher than the maximum, it returns the maximum delay.
      *
-     * @return The delay in milliseconds
+     * @return the delay in milliseconds
      */
     @Override
     public long getDelay() {

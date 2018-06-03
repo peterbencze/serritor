@@ -16,16 +16,16 @@
 package com.github.peterbencze.serritor.internal;
 
 /**
- * An interface that every crawl delay mechanism should implement.
- * 
+ * An interface which should be implemented by every crawl delay mechanism.
+ *
  * @author Peter Bencze
  */
 public interface CrawlDelayMechanism {
-    
+
     /**
-     * Returns the delay that should pass between each request.
-     * 
-     * @return The duration of delay in milliseconds
+     * Returns the delay which should pass between each request.
+     *
+     * @return the duration of delay in milliseconds
      */
     long getDelay();
 }

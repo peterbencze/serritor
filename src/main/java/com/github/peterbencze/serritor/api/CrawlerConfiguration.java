@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.commons.lang3.Validate;
 
 /**
- * This class contains the settings of the crawler.
+ * Contains the settings of the crawler.
  *
  * @author Peter Bencze
  */
@@ -58,7 +58,7 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the set of allowed crawl domains.
      *
-     * @return The set of allowed crawl domains
+     * @return the set of allowed crawl domains
      */
     public Set<CrawlDomain> getAllowedCrawlDomains() {
         return allowedCrawlDomains;
@@ -67,7 +67,7 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the set of crawl seeds.
      *
-     * @return The set of crawl seeds
+     * @return the set of crawl seeds
      */
     public Set<CrawlRequest> getCrawlSeeds() {
         return crawlSeeds;
@@ -76,14 +76,14 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the crawl strategy of the crawler.
      *
-     * @return The crawl strategy
+     * @return the crawl strategy of the crawler
      */
     public CrawlStrategy getCrawlStrategy() {
         return crawlStrategy;
     }
 
     /**
-     * Indicates if duplicate request filtering is enabled or not.
+     * Indicates if duplicate request filtering is enabled.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
@@ -92,7 +92,7 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Indicates if offsite request filtering is enabled or not.
+     * Indicates if offsite request filtering is enabled.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
@@ -101,18 +101,18 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Returns the maximum possible crawl depth.
+     * Returns the maximum crawl depth.
      *
-     * @return The maximum crawl depth
+     * @return the maximum crawl depth
      */
     public int getMaximumCrawlDepth() {
         return maxCrawlDepth;
     }
 
     /**
-     * Returns the crawl delay strategy used by the crawler.
+     * Returns the crawl delay strategy of the crawler.
      *
-     * @return The crawl delay strategy
+     * @return the crawl delay strategy of the crawler
      */
     public CrawlDelayStrategy getCrawlDelayStrategy() {
         return crawlDelayStrategy;
@@ -121,7 +121,7 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the exact duration of delay between each request.
      *
-     * @return The duration of delay in milliseconds
+     * @return the duration of delay in milliseconds
      */
     public long getFixedCrawlDelayDurationInMillis() {
         return fixedCrawlDelayDurationInMillis;
@@ -130,7 +130,7 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the minimum duration of delay between each request.
      *
-     * @return The minimum duration of delay in milliseconds
+     * @return the minimum duration of delay in milliseconds
      */
     public long getMinimumCrawlDelayDurationInMillis() {
         return minCrawlDelayDurationInMillis;
@@ -139,12 +139,15 @@ public final class CrawlerConfiguration implements Serializable {
     /**
      * Returns the maximum duration of delay between each request.
      *
-     * @return The maximum duration of delay in milliseconds
+     * @return the maximum duration of delay in milliseconds
      */
     public long getMaximumCrawlDelayDurationInMillis() {
         return maxCrawlDelayDurationInMillis;
     }
 
+    /**
+     * Builds {@link CrawlerConfiguration} instances.
+     */
     public static final class CrawlerConfigurationBuilder {
 
         private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
@@ -168,6 +171,9 @@ public final class CrawlerConfiguration implements Serializable {
         private long minCrawlDelayDurationInMillis;
         private long maxCrawlDelayDurationInMillis;
 
+        /**
+         * Creates a {@link CrawlerConfigurationBuilder} instance.
+         */
         public CrawlerConfigurationBuilder() {
             // Initialize with default values
             allowedCrawlDomains = new HashSet<>();
@@ -185,8 +191,8 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Appends an internet domain to the list of allowed crawl domains.
          *
-         * @param allowedCrawlDomain A well-formed internet domain name
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param allowedCrawlDomain a well-formed internet domain name
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder addAllowedCrawlDomain(final String allowedCrawlDomain) {
             InternetDomainName domain = InternetDomainName.from(allowedCrawlDomain);
@@ -201,9 +207,9 @@ public final class CrawlerConfiguration implements Serializable {
          * Appends a list of internet domains to the list of allowed crawl
          * domains.
          *
-         * @param allowedCrawlDomains A list of well-formed internet domain
+         * @param allowedCrawlDomains a list of well-formed internet domain
          * names
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder addAllowedCrawlDomains(final List<String> allowedCrawlDomains) {
             allowedCrawlDomains.forEach(this::addAllowedCrawlDomain);
@@ -213,9 +219,8 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Appends a crawl request to the set of crawl seeds.
          *
-         * @param request The <code>CrawlRequest</code> instance which
-         * represents the crawl seed
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param request the crawl request which represents a crawl seed
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder addCrawlSeed(final CrawlRequest request) {
             Validate.notNull(request, "The request cannot be null.");
@@ -227,9 +232,9 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Appends a list of crawl requests to the set of crawl seeds.
          *
-         * @param requests The list of <code>CrawlRequest</code> instances which
-         * represent the crawl seeds
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param requests the list of crawl requests which represent crawl
+         * seeds
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder addCrawlSeeds(final List<CrawlRequest> requests) {
             requests.forEach(this::addCrawlSeed);
@@ -241,8 +246,8 @@ public final class CrawlerConfiguration implements Serializable {
          * strategy orders crawl requests by the lowest crawl depth, whereas
          * depth-first orders them by the highest crawl depth.
          *
-         * @param strategy The crawl strategy
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param strategy the crawl strategy
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setCrawlStrategy(final CrawlStrategy strategy) {
             Validate.notNull(strategy, "The strategy cannot be null.");
@@ -256,7 +261,7 @@ public final class CrawlerConfiguration implements Serializable {
          *
          * @param filterDuplicateRequests <code>true</code> means enabled,
          * <code>false</code> means disabled
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setDuplicateRequestFiltering(final boolean filterDuplicateRequests) {
             this.filterDuplicateRequests = filterDuplicateRequests;
@@ -268,7 +273,7 @@ public final class CrawlerConfiguration implements Serializable {
          *
          * @param filterOffsiteRequests <code>true</code> means enabled,
          * <code>false</code> means disabled
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setOffsiteRequestFiltering(final boolean filterOffsiteRequests) {
             this.filterOffsiteRequests = filterOffsiteRequests;
@@ -276,11 +281,11 @@ public final class CrawlerConfiguration implements Serializable {
         }
 
         /**
-         * Sets the maximum possible crawl depth. It should be a non-negative
-         * number where 0 means there is no limit.
+         * Sets the maximum crawl depth. It should be a non-negative
+         * number (0 means no limit).
          *
-         * @param maxCrawlDepth The maximum crawl depth
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param maxCrawlDepth the maximum crawl depth
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setMaximumCrawlDepth(final int maxCrawlDepth) {
             Validate.isTrue(maxCrawlDepth >= 0, "The maximum crawl depth cannot be negative.");
@@ -290,10 +295,11 @@ public final class CrawlerConfiguration implements Serializable {
         }
 
         /**
-         * Sets the crawl delay strategy to be used by the crawler.
+         * Sets the crawl delay strategy to be used by the crawler. This
+         * strategy defines how the delay between each request is determined.
          *
-         * @param strategy The crawl delay strategy
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param strategy the crawl delay strategy
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setCrawlDelayStrategy(final CrawlDelayStrategy strategy) {
             Validate.notNull(strategy, "The strategy cannot be null.");
@@ -305,8 +311,8 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Sets the exact duration of delay between each request.
          *
-         * @param fixedCrawlDelayDuration The duration of delay
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param fixedCrawlDelayDuration the duration of delay
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setFixedCrawlDelayDuration(final Duration fixedCrawlDelayDuration) {
             Validate.notNull(fixedCrawlDelayDuration, "The duration cannot be null.");
@@ -318,8 +324,8 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Sets the minimum duration of delay between each request.
          *
-         * @param minCrawlDelayDuration The minimum duration of delay
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param minCrawlDelayDuration the minimum duration of delay
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setMinimumCrawlDelayDuration(final Duration minCrawlDelayDuration) {
             Validate.notNull(minCrawlDelayDuration, "The duration cannot be null.");
@@ -336,8 +342,8 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Sets the maximum duration of delay between each request.
          *
-         * @param maxCrawlDelayDuration The maximum duration of delay
-         * @return The <code>CrawlerConfigurationBuilder</code> instance
+         * @param maxCrawlDelayDuration the maximum duration of delay
+         * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setMaximumCrawlDelayDuration(final Duration maxCrawlDelayDuration) {
             Validate.notNull(maxCrawlDelayDuration, "The duration cannot be null.");
@@ -353,7 +359,7 @@ public final class CrawlerConfiguration implements Serializable {
         /**
          * Builds the configured <code>CrawlerConfiguration</code> instance.
          *
-         * @return The configured <code>CrawlerConfiguration</code> instance
+         * @return the configured <code>CrawlerConfiguration</code> instance
          */
         public CrawlerConfiguration build() {
             return new CrawlerConfiguration(this);

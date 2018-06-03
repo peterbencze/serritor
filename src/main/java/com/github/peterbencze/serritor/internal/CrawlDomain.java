@@ -29,19 +29,19 @@ public final class CrawlDomain implements Serializable {
     private final ImmutableList<String> parts;
 
     /**
-     * Constructs a new <code>CrawlDomain</code> instance.
+     * Creates a <code>CrawlDomain</code> instance.
      *
-     * @param domain An immutable well-formed internet domain name
+     * @param domain an immutable well-formed internet domain name
      */
     public CrawlDomain(final InternetDomainName domain) {
         parts = domain.parts();
     }
 
     /**
-     * Indicates if two <code>CrawlDomain</code> instances are equal or not.
+     * Indicates if two <code>CrawlDomain</code> instances are equal.
      * Crawl domains with the same domain name are considered equal.
      *
-     * @param obj A <code>CrawlDomain</code> instance
+     * @param obj a <code>CrawlDomain</code> instance
      * @return <code>true</code> if equal, <code>false</code> otherwise
      */
     @Override
@@ -62,7 +62,7 @@ public final class CrawlDomain implements Serializable {
      * Calculates the hash code from the individual components of the domain
      * name.
      *
-     * @return The hash code for the crawl domain
+     * @return the hash code for the crawl domain
      */
     @Override
     public int hashCode() {
@@ -72,7 +72,7 @@ public final class CrawlDomain implements Serializable {
     /**
      * Indicates if this crawl domain contains the specific internet domain.
      *
-     * @param domain An immutable well-formed internet domain name
+     * @param domain an immutable well-formed internet domain name
      * @return <code>true</code> if belongs, <code>false</code> otherwise
      */
     public boolean contains(final InternetDomainName domain) {

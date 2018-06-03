@@ -21,7 +21,7 @@ import java.net.URI;
 import java.util.Optional;
 
 /**
- * Represents a candidate to be crawled by the crawler.
+ * Represents a candidate for crawling.
  *
  * @author Peter Bencze
  */
@@ -40,59 +40,59 @@ public final class CrawlCandidate implements Serializable {
     /**
      * Returns the referer URL.
      *
-     * @return The URL of the referer
+     * @return the URL of the referer
      */
     public URI getRefererUrl() {
         return refererUrl;
     }
 
     /**
-     * Returns the candidate URL.
+     * Returns the request URL.
      *
-     * @return The URL of the candidate
+     * @return the URL of the request
      */
     public URI getCandidateUrl() {
         return crawlRequest.getRequestUrl();
     }
 
     /**
-     * Returns the domain of the candidate URL.
+     * Returns the domain of the request URL.
      *
-     * @return The domain of the candidate URL
+     * @return the domain of the request URL
      */
     public InternetDomainName getDomain() {
         return crawlRequest.getDomain();
     }
 
     /**
-     * Returns the crawl depth of the candidate.
+     * Returns the crawl depth of the request.
      *
-     * @return The crawl depth of the candidate
+     * @return the crawl depth of the request
      */
     public int getCrawlDepth() {
         return crawlDepth;
     }
 
     /**
-     * Returns the priority of the candidate.
+     * Returns the priority of the request.
      *
-     * @return The priority of the candidate
+     * @return the priority of the request
      */
     public int getPriority() {
         return crawlRequest.getPriority();
     }
 
     /**
-     * Returns the metadata associated with the candidate.
+     * Returns the metadata associated with the request.
      *
-     * @return The metadata associated with the candidate
+     * @return the metadata associated with the request
      */
     public Optional<Serializable> getMetadata() {
         return crawlRequest.getMetadata();
     }
 
     /**
-     * Builds crawl candidates to be crawled by the crawler.
+     * Builds {@link CrawlCandidate} instances.
      */
     public static final class CrawlCandidateBuilder {
 
@@ -104,7 +104,7 @@ public final class CrawlCandidate implements Serializable {
         /**
          * Creates a {@link CrawlCandidateBuilder} instance.
          *
-         * @param request The {@link CrawlRequest} instance from which this
+         * @param request the <code>CrawlRequest</code> instance from which this
          * candidate is built
          */
         public CrawlCandidateBuilder(final CrawlRequest request) {
@@ -114,8 +114,8 @@ public final class CrawlCandidate implements Serializable {
         /**
          * Sets the referer URL.
          *
-         * @param refererUrl The referer URL
-         * @return The {@link CrawlCandidateBuilder} instance
+         * @param refererUrl the referer URL
+         * @return the <code>CrawlCandidateBuilder</code> instance
          */
         public CrawlCandidateBuilder setRefererUrl(final URI refererUrl) {
             this.refererUrl = refererUrl;
@@ -123,10 +123,10 @@ public final class CrawlCandidate implements Serializable {
         }
 
         /**
-         * Sets the crawl depth of the candidate.
+         * Sets the crawl depth of the request.
          *
-         * @param crawlDepth The crawl depth of the candidate
-         * @return The {@link CrawlCandidateBuilder} instance
+         * @param crawlDepth the crawl depth of the request
+         * @return the <code>CrawlCandidateBuilder</code> instance
          */
         public CrawlCandidateBuilder setCrawlDepth(final int crawlDepth) {
             this.crawlDepth = crawlDepth;
@@ -134,9 +134,9 @@ public final class CrawlCandidate implements Serializable {
         }
 
         /**
-         * Builds the configured {@link CrawlCandidate} instance.
+         * Builds the configured <code>CrawlCandidate</code> instance.
          *
-         * @return The configured {@link CrawlCandidate} instance
+         * @return the configured <code>CrawlCandidate</code> instance
          */
         public CrawlCandidate build() {
             return new CrawlCandidate(this);

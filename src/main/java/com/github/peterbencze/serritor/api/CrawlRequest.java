@@ -47,7 +47,7 @@ public final class CrawlRequest implements Serializable {
     /**
      * Returns the request URL.
      *
-     * @return The request URL
+     * @return the request URL
      */
     public URI getRequestUrl() {
         return requestUrl;
@@ -56,7 +56,7 @@ public final class CrawlRequest implements Serializable {
     /**
      * Returns the domain of the request URL.
      *
-     * @return The domain of the request URL
+     * @return the domain of the request URL
      */
     public InternetDomainName getDomain() {
         return domain;
@@ -65,7 +65,7 @@ public final class CrawlRequest implements Serializable {
     /**
      * Returns the priority of the request.
      *
-     * @return The priority of the request
+     * @return the priority of the request
      */
     public int getPriority() {
         return priority;
@@ -74,14 +74,14 @@ public final class CrawlRequest implements Serializable {
     /**
      * Returns the metadata associated with the request.
      *
-     * @return The metadata associated with the request
+     * @return the metadata associated with the request
      */
     public Optional<Serializable> getMetadata() {
         return Optional.ofNullable(metadata);
     }
 
     /**
-     * Builds crawl requests which can be fed to the crawler.
+     * Builds {@link CrawlRequest} instances.
      */
     public static final class CrawlRequestBuilder {
 
@@ -96,7 +96,7 @@ public final class CrawlRequest implements Serializable {
         /**
          * Creates a {@link CrawlRequestBuilder} instance.
          *
-         * @param requestUrl The request URL
+         * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final URI requestUrl) {
             this.requestUrl = requestUrl;
@@ -111,7 +111,7 @@ public final class CrawlRequest implements Serializable {
         /**
          * Creates a {@link CrawlRequestBuilder} instance.
          *
-         * @param requestUrl The request URL
+         * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final String requestUrl) {
             this(URI.create(requestUrl));
@@ -120,9 +120,9 @@ public final class CrawlRequest implements Serializable {
         /**
          * Sets the priority of the request.
          *
-         * @param priority The priority of the request (higher number means
+         * @param priority the priority of the request (higher number means
          * higher priority)
-         * @return The {@link CrawlRequestBuilder} instance
+         * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setPriority(final int priority) {
             this.priority = priority;
@@ -130,11 +130,10 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Sets the metadata of the request which can be later accessed when the
-         * crawler completed the request.
+         * Sets the metadata associated with the request.
          *
-         * @param metadata The metadata associated with the request
-         * @return The {@link CrawlRequestBuilder} instance
+         * @param metadata the metadata associated with the request
+         * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
             this.metadata = Validate.notNull(metadata, "The metadata cannot be null.");
@@ -142,9 +141,9 @@ public final class CrawlRequest implements Serializable {
         }
 
         /**
-         * Builds the configured {@link CrawlRequest} instance.
+         * Builds the configured <code>CrawlRequest</code> instance.
          *
-         * @return The configured {@link CrawlRequest} instance
+         * @return the configured <code>CrawlRequest</code> instance
          */
         public CrawlRequest build() {
             return new CrawlRequest(this);

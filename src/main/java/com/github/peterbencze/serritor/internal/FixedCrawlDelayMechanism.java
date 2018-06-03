@@ -28,10 +28,10 @@ public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
     private final long delayInMillis;
 
     /**
-     * Constructs a new <code>FixedCrawlDelayMechanism</code> instance.
+     * Creates a {@link FixedCrawlDelayMechanism} instance.
      *
-     * @param config The <code>CrawlerConfiguration</code> instance which
-     * specifies the fixed delay duration.
+     * @param config the crawler configuration which specifies the fixed delay
+     * duration
      */
     public FixedCrawlDelayMechanism(final CrawlerConfiguration config) {
         this.delayInMillis = config.getFixedCrawlDelayDurationInMillis();
@@ -40,7 +40,7 @@ public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Returns the fixed delay specified in the configuration.
      *
-     * @return The delay in milliseconds
+     * @return the delay in milliseconds
      */
     @Override
     public long getDelay() {

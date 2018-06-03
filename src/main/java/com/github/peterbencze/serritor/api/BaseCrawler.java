@@ -67,6 +67,11 @@ public abstract class BaseCrawler {
     private CrawlFrontier crawlFrontier;
     private CrawlDelayMechanism crawlDelayMechanism;
 
+    /**
+     * Base constructor of all crawlers.
+     *
+     * @param config the configuration of the crawler
+     */
     protected BaseCrawler(final CrawlerConfiguration config) {
         this.config = config;
 
@@ -82,23 +87,23 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler using the browser specified by the
+     * Starts the crawler using the browser specified by the given
      * <code>WebDriver</code> instance.
      *
-     * @param driver The <code>WebDriver</code> instance that will be used by
-     * the crawler
+     * @param webDriver the <code>WebDriver</code> instance to control the
+     * browser
      */
-    public final void start(final WebDriver driver) {
-        start(driver, new CrawlFrontier(config));
+    public final void start(final WebDriver webDriver) {
+        start(webDriver, new CrawlFrontier(config));
     }
 
     /**
-     * Constructs all the necessary objects and runs the crawler.
+     * Initializes and runs the crawler.
      *
-     * @param frontierToUse The <code>CrawlFrontier</code> instance to be used
-     * by the crawler.
+     * @param crawlFrontier the <code>CrawlFrontier</code> instance to be used
+     * by the crawler to manage crawl requests
      */
-    private void start(final WebDriver driver, final CrawlFrontier frontierToUse) {
+    private void start(final WebDriver webDriver, final CrawlFrontier crawlFrontier) {
         try {
             Validate.validState(isStopped, "The crawler is already started.");
 
@@ -107,8 +112,8 @@ public abstract class BaseCrawler {
             httpClient = HttpClientBuilder.create()
                     .setDefaultCookieStore(cookieStore)
                     .build();
-            webDriver = Validate.notNull(driver, "The webdriver cannot be null.");
-            crawlFrontier = frontierToUse;
+            this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
+            this.crawlFrontier = crawlFrontier;
             crawlDelayMechanism = createCrawlDelayMechanism();
 
             run();
@@ -122,9 +127,9 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Saves the current state of the crawler to the specified output stream.
+     * Saves the current state of the crawler to the given output stream.
      *
-     * @param out The <code>OutputStream</code> instance to use
+     * @param out the output stream
      */
     public final void saveState(final OutputStream out) {
         // Check if the crawler has been started at least once, otherwise we have nothing to save
@@ -137,25 +142,25 @@ public abstract class BaseCrawler {
     /**
      * Resumes a previously saved state using HtmlUnit headless browser.
      *
-     * @param in The <code>InputStream</code> instance to use
+     * @param in the input stream from which the state should be loaded
      */
     public final void resumeState(final InputStream in) {
         resumeState(new HtmlUnitDriver(true), in);
     }
 
     /**
-     * Resumes a previously saved state using the browser specified by the
-     * WebDriver instance.
+     * Resumes a previously saved state using the browser specified by the given
+     * <code>WebDriver</code> instance.
      *
-     * @param driver The <code>WebDriver</code> instance to be used by the
-     * crawler
-     * @param in The <code>InputStream</code> instance to use
+     * @param webDriver the <code>WebDriver</code> instance to control the
+     * browser
+     * @param in the input stream from which the state should be loaded
      */
-    public final void resumeState(final WebDriver driver, final InputStream in) {
+    public final void resumeState(final WebDriver webDriver, final InputStream in) {
         // Re-create crawl frontier from the saved state
-        CrawlFrontier frontierToUse = SerializationUtils.deserialize(in);
+        CrawlFrontier deserializedCrawlFrontier = SerializationUtils.deserialize(in);
 
-        start(driver, frontierToUse);
+        start(webDriver, deserializedCrawlFrontier);
     }
 
     /**
@@ -170,12 +175,10 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Passes a crawl request to the crawl frontier. The crawler must be
-     * running, otherwise use
-     * {@link CrawlerConfiguration.CrawlerConfigurationBuilder#addCrawlSeed(com.github.peterbencze.serritor.api.CrawlRequest)}
-     * for adding crawl seeds.
+     * Feeds a crawl request to the crawler. The crawler should be running,
+     * otherwise the request has to be added as a crawl seed instead.
      *
-     * @param request The <code>CrawlRequest</code> instance
+     * @param request the crawl request
      */
     protected final void crawl(final CrawlRequest request) {
         Validate.notNull(request, "The request cannot be null.");
@@ -185,12 +188,10 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Passes multiple crawl requests to the crawl frontier. The crawler must be
-     * running, otherwise use
-     * {@link CrawlerConfiguration.CrawlerConfigurationBuilder#addCrawlSeeds(java.util.List)}
-     * for adding crawl seeds.
+     * Feeds multiple crawl requests to the crawler. The crawler should be
+     * running, otherwise the requests have to be added as crawl seeds instead.
      *
-     * @param requests The list of <code>CrawlRequest</code> instances
+     * @param requests the list of crawl requests
      */
     protected final void crawl(final List<CrawlRequest> requests) {
         requests.forEach(this::crawl);
@@ -266,10 +267,12 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Returns a HTTP HEAD response for the given URL.
+     * Sends an HTTP HEAD request to the given URL and returns the response.
      *
-     * @param destinationUrl The URL to crawl
-     * @return The HTTP HEAD response
+     * @param destinationUrl the destination URL
+     * @throws IOException if an error occurs while trying to fulfill the
+     * request
+     * @return the HTTP HEAD response
      */
     private HttpResponse getHttpHeadResponse(final URI destinationUrl, final HttpClientContext context) throws IOException {
         HttpHead headRequest = new HttpHead(destinationUrl.toString());
@@ -277,10 +280,10 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Indicates if the content of the response is HTML or not.
+     * Indicates if the response's content type is HTML.
      *
-     * @param httpHeadResponse The HTTP HEAD response
-     * @return <code>true</code> if the content is HTML, <code>false</code>
+     * @param httpHeadResponse the HTTP HEAD response
+     * @return <code>true</code> if the content type is HTML, <code>false</code>
      * otherwise
      */
     private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
@@ -289,9 +292,9 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Constructs the crawl delay mechanism specified in the configuration.
+     * Creates the crawl delay mechanism according to the configuration.
      *
-     * @return The crawl delay mechanism
+     * @return the created crawl delay mechanism
      */
     private CrawlDelayMechanism createCrawlDelayMechanism() {
         switch (config.getCrawlDelayStrategy()) {
@@ -338,8 +341,8 @@ public abstract class BaseCrawler {
     /**
      * Converts a browser cookie to a HTTP client one.
      *
-     * @param browserCookie The browser cookie to be converted
-     * @return The converted HTTP client cookie
+     * @param browserCookie the browser cookie to be converted
+     * @return the converted HTTP client cookie
      */
     private static BasicClientCookie convertBrowserCookie(final Cookie browserCookie) {
         BasicClientCookie clientCookie = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
@@ -364,7 +367,7 @@ public abstract class BaseCrawler {
     /**
      * Callback which gets called when the browser loads the page.
      *
-     * @param event The {@link PageLoadEvent} instance
+     * @param event the <code>PageLoadEvent</code> instance
      */
     protected void onPageLoad(final PageLoadEvent event) {
     }
@@ -372,7 +375,7 @@ public abstract class BaseCrawler {
     /**
      * Callback which gets called when the content type is not HTML.
      *
-     * @param event The {@link NonHtmlContentEvent} instance
+     * @param event the <code>NonHtmlContentEvent</code> instance
      */
     protected void onNonHtmlContent(final NonHtmlContentEvent event) {
     }
@@ -380,7 +383,7 @@ public abstract class BaseCrawler {
     /**
      * Callback which gets called when a request error occurs.
      *
-     * @param event The {@link RequestErrorEvent} instance
+     * @param event the <code>RequestErrorEvent</code> instance
      */
     protected void onRequestError(final RequestErrorEvent event) {
     }
@@ -388,7 +391,7 @@ public abstract class BaseCrawler {
     /**
      * Callback which gets called when a request is redirected.
      *
-     * @param event The {@link RequestRedirectEvent} instance
+     * @param event the <code>RequestRedirectEvent</code> instance
      */
     protected void onRequestRedirect(final RequestRedirectEvent event) {
     }
@@ -397,7 +400,7 @@ public abstract class BaseCrawler {
      * Callback which gets called when the page does not load in the browser
      * within the timeout period.
      *
-     * @param event The {@link PageLoadTimeoutEvent} instance
+     * @param event the <code>PageLoadTimeoutEvent</code> instance
      */
     protected void onPageLoadTimeout(final PageLoadTimeoutEvent event) {
     }
