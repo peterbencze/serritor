@@ -16,6 +16,11 @@
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
+import com.github.peterbencze.serritor.api.event.PageLoadEvent;
+import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
+import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
+import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.internal.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
@@ -195,7 +200,7 @@ public abstract class BaseCrawler {
      * Defines the workflow of the crawler.
      */
     private void run() {
-        onBegin();
+        onStart();
 
         while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
@@ -212,7 +217,7 @@ public abstract class BaseCrawler {
                 // Send an HTTP HEAD request to the current URL to determine its availability and content type
                 httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
             } catch (IOException exception) {
-                onUnsuccessfulRequest(new UnsuccessfulRequest(currentCandidate, exception));
+                onRequestError(new RequestErrorEvent(currentCandidate, exception));
                 isUnsuccessfulRequest = true;
             }
 
@@ -225,32 +230,39 @@ public abstract class BaseCrawler {
 
                 if (!responseUrl.equals(candidateUrl)) {
                     // If the request has been redirected, a new crawl request should be created for the redirected URL
-
                     CrawlRequestBuilder builder = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority());
                     currentCandidate.getMetadata().ifPresent(builder::setMetadata);
+                    CrawlRequest redirectedRequest = builder.build();
 
-                    crawlFrontier.feedRequest(builder.build(), false);
+                    crawlFrontier.feedRequest(redirectedRequest, false);
+                    onRequestRedirect(new RequestRedirectEvent(currentCandidate, redirectedRequest));
                 } else if (isContentHtml(httpHeadResponse)) {
-                    HtmlResponse response = new HtmlResponse(currentCandidate, webDriver);
+                    boolean isTimedOut = false;
+                    TimeoutException exception = null;
 
                     try {
                         // Open the URL in the browser
                         webDriver.get(candidateUrl.toString());
-                    } catch (TimeoutException exception) {
-                        onResponseTimeout(response);
+                    } catch (TimeoutException exc) {
+                        isTimedOut = true;
+                        exception = exc;
                     }
 
-                    onResponseComplete(response);
+                    if (!isTimedOut) {
+                        onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                    } else {
+                        onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate, exception));
+                    }
                 } else {
                     // URLs that point to non-HTML content should not be opened in the browser
-                    onNonHtmlResponse(new NonHtmlResponse(currentCandidate));
+                    onNonHtmlContent(new NonHtmlContentEvent(currentCandidate));
                 }
             }
 
             performDelay();
         }
 
-        onFinish();
+        onStop();
     }
 
     /**
@@ -344,49 +356,55 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Called when the crawler is about to begin its operation.
+     * Callback which gets called when the crawler is started.
      */
-    protected void onBegin() {
+    protected void onStart() {
     }
 
     /**
-     * Called after the browser loads the given URL.
+     * Callback which gets called when the browser loads the page.
      *
-     * @param response The HTML response
+     * @param event The {@link PageLoadEvent} instance
      */
-    protected void onResponseComplete(final HtmlResponse response) {
+    protected void onPageLoad(final PageLoadEvent event) {
     }
 
     /**
-     * Called when the loading of the given URL times out in the browser. Use
-     * this callback with caution: the page might be half-loaded or not loaded
-     * at all.
+     * Callback which gets called when the content type is not HTML.
      *
-     * @param response The HTML response
+     * @param event The {@link NonHtmlContentEvent} instance
      */
-    protected void onResponseTimeout(final HtmlResponse response) {
+    protected void onNonHtmlContent(final NonHtmlContentEvent event) {
     }
 
     /**
-     * Called when getting a non-HTML response.
+     * Callback which gets called when a request error occurs.
      *
-     * @param response The non-HTML response
+     * @param event The {@link RequestErrorEvent} instance
      */
-    protected void onNonHtmlResponse(final NonHtmlResponse response) {
+    protected void onRequestError(final RequestErrorEvent event) {
     }
 
     /**
-     * Called when an exception occurs while sending an initial HEAD request to
-     * the given URL.
+     * Callback which gets called when a request is redirected.
      *
-     * @param request The unsuccessful request
+     * @param event The {@link RequestRedirectEvent} instance
      */
-    protected void onUnsuccessfulRequest(final UnsuccessfulRequest request) {
+    protected void onRequestRedirect(final RequestRedirectEvent event) {
     }
 
     /**
-     * Called when the crawler successfully finishes its operation.
+     * Callback which gets called when the page does not load in the browser
+     * within the timeout period.
+     *
+     * @param event The {@link PageLoadTimeoutEvent} instance
      */
-    protected void onFinish() {
+    protected void onPageLoadTimeout(final PageLoadTimeoutEvent event) {
+    }
+
+    /**
+     * Callback which gets called when the crawler is stopped.
+     */
+    protected void onStop() {
     }
 }

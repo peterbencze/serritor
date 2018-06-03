@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.api;
+package com.github.peterbencze.serritor.api.event;
 
-import com.github.peterbencze.serritor.internal.CallbackParameter;
+import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.internal.EventObject;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 /**
- * Represents a non-HTML response.
+ * Event which gets delivered when the content type is not HTML.
  *
  * @author Peter Bencze
  */
-public final class NonHtmlResponse extends CallbackParameter {
+public final class NonHtmlContentEvent extends EventObject {
 
     /**
-     * Creates a {@link NonHtmlResponse} instance.
+     * Creates a {@link NonHtmlContentEvent} instance.
      *
-     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
+     * @param crawlCandidate the current crawl candidate
      */
-    public NonHtmlResponse(final CrawlCandidate crawlCandidate) {
+    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate) {
         super(crawlCandidate);
     }
 
     /**
-     * Downloads the file specified by the request URL.
+     * Downloads the file specified by the URL.
      *
-     * @param destination The destination {@link File} instance
-     * @throws IOException If the URL cannot be opened or I/O error occurs while
+     * @param destination the destination file
+     * @throws IOException if the URL cannot be opened or I/O error occurs while
      * downloading the file
      */
     public void downloadFile(final File destination) throws IOException {

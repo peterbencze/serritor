@@ -15,7 +15,7 @@
  */
 package com.github.peterbencze.serritor.api.helper;
 
-import com.github.peterbencze.serritor.api.HtmlResponse;
+import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
 import java.net.URI;
@@ -54,17 +54,17 @@ public final class UrlFinder {
     }
 
     /**
-     * Returns a list of validated URLs found in the response's HTML source.
+     * Returns a list of validated URLs found in the page's HTML source.
      *
-     * @param response The <code>HtmlResponse</code> instance
-     * @return The list of found URLs
+     * @param event the {@link PageLoadEvent} instance
+     * @return the list of found URLs in the page's HTML source
      */
-    public List<String> findUrlsInResponse(final HtmlResponse response) {
+    public List<String> findUrlsInPage(final PageLoadEvent event) {
         Set<String> foundUrls = new HashSet<>();
 
         // Find elements using the specified locating mechanisms
         Set<WebElement> extractedElements = locatingMechanisms.stream()
-                .map(response.getWebDriver()::findElements)
+                .map(event.getWebDriver()::findElements)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 

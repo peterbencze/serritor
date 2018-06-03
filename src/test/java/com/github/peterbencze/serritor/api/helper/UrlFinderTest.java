@@ -15,7 +15,7 @@
  */
 package com.github.peterbencze.serritor.api.helper;
 
-import com.github.peterbencze.serritor.api.HtmlResponse;
+import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.helper.UrlFinder.UrlFinderBuilder;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +43,7 @@ public final class UrlFinderTest {
     private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
     
     private WebDriver mockedDriver;
-    private HtmlResponse mockedResponse;
+    private PageLoadEvent mockedEvent;
     private WebElement mockedElementWithValidUrl;
     private WebElement mockedElementWithInvalidUrlFormat;
     private WebElement mockedElementWithInvalidDomain; 
@@ -51,10 +51,10 @@ public final class UrlFinderTest {
 
     @Before
     public void initialize() {
-        mockedResponse = Mockito.mock(HtmlResponse.class);
+        mockedEvent = Mockito.mock(PageLoadEvent.class);
         
         mockedDriver = Mockito.mock(WebDriver.class);
-        Mockito.when(mockedResponse.getWebDriver())
+        Mockito.when(mockedEvent.getWebDriver())
                 .thenReturn(mockedDriver);     
         
         mockedElementWithValidUrl = Mockito.mock(WebElement.class);
@@ -77,7 +77,7 @@ public final class UrlFinderTest {
     }
 
     @Test
-    public void testFindUrlsInResponse() {
-        Assert.assertEquals(Arrays.asList(VALID_URL), urlFinder.findUrlsInResponse(mockedResponse));
+    public void testFindUrlsInPage() {
+        Assert.assertEquals(Arrays.asList(VALID_URL), urlFinder.findUrlsInPage(mockedEvent));
     }
 }

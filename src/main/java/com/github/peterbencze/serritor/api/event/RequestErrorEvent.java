@@ -13,34 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.internal.EventObject;
+import java.io.IOException;
 
 /**
- * Base class from which all callback parameters inherit from.
+ * Event which gets delivered when a request error occurs.
  *
  * @author Peter Bencze
  */
-public abstract class CallbackParameter {
+public final class RequestErrorEvent extends EventObject {
 
-    private final CrawlCandidate crawlCandidate;
+    private final IOException exception;
 
     /**
-     * Base constructor of callback parameters.
+     * Creates a {@link RequestErrorEvent} instance.
      *
-     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
+     * @param crawlCandidate the current crawl candidate
+     * @param exception the thrown exception
      */
-    protected CallbackParameter(final CrawlCandidate crawlCandidate) {
-        this.crawlCandidate = crawlCandidate;
+    public RequestErrorEvent(final CrawlCandidate crawlCandidate, final IOException exception) {
+        super(crawlCandidate);
+
+        this.exception = exception;
     }
 
     /**
-     * Returns the crawl candidate which was crawled by the crawler.
+     * Returns the thrown exception.
      *
-     * @return The crawled {@link CrawlCandidate} instance
+     * @return the thrown exception
      */
-    public final CrawlCandidate getCrawlCandidate() {
-        return crawlCandidate;
+    public IOException getException() {
+        return exception;
     }
 }

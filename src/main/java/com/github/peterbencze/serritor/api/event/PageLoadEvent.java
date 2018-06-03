@@ -13,36 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.api;
+package com.github.peterbencze.serritor.api.event;
 
-import com.github.peterbencze.serritor.internal.CallbackParameter;
+import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.internal.EventObject;
 import org.openqa.selenium.WebDriver;
 
 /**
- * Represents an HTML response.
+ * Event which gets delivered when the browser loads the page.
  *
  * @author Peter Bencze
  */
-public final class HtmlResponse extends CallbackParameter {
+public final class PageLoadEvent extends EventObject {
 
     private final WebDriver webDriver;
 
     /**
-     * Creates an {@link HtmlResponse} instance.
+     * Creates a {@link PageLoadEvent} instance.
      *
-     * @param crawlCandidate The crawled {@link CrawlCandidate} instance
-     * @param webDriver The {@link WebDriver} instance
+     * @param crawlCandidate the current crawl candidate
+     * @param webDriver the <code>WebDriver</code> to control the browser
      */
-    public HtmlResponse(final CrawlCandidate crawlCandidate, final WebDriver webDriver) {
+    public PageLoadEvent(final CrawlCandidate crawlCandidate, final WebDriver webDriver) {
         super(crawlCandidate);
 
         this.webDriver = webDriver;
     }
 
     /**
-     * Returns the {@link WebDriver} instance of the browser.
+     * Returns the <code>WebDriver</code> to control the browser.
      *
-     * @return The {@link WebDriver} instance of the browser
+     * @return the <code>WebDriver</code> to control the browser
      */
     public WebDriver getWebDriver() {
         return webDriver;
