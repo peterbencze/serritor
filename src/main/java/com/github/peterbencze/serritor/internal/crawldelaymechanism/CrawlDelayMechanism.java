@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 /**
  * An interface which should be implemented by every crawl delay mechanism.
