@@ -21,9 +21,9 @@ import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
+import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
-import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
 import java.io.IOException;
@@ -205,8 +205,7 @@ public abstract class BaseCrawler {
 
         while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
-            URI candidateUrl = currentCandidate.getCandidateUrl();
-            URI responseUrl = candidateUrl;
+            String candidateUrl = currentCandidate.getCandidateUrl().toString();
             HttpClientContext context = HttpClientContext.create();
             HttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
@@ -223,30 +222,32 @@ public abstract class BaseCrawler {
             }
 
             if (!isUnsuccessfulRequest) {
+                String responseUrl = candidateUrl;
                 List<URI> redirectLocations = context.getRedirectLocations();
                 if (redirectLocations != null) {
-                    // If the request has been redirected, get the final URL
-                    responseUrl = redirectLocations.get(redirectLocations.size() - 1);
+                    // If the request was redirected, get the final URL
+                    responseUrl = redirectLocations.get(redirectLocations.size() - 1).toString();
                 }
 
                 if (!responseUrl.equals(candidateUrl)) {
-                    // If the request has been redirected, a new crawl request should be created for the redirected URL
-                    CrawlRequestBuilder builder = new CrawlRequestBuilder(responseUrl).setPriority(currentCandidate.getPriority());
-                    currentCandidate.getMetadata().ifPresent(builder::setMetadata);
-                    CrawlRequest redirectedRequest = builder.build();
-
-                    crawlFrontier.feedRequest(redirectedRequest, false);
-                    onRequestRedirect(new RequestRedirectEvent(currentCandidate, redirectedRequest));
+                    // If the request was redirected, a new crawl request should be created for the redirected URL
+                    handleRequestRedirect(currentCandidate, responseUrl);
                 } else if (isContentHtml(httpHeadResponse)) {
                     boolean isTimedOut = false;
                     TimeoutException exception = null;
 
                     try {
                         // Open the URL in the browser
-                        webDriver.get(candidateUrl.toString());
+                        webDriver.get(candidateUrl);
                     } catch (TimeoutException exc) {
                         isTimedOut = true;
                         exception = exc;
+                    }
+
+                    String loadedPageUrl = webDriver.getCurrentUrl();
+                    if (!loadedPageUrl.equals(candidateUrl)) {
+                        // If the request was redirected (using JavaScript), a new crawl request should be created for the redirected URL
+                        handleRequestRedirect(currentCandidate, loadedPageUrl);
                     }
 
                     if (!isTimedOut) {
@@ -264,31 +265,6 @@ public abstract class BaseCrawler {
         }
 
         onStop();
-    }
-
-    /**
-     * Sends an HTTP HEAD request to the given URL and returns the response.
-     *
-     * @param destinationUrl the destination URL
-     * @throws IOException if an error occurs while trying to fulfill the
-     * request
-     * @return the HTTP HEAD response
-     */
-    private HttpResponse getHttpHeadResponse(final URI destinationUrl, final HttpClientContext context) throws IOException {
-        HttpHead headRequest = new HttpHead(destinationUrl.toString());
-        return httpClient.execute(headRequest, context);
-    }
-
-    /**
-     * Indicates if the response's content type is HTML.
-     *
-     * @param httpHeadResponse the HTTP HEAD response
-     * @return <code>true</code> if the content type is HTML, <code>false</code>
-     * otherwise
-     */
-    private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
-        Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
-        return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
     }
 
     /**
@@ -315,15 +291,44 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Delays the next request.
+     * Sends an HTTP HEAD request to the given URL and returns the response.
+     *
+     * @param destinationUrl the destination URL
+     * @throws IOException if an error occurs while trying to fulfill the
+     * request
+     * @return the HTTP HEAD response
      */
-    private void performDelay() {
-        try {
-            TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            stopCrawling = true;
-        }
+    private HttpResponse getHttpHeadResponse(final String destinationUrl, final HttpClientContext context) throws IOException {
+        HttpHead headRequest = new HttpHead(destinationUrl);
+        return httpClient.execute(headRequest, context);
+    }
+
+    /**
+     * Indicates if the response's content type is HTML.
+     *
+     * @param httpHeadResponse the HTTP HEAD response
+     * @return <code>true</code> if the content type is HTML, <code>false</code>
+     * otherwise
+     */
+    private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
+        Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
+        return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
+    }
+
+    /**
+     * Creates a crawl request for the redirected URL, feeds it to the crawler
+     * and calls the appropriate event callback.
+     *
+     * @param currentCrawlCandidate the current crawl candidate
+     * @param redirectedUrl the URL of the redirected request
+     */
+    private void handleRequestRedirect(final CrawlCandidate currentCrawlCandidate, final String redirectedUrl) {
+        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectedUrl).setPriority(currentCrawlCandidate.getPriority());
+        currentCrawlCandidate.getMetadata().ifPresent(builder::setMetadata);
+        CrawlRequest redirectedRequest = builder.build();
+
+        crawlFrontier.feedRequest(redirectedRequest, false);
+        onRequestRedirect(new RequestRedirectEvent(currentCrawlCandidate, redirectedRequest));
     }
 
     /**
@@ -356,6 +361,18 @@ public abstract class BaseCrawler {
         }
 
         return clientCookie;
+    }
+
+    /**
+     * Delays the next request.
+     */
+    private void performDelay() {
+        try {
+            TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            stopCrawling = true;
+        }
     }
 
     /**
