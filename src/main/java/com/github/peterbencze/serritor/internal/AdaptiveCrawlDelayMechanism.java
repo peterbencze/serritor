@@ -36,8 +36,8 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
      *
      * @param config the crawler configuration which specifies the minimum and
      * maximum delay
-     * @param jsExecutor the {@link WebDriver} instance which is capable of
-     * executing JavaScript
+     * @param jsExecutor the {@link org.openqa.selenium.WebDriver} instance
+     * which is capable of executing JavaScript
      */
     public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration config, final JavascriptExecutor jsExecutor) {
         minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
