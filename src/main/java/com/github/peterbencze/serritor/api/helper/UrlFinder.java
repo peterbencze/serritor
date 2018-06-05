@@ -225,7 +225,7 @@ public final class UrlFinder {
         private static boolean isValidUrl(final String url) {
             try {
                 return InternetDomainName.isValid(URI.create(url).getHost());
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | NullPointerException exc) {
                 return false;
             }
         }
