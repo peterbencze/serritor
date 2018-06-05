@@ -45,6 +45,6 @@ public final class NonHtmlContentEvent extends EventObject {
      * downloading the file
      */
     public void downloadFile(final File destination) throws IOException {
-        FileUtils.copyURLToFile(getCrawlCandidate().getCandidateUrl().toURL(), destination);
+        FileUtils.copyURLToFile(getCrawlCandidate().getRequestUrl().toURL(), destination);
     }
 }

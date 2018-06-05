@@ -51,7 +51,7 @@ public final class CrawlCandidate implements Serializable {
      *
      * @return the URL of the request
      */
-    public URI getCandidateUrl() {
+    public URI getRequestUrl() {
         return crawlRequest.getRequestUrl();
     }
 

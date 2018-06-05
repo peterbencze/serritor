@@ -205,7 +205,7 @@ public abstract class BaseCrawler {
 
         while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
-            String candidateUrl = currentCandidate.getCandidateUrl().toString();
+            String candidateUrl = currentCandidate.getRequestUrl().toString();
             HttpClientContext context = HttpClientContext.create();
             HttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;

@@ -182,7 +182,7 @@ public final class CrawlFrontierTest {
         Assert.assertTrue(frontier.hasNextCandidate());
 
         // Check if the URLs match
-        Assert.assertEquals(DUPLICATE_ROOT_URL_0, frontier.getNextCandidate().getCandidateUrl());
+        Assert.assertEquals(DUPLICATE_ROOT_URL_0, frontier.getNextCandidate().getRequestUrl());
     }
 
     @Test
@@ -212,7 +212,7 @@ public final class CrawlFrontierTest {
         Assert.assertTrue(frontier.hasNextCandidate());
 
         // Check if the URLs match
-        Assert.assertEquals(OFFSITE_URL.toString(), frontier.getNextCandidate().getCandidateUrl().toString());
+        Assert.assertEquals(OFFSITE_URL.toString(), frontier.getNextCandidate().getRequestUrl().toString());
     }
 
     @Test
@@ -221,7 +221,7 @@ public final class CrawlFrontierTest {
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be root URL 1.
-        Assert.assertEquals(ROOT_URL_1, nextCandidate.getCandidateUrl());
+        Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
 
         // Check the crawl depth of this candidate, it should be 0 because it is a root URL.
         Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -236,7 +236,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be root URL 0.
-        Assert.assertEquals(ROOT_URL_0, nextCandidate.getCandidateUrl());
+        Assert.assertEquals(ROOT_URL_0, nextCandidate.getRequestUrl());
 
         // Check the crawl depth of this candidate, it should be 0 again because it is also a root URL.
         Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -252,7 +252,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be child URL 2.
-        Assert.assertEquals(CHILD_URL_2.toString(), nextCandidate.getCandidateUrl().toString());
+        Assert.assertEquals(CHILD_URL_2.toString(), nextCandidate.getRequestUrl().toString());
 
         // Check the crawl depth of this candidate, it should be 1 because it is a child URL that comes from root URL 1.
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -265,7 +265,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this request, it should be a child URL.
-        Assert.assertTrue(nextCandidate.getCandidateUrl().toString().contains(CHILD_URL_PATH));
+        Assert.assertTrue(nextCandidate.getRequestUrl().toString().contains(CHILD_URL_PATH));
 
         // Check the crawl depth of this candidate, it should be 1 again because it is a child URL that comes from root URL 0.
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -277,7 +277,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be a child URL.
-        Assert.assertTrue(nextCandidate.getCandidateUrl().toString().contains(CHILD_URL_PATH));
+        Assert.assertTrue(nextCandidate.getRequestUrl().toString().contains(CHILD_URL_PATH));
 
         // Check the crawl depth of this candidate, it should be 1 again becaise it is another child URL that also comes from root URL 0.
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -301,7 +301,7 @@ public final class CrawlFrontierTest {
         CrawlCandidate nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be root URL 1
-        Assert.assertEquals(ROOT_URL_1, nextCandidate.getCandidateUrl());
+        Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
 
         // Check the crawl depth of this candidate, it should be 0 because it is a root URL
         Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -317,7 +317,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be a child URL
-        Assert.assertTrue(nextCandidate.getCandidateUrl().toString().contains(CHILD_URL_PATH));
+        Assert.assertTrue(nextCandidate.getRequestUrl().toString().contains(CHILD_URL_PATH));
 
         // Check the crawl depth of this candidate, it should be 1 because it is a child URL that comes from root URL 1
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -329,7 +329,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be root URL 0
-        Assert.assertEquals(ROOT_URL_0, nextCandidate.getCandidateUrl());
+        Assert.assertEquals(ROOT_URL_0, nextCandidate.getRequestUrl());
 
         // Check the crawl depth of this candidate, it should be 0 again because it is also a root URL
         Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -345,7 +345,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be child URL 0
-        Assert.assertEquals(CHILD_URL_0.toString(), nextCandidate.getCandidateUrl().toString());
+        Assert.assertEquals(CHILD_URL_0.toString(), nextCandidate.getRequestUrl().toString());
 
         // Check the crawl depth of this candidate, it should be 1 again because it is a child URL that comes from root URL 0
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
@@ -357,7 +357,7 @@ public final class CrawlFrontierTest {
         nextCandidate = frontier.getNextCandidate();
 
         // Check the URL of this candidate, it should be child URL 1
-        Assert.assertEquals(CHILD_URL_1.toString(), nextCandidate.getCandidateUrl().toString());
+        Assert.assertEquals(CHILD_URL_1.toString(), nextCandidate.getRequestUrl().toString());
 
         // Check the crawl depth of this candidate, it should be 1 again becaise it is a child URL that also comes from root URL 0
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
