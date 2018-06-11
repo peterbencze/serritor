@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
@@ -56,6 +57,7 @@ public final class UrlFinder {
      * Returns a list of validated URLs found in the page's HTML source.
      *
      * @param event the <code>PageLoadEvent</code> instance
+     *
      * @return the list of found URLs
      */
     public List<String> findUrlsInPage(final PageLoadEvent event) {
@@ -85,6 +87,7 @@ public final class UrlFinder {
      * Returns a list of validated URLs found in the attribute's value.
      *
      * @param attributeValue the value of the attribute
+     *
      * @return the list of found URLs
      */
     private List<String> findUrlsInAttributeValue(final String attributeValue) {
@@ -144,11 +147,11 @@ public final class UrlFinder {
         }
 
         /**
-         * Sets the locating mechanism used by the finder. Only elements matched
-         * by the locator will be considered when searching for URLs.
+         * Sets the locating mechanism used by the finder. Only elements matched by the locator will
+         * be considered when searching for URLs.
          *
-         * @param locatingMechanism the <code>By</code> locating mechanism
-         * instance
+         * @param locatingMechanism the <code>By</code> locating mechanism instance
+         *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setLocatingMechanism(final By locatingMechanism) {
@@ -156,11 +159,11 @@ public final class UrlFinder {
         }
 
         /**
-         * Sets the locating mechanisms used by the finder. Only elements
-         * matched by the locators will be considered when searching for URLs.
+         * Sets the locating mechanisms used by the finder. Only elements matched by the locators
+         * will be considered when searching for URLs.
          *
-         * @param locatingMechanisms the list of <code>By</code> locating
-         * mechanism instances
+         * @param locatingMechanisms the list of <code>By</code> locating mechanism instances
+         *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setLocatingMechanisms(final List<By> locatingMechanisms) {
@@ -174,6 +177,7 @@ public final class UrlFinder {
          * Sets the list of attribute names to search for URLs.
          *
          * @param attributes the list of attribute names
+         *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setAttributes(final List<String> attributes) {
@@ -187,6 +191,7 @@ public final class UrlFinder {
          * Sets the attribute name to search for URLs.
          *
          * @param attribute the attribute name
+         *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setAttribute(final String attribute) {
@@ -197,6 +202,7 @@ public final class UrlFinder {
          * Sets a predicate to be used for validating found URLs.
          *
          * @param validator the validator predicate
+         *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setValidator(final Predicate<String> validator) {
@@ -219,8 +225,8 @@ public final class UrlFinder {
          * The default URL validator function.
          *
          * @param url the URL to validate
-         * @return <code>true</code> if the URL is valid, <code>false</code>
-         * otherwise
+         *
+         * @return <code>true</code> if the URL is valid, <code>false</code> otherwise
          */
         private static boolean isValidUrl(final String url) {
             try {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api;
 
 import com.google.common.net.InternetDomainName;
@@ -24,8 +25,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.Validate;
 
 /**
- * Represents a crawl request that may be completed by the crawler. If request
- * filtering is enabled, it could get filtered out.
+ * Represents a crawl request that may be completed by the crawler. If request filtering is enabled,
+ * it could get filtered out.
  *
  * @author Peter Bencze
  */
@@ -120,8 +121,8 @@ public final class CrawlRequest implements Serializable {
         /**
          * Sets the priority of the request.
          *
-         * @param priority the priority of the request (higher number means
-         * higher priority)
+         * @param priority the priority of the request (higher number means higher priority)
+         *
          * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setPriority(final int priority) {
@@ -133,6 +134,7 @@ public final class CrawlRequest implements Serializable {
          * Sets the metadata associated with the request.
          *
          * @param metadata the metadata associated with the request
+         *
          * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {

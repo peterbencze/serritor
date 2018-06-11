@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
@@ -32,7 +33,7 @@ public final class RequestErrorEvent extends EventObject {
      * Creates a {@link RequestErrorEvent} instance.
      *
      * @param crawlCandidate the current crawl candidate
-     * @param exception the thrown exception
+     * @param exception      the thrown exception
      */
     public RequestErrorEvent(final CrawlCandidate crawlCandidate, final IOException exception) {
         super(crawlCandidate);

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api;
 
 /**
- * Available crawl delay strategies which define how the delay between each
- * request is determined.
- * 
+ * Available crawl delay strategies which define how the delay between each request is determined.
+ *
  * @author Peter Bencze
  */
 public enum CrawlDelayStrategy {
-    
+
     FIXED,
     ADAPTIVE,
     RANDOM

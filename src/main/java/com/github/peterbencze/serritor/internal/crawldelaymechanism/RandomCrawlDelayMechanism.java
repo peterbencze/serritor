@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A crawl delay mechanism in which case the duration is randomized between the
- * specified minimum and maximum range.
+ * A crawl delay mechanism in which case the duration is randomized between the specified minimum
+ * and maximum range.
  *
  * @author Peter Bencze
  */
@@ -32,8 +33,7 @@ public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Creates a {@link RandomCrawlDelayMechanism} instance.
      *
-     * @param config the crawler configuration which specifies the minimum and
-     * maximum delay.
+     * @param config the crawler configuration which specifies the minimum and maximum delay.
      */
     public RandomCrawlDelayMechanism(final CrawlerConfiguration config) {
         lowerLimit = config.getMinimumCrawlDelayDurationInMillis();
@@ -41,8 +41,7 @@ public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
     }
 
     /**
-     * Returns a random delay between the minimum and maximum range specified in
-     * the configuration.
+     * Returns a random delay between the minimum and maximum range specified in the configuration.
      *
      * @return the delay in milliseconds
      */

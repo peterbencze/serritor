@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal;
 
 import com.google.common.net.InternetDomainName;
@@ -37,13 +38,8 @@ public final class CrawlDomainTest {
 
     @Test
     public void testEquals() {
-        // A crawl domain should be equal with itself
         Assert.assertEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_0);
-
-        // Crawl domains with the same domain should be equal
         Assert.assertEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_1);
-
-        // Crawl domains with different domains should not be equal
         Assert.assertNotEquals(CRAWL_DOMAIN_0, CRAWL_DOMAIN_2);
     }
 
@@ -54,13 +50,8 @@ public final class CrawlDomainTest {
 
     @Test
     public void testContains() {
-        // A crawl domain should contain its own domain
         Assert.assertTrue(CRAWL_DOMAIN_0.contains(DOMAIN));
-
-        // A crawl domain should contain its own domain's subdomain
         Assert.assertTrue(CRAWL_DOMAIN_0.contains(SUBDOMAIN));
-
-        // A crawl domain should not contain a domain different from its own domain
         Assert.assertFalse(CRAWL_DOMAIN_2.contains(DOMAIN));
     }
 }

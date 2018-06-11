@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api;
 
 import com.google.common.net.InternetDomainName;
@@ -104,8 +105,7 @@ public final class CrawlCandidate implements Serializable {
         /**
          * Creates a {@link CrawlCandidateBuilder} instance.
          *
-         * @param request the <code>CrawlRequest</code> instance from which this
-         * candidate is built
+         * @param request the <code>CrawlRequest</code> instance from which this candidate is built
          */
         public CrawlCandidateBuilder(final CrawlRequest request) {
             crawlRequest = request;
@@ -115,6 +115,7 @@ public final class CrawlCandidate implements Serializable {
          * Sets the referer URL.
          *
          * @param refererUrl the referer URL
+         *
          * @return the <code>CrawlCandidateBuilder</code> instance
          */
         public CrawlCandidateBuilder setRefererUrl(final URI refererUrl) {
@@ -126,6 +127,7 @@ public final class CrawlCandidate implements Serializable {
          * Sets the crawl depth of the request.
          *
          * @param crawlDepth the crawl depth of the request
+         *
          * @return the <code>CrawlCandidateBuilder</code> instance
          */
         public CrawlCandidateBuilder setCrawlDepth(final int crawlDepth) {

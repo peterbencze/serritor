@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import org.openqa.selenium.JavascriptExecutor;
 
 /**
- * A crawl delay mechanism, in which case the delay corresponds to the page
- * loading time, if it is between the specified range, otherwise the minimum or
- * maximum duration is used.
+ * A crawl delay mechanism, in which case the delay corresponds to the page loading time, if it is
+ * between the specified range, otherwise the minimum or maximum duration is used.
  *
  * @author Peter Bencze
  */
 public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
+
+    private static final String BROWSER_COMPATIBILITY_JS = "return ('performance' in window) && "
+            + "('timing' in window.performance)";
+    private static final String DELAY_CALCULATION_JS = "return performance.timing.loadEventEnd - "
+            + "performance.timing.navigationStart;";
 
     private final long minDelayInMillis;
     private final long maxDelayInMillis;
@@ -34,12 +39,13 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Creates an {@link AdaptiveCrawlDelayMechanism} instance.
      *
-     * @param config the crawler configuration which specifies the minimum and
-     * maximum delay
-     * @param jsExecutor the {@link org.openqa.selenium.WebDriver} instance
-     * which is capable of executing JavaScript
+     * @param config     the crawler configuration which specifies the minimum and maximum delay
+     * @param jsExecutor the {@link org.openqa.selenium.WebDriver} instance which is capable of
+     *                   executing JavaScript
      */
-    public AdaptiveCrawlDelayMechanism(final CrawlerConfiguration config, final JavascriptExecutor jsExecutor) {
+    public AdaptiveCrawlDelayMechanism(
+            final CrawlerConfiguration config,
+            final JavascriptExecutor jsExecutor) {
         minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
         maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
         this.jsExecutor = jsExecutor;
@@ -48,24 +54,22 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Checks if the browser supports the Navigation Timing API.
      *
-     * @return <code>true</code> if the browser is compatible,
-     * <code>false</code> otherwise
+     * @return <code>true</code> if the browser is compatible, <code>false</code> otherwise
      */
     public boolean isBrowserCompatible() {
-        return (boolean) jsExecutor.executeScript("return ('performance' in window) && ('timing' in window.performance)");
+        return (boolean) jsExecutor.executeScript(BROWSER_COMPATIBILITY_JS);
     }
 
     /**
-     * Calculates the page loading time and returns the delay accordingly,
-     * between the specified min-max range. If the calculated delay is smaller
-     * than the minimum, it returns the minimum delay. If the calculated delay
-     * is higher than the maximum, it returns the maximum delay.
+     * Calculates the page loading time and returns the delay accordingly, between the specified
+     * min-max range. If the calculated delay is smaller than the minimum, it returns the minimum
+     * delay. If the calculated delay is higher than the maximum, it returns the maximum delay.
      *
      * @return the delay in milliseconds
      */
     @Override
     public long getDelay() {
-        long delayInMillis = (long) jsExecutor.executeScript("return performance.timing.loadEventEnd - performance.timing.navigationStart;");
+        long delayInMillis = (long) jsExecutor.executeScript(DELAY_CALCULATION_JS);
 
         if (delayInMillis < minDelayInMillis) {
             return minDelayInMillis;

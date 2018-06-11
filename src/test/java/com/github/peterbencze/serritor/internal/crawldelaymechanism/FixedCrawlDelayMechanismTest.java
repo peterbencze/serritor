@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
@@ -40,7 +41,7 @@ public class FixedCrawlDelayMechanismTest {
 
     @Test
     public void testGetDelay() {
-        // The delay should be the same as in the configuration
-        Assert.assertEquals(config.getFixedCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(config.getFixedCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
 }

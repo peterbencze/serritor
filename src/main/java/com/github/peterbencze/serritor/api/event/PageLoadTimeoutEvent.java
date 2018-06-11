@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
@@ -20,30 +21,30 @@ import com.github.peterbencze.serritor.internal.EventObject;
 import org.openqa.selenium.TimeoutException;
 
 /**
- * Event which gets delivered when a page does not load in the browser within
- * the timeout period.
+ * Event which gets delivered when a page does not load in the browser within the timeout period.
  *
  * @author Peter Bencze
  */
 public final class PageLoadTimeoutEvent extends EventObject {
-    
+
     private final TimeoutException exception;
-    
+
     /**
      * Creates a {@link PageLoadTimeoutEvent} instance.
-     * 
+     *
      * @param crawlCandidate the current crawl candidate
-     * @param exception the thrown exception
+     * @param exception      the thrown exception
      */
-    public PageLoadTimeoutEvent(final CrawlCandidate crawlCandidate, final TimeoutException exception) {
+    public PageLoadTimeoutEvent(final CrawlCandidate crawlCandidate,
+            final TimeoutException exception) {
         super(crawlCandidate);
-        
+
         this.exception = exception;
     }
 
     /**
      * Returns the thrown exception.
-     * 
+     *
      * @return the thrown exception
      */
     public TimeoutException getException() {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
@@ -41,8 +42,9 @@ public final class NonHtmlContentEvent extends EventObject {
      * Downloads the file specified by the URL.
      *
      * @param destination the destination file
-     * @throws IOException if the URL cannot be opened or I/O error occurs while
-     * downloading the file
+     *
+     * @throws IOException if the URL cannot be opened or I/O error occurs while downloading the
+     *                     file
      */
     public void downloadFile(final File destination) throws IOException {
         FileUtils.copyURLToFile(getCrawlCandidate().getRequestUrl().toURL(), destination);

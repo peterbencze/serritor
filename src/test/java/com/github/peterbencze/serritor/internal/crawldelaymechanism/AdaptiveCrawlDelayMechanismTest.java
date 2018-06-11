@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
@@ -55,31 +56,27 @@ public final class AdaptiveCrawlDelayMechanismTest {
 
     @Test
     public void testDelayLowerThanMinimum() {
-        // Return a delay which is lower than the predefined minimum
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(LOWER_DELAY_DURATION_IN_MILLIS);
 
-        // The minimum delay should be returned
-        Assert.assertEquals(mockedConfig.getMinimumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(mockedConfig.getMinimumCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
 
     @Test
     public void testDelayHigherThanMaximum() {
-        // Return a delay which is higher than the predefined maximum
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(HIGHER_DELAY_DURATION_IN_MILLIS);
 
-        // The maximum delay should be returned
-        Assert.assertEquals(mockedConfig.getMaximumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(mockedConfig.getMaximumCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
 
     @Test
     public void testDelayBetweenRange() {
-        // Return an in range delay
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(IN_RANGE_DELAY_DURATION_IN_MILLIS);
 
-        // The in range delay should be returned
         Assert.assertEquals(IN_RANGE_DELAY_DURATION_IN_MILLIS, crawlDelayMechanism.getDelay());
     }
 }

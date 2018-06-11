@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 
 /**
- * A crawl delay mechanism, in which case the delay is constant and equals to
- * the duration specified in the configuration.
+ * A crawl delay mechanism, in which case the delay is constant and equals to the duration specified
+ * in the configuration.
  *
  * @author Peter Bencze
  */
@@ -30,8 +31,7 @@ public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Creates a {@link FixedCrawlDelayMechanism} instance.
      *
-     * @param config the crawler configuration which specifies the fixed delay
-     * duration
+     * @param config the crawler configuration which specifies the fixed delay duration
      */
     public FixedCrawlDelayMechanism(final CrawlerConfiguration config) {
         this.delayInMillis = config.getFixedCrawlDelayDurationInMillis();

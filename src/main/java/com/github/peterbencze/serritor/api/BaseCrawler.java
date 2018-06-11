@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api;
 
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
@@ -50,8 +51,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
- * Provides a skeletal implementation of a crawler to minimize the effort for
- * users to implement their own.
+ * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
+ * their own.
  *
  * @author Peter Bencze
  */
@@ -87,11 +88,9 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler using the browser specified by the given
-     * <code>WebDriver</code> instance.
+     * Starts the crawler using the browser specified by the given <code>WebDriver</code> instance.
      *
-     * @param webDriver the <code>WebDriver</code> instance to control the
-     * browser
+     * @param webDriver the <code>WebDriver</code> instance to control the browser
      */
     public final void start(final WebDriver webDriver) {
         start(webDriver, new CrawlFrontier(config));
@@ -100,8 +99,8 @@ public abstract class BaseCrawler {
     /**
      * Initializes and runs the crawler.
      *
-     * @param crawlFrontier the <code>CrawlFrontier</code> instance to be used
-     * by the crawler to manage crawl requests
+     * @param crawlFrontier the <code>CrawlFrontier</code> instance to be used by the crawler to
+     *                      manage crawl requests
      */
     private void start(final WebDriver webDriver, final CrawlFrontier crawlFrontier) {
         try {
@@ -133,7 +132,8 @@ public abstract class BaseCrawler {
      */
     public final void saveState(final OutputStream out) {
         // Check if the crawler has been started at least once, otherwise we have nothing to save
-        Validate.validState(crawlFrontier != null, "Cannot save state at this point. The crawler should be started first.");
+        Validate.validState(crawlFrontier != null,
+                "Cannot save state at this point. The crawler should be started first.");
 
         // Save the crawl frontier's current state
         SerializationUtils.serialize(crawlFrontier, out);
@@ -152,9 +152,8 @@ public abstract class BaseCrawler {
      * Resumes a previously saved state using the browser specified by the given
      * <code>WebDriver</code> instance.
      *
-     * @param webDriver the <code>WebDriver</code> instance to control the
-     * browser
-     * @param in the input stream from which the state should be loaded
+     * @param webDriver the <code>WebDriver</code> instance to control the browser
+     * @param in        the input stream from which the state should be loaded
      */
     public final void resumeState(final WebDriver webDriver, final InputStream in) {
         // Re-create crawl frontier from the saved state
@@ -175,21 +174,22 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Feeds a crawl request to the crawler. The crawler should be running,
-     * otherwise the request has to be added as a crawl seed instead.
+     * Feeds a crawl request to the crawler. The crawler should be running, otherwise the request
+     * has to be added as a crawl seed instead.
      *
      * @param request the crawl request
      */
     protected final void crawl(final CrawlRequest request) {
         Validate.notNull(request, "The request cannot be null.");
-        Validate.validState(!isStopped, "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
+        Validate.validState(!isStopped,
+                "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
 
         crawlFrontier.feedRequest(request, false);
     }
 
     /**
-     * Feeds multiple crawl requests to the crawler. The crawler should be
-     * running, otherwise the requests have to be added as crawl seeds instead.
+     * Feeds multiple crawl requests to the crawler. The crawler should be running, otherwise the
+     * requests have to be added as crawl seeds instead.
      *
      * @param requests the list of crawl requests
      */
@@ -210,11 +210,11 @@ public abstract class BaseCrawler {
             HttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
 
-            // Update the client's cookie store, so it will have the same state as the browser.
+            // Update the client's cookie store, so it will have the same state as the browser
             updateClientCookieStore();
 
             try {
-                // Send an HTTP HEAD request to the current URL to determine its availability and content type
+                // Send an HTTP HEAD request to determine its availability and content type
                 httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
             } catch (IOException exception) {
                 onRequestError(new RequestErrorEvent(currentCandidate, exception));
@@ -230,7 +230,7 @@ public abstract class BaseCrawler {
                 }
 
                 if (!responseUrl.equals(candidateUrl)) {
-                    // If the request was redirected, a new crawl request should be created for the redirected URL
+                    // Create a new crawl request for the redirected URL
                     handleRequestRedirect(currentCandidate, responseUrl);
                 } else if (isContentHtml(httpHeadResponse)) {
                     try {
@@ -239,10 +239,10 @@ public abstract class BaseCrawler {
                     } catch (TimeoutException exception) {
                         onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate, exception));
                     }
-                    
+
                     String loadedPageUrl = webDriver.getCurrentUrl();
                     if (!loadedPageUrl.equals(candidateUrl)) {
-                        // If the request was redirected (using JavaScript), a new crawl request should be created for the redirected URL
+                        // Create a new crawl request for the redirected URL (JavaScript redirect)
                         handleRequestRedirect(currentCandidate, loadedPageUrl);
                     } else {
                         onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
@@ -264,6 +264,7 @@ public abstract class BaseCrawler {
      *
      * @return the created crawl delay mechanism
      */
+    @SuppressWarnings("checkstyle:MissingSwitchDefault")
     private CrawlDelayMechanism createCrawlDelayMechanism() {
         switch (config.getCrawlDelayStrategy()) {
             case FIXED:
@@ -271,12 +272,14 @@ public abstract class BaseCrawler {
             case RANDOM:
                 return new RandomCrawlDelayMechanism(config);
             case ADAPTIVE:
-                AdaptiveCrawlDelayMechanism adaptiveCrawlDelay = new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
-                if (!adaptiveCrawlDelay.isBrowserCompatible()) {
-                    throw new UnsupportedOperationException("The Navigation Timing API is not supported by the browser.");
+                AdaptiveCrawlDelayMechanism mechanism
+                        = new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
+                if (!mechanism.isBrowserCompatible()) {
+                    throw new UnsupportedOperationException("The Navigation Timing API is not "
+                            + "supported by the browser.");
                 }
 
-                return adaptiveCrawlDelay;
+                return mechanism;
         }
 
         throw new IllegalArgumentException("Unsupported crawl delay strategy.");
@@ -286,11 +289,14 @@ public abstract class BaseCrawler {
      * Sends an HTTP HEAD request to the given URL and returns the response.
      *
      * @param destinationUrl the destination URL
-     * @throws IOException if an error occurs while trying to fulfill the
-     * request
+     *
      * @return the HTTP HEAD response
+     *
+     * @throws IOException if an error occurs while trying to fulfill the request
      */
-    private HttpResponse getHttpHeadResponse(final String destinationUrl, final HttpClientContext context) throws IOException {
+    private HttpResponse getHttpHeadResponse(
+            final String destinationUrl,
+            final HttpClientContext context) throws IOException {
         HttpHead headRequest = new HttpHead(destinationUrl);
         return httpClient.execute(headRequest, context);
     }
@@ -299,8 +305,8 @@ public abstract class BaseCrawler {
      * Indicates if the response's content type is HTML.
      *
      * @param httpHeadResponse the HTTP HEAD response
-     * @return <code>true</code> if the content type is HTML, <code>false</code>
-     * otherwise
+     *
+     * @return <code>true</code> if the content type is HTML, <code>false</code> otherwise
      */
     private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
@@ -308,14 +314,17 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Creates a crawl request for the redirected URL, feeds it to the crawler
-     * and calls the appropriate event callback.
+     * Creates a crawl request for the redirected URL, feeds it to the crawler and calls the
+     * appropriate event callback.
      *
      * @param currentCrawlCandidate the current crawl candidate
-     * @param redirectedUrl the URL of the redirected request
+     * @param redirectedUrl         the URL of the redirected request
      */
-    private void handleRequestRedirect(final CrawlCandidate currentCrawlCandidate, final String redirectedUrl) {
-        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectedUrl).setPriority(currentCrawlCandidate.getPriority());
+    private void handleRequestRedirect(
+            final CrawlCandidate currentCrawlCandidate,
+            final String redirectedUrl) {
+        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectedUrl)
+                .setPriority(currentCrawlCandidate.getPriority());
         currentCrawlCandidate.getMetadata().ifPresent(builder::setMetadata);
         CrawlRequest redirectedRequest = builder.build();
 
@@ -324,8 +333,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Adds all the browser cookies for the current domain to the HTTP client's
-     * cookie store, replacing any existing equivalent ones.
+     * Adds all the browser cookies for the current domain to the HTTP client's cookie store,
+     * replacing any existing equivalent ones.
      */
     private void updateClientCookieStore() {
         webDriver.manage()
@@ -339,10 +348,12 @@ public abstract class BaseCrawler {
      * Converts a browser cookie to a HTTP client one.
      *
      * @param browserCookie the browser cookie to be converted
+     *
      * @return the converted HTTP client cookie
      */
     private static BasicClientCookie convertBrowserCookie(final Cookie browserCookie) {
-        BasicClientCookie clientCookie = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
+        BasicClientCookie clientCookie
+                = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
         clientCookie.setDomain(browserCookie.getDomain());
         clientCookie.setPath(browserCookie.getPath());
         clientCookie.setExpiryDate(browserCookie.getExpiry());
@@ -406,8 +417,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Callback which gets called when the page does not load in the browser
-     * within the timeout period.
+     * Callback which gets called when the page does not load in the browser within the timeout
+     * period.
      *
      * @param event the <code>PageLoadTimeoutEvent</code> instance
      */

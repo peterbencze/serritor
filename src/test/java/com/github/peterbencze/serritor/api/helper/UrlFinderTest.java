@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
@@ -69,7 +70,9 @@ public final class UrlFinderTest {
         Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(URL_WITH_INVALID_DOMAIN);
 
-        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);
+        List<WebElement> elementList
+                = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat,
+                        mockedElementWithInvalidDomain);
         Mockito.when(mockedDriver.findElements(By.tagName(TAG_NAME)))
                 .thenReturn(elementList);
 

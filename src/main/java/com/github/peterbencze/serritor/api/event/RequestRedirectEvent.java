@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
@@ -31,10 +32,11 @@ public final class RequestRedirectEvent extends EventObject {
     /**
      * Creates a {@link RequestRedirectEvent} instance.
      *
-     * @param crawlCandidate the current crawl candidate
+     * @param crawlCandidate         the current crawl candidate
      * @param redirectedCrawlRequest the crawl request for the redirected URL
      */
-    public RequestRedirectEvent(final CrawlCandidate crawlCandidate, final CrawlRequest redirectedCrawlRequest) {
+    public RequestRedirectEvent(final CrawlCandidate crawlCandidate,
+            final CrawlRequest redirectedCrawlRequest) {
         super(crawlCandidate);
 
         this.redirectedCrawlRequest = redirectedCrawlRequest;

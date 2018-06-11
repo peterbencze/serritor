@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.internal;
 
 import com.google.common.collect.ImmutableList;
@@ -38,10 +39,11 @@ public final class CrawlDomain implements Serializable {
     }
 
     /**
-     * Indicates if two <code>CrawlDomain</code> instances are equal.
-     * Crawl domains with the same domain name are considered equal.
+     * Indicates if two <code>CrawlDomain</code> instances are equal. Crawl domains with the same
+     * domain name are considered equal.
      *
      * @param obj a <code>CrawlDomain</code> instance
+     *
      * @return <code>true</code> if equal, <code>false</code> otherwise
      */
     @Override
@@ -59,8 +61,7 @@ public final class CrawlDomain implements Serializable {
     }
 
     /**
-     * Calculates the hash code from the individual components of the domain
-     * name.
+     * Calculates the hash code from the individual components of the domain name.
      *
      * @return the hash code for the crawl domain
      */
@@ -73,6 +74,7 @@ public final class CrawlDomain implements Serializable {
      * Indicates if this crawl domain contains the specific internet domain.
      *
      * @param domain an immutable well-formed internet domain name
+     *
      * @return <code>true</code> if belongs, <code>false</code> otherwise
      */
     public boolean contains(final InternetDomainName domain) {
