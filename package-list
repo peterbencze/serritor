@@ -1,0 +1,5 @@
+com.github.peterbencze.serritor.api
+com.github.peterbencze.serritor.api.event
+com.github.peterbencze.serritor.api.helper
+com.github.peterbencze.serritor.internal
+com.github.peterbencze.serritor.internal.crawldelaymechanism
