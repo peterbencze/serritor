@@ -33,6 +33,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -57,6 +59,8 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  * @author Peter Bencze
  */
 public abstract class BaseCrawler {
+
+    private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
 
     private final CrawlerConfiguration config;
 
@@ -382,6 +386,7 @@ public abstract class BaseCrawler {
      * Callback which gets called when the crawler is started.
      */
     protected void onStart() {
+        LOGGER.info("onStart");
     }
 
     /**
@@ -390,6 +395,7 @@ public abstract class BaseCrawler {
      * @param event the <code>PageLoadEvent</code> instance
      */
     protected void onPageLoad(final PageLoadEvent event) {
+        LOGGER.log(Level.INFO, "onPageLoad: {0}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -398,6 +404,7 @@ public abstract class BaseCrawler {
      * @param event the <code>NonHtmlContentEvent</code> instance
      */
     protected void onNonHtmlContent(final NonHtmlContentEvent event) {
+        LOGGER.log(Level.INFO, "onNonHtmlContent: {0}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -406,6 +413,7 @@ public abstract class BaseCrawler {
      * @param event the <code>RequestErrorEvent</code> instance
      */
     protected void onRequestError(final RequestErrorEvent event) {
+        LOGGER.log(Level.INFO, "onRequestError: {0}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -414,6 +422,11 @@ public abstract class BaseCrawler {
      * @param event the <code>RequestRedirectEvent</code> instance
      */
     protected void onRequestRedirect(final RequestRedirectEvent event) {
+        LOGGER.log(Level.INFO, "onRequestRedirect: {0} -> {1}",
+                new Object[]{
+                    event.getCrawlCandidate().getRequestUrl(),
+                    event.getRedirectedCrawlRequest().getRequestUrl()
+                });
     }
 
     /**
@@ -423,11 +436,13 @@ public abstract class BaseCrawler {
      * @param event the <code>PageLoadTimeoutEvent</code> instance
      */
     protected void onPageLoadTimeout(final PageLoadTimeoutEvent event) {
+        LOGGER.log(Level.INFO, "onPageLoadTimeout: {0}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
      * Callback which gets called when the crawler is stopped.
      */
     protected void onStop() {
+        LOGGER.info("onStop");
     }
 }
