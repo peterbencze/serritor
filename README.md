@@ -31,7 +31,9 @@ The standalone JAR files are available on the [releases](https://github.com/pete
 * The Javadoc is available [here](https://peterbencze.github.io/serritor/)
 
 ## Quickstart
-The `BaseCrawler` abstract class provides a skeletal implementation of a crawler to minimize the effort to create your own. The extending class should define the logic of the crawler. Below you can find a simple example that is enough to get you started:
+The `BaseCrawler` abstract class provides a skeletal implementation of a crawler to minimize the effort to create your own. The extending class should define the logic of the crawler.
+
+Below you can find a simple example that is enough to get you started:
 ```java
 public class MyCrawler extends BaseCrawler {
 
