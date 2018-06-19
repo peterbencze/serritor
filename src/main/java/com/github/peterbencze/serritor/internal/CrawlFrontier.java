@@ -40,10 +40,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 public final class CrawlFrontier implements Serializable {
 
     private final CrawlerConfiguration config;
-
-    private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<String> urlFingerprints;
-
     private final Queue<CrawlCandidate> candidates;
 
     private CrawlCandidate currentCandidate;
@@ -55,7 +52,6 @@ public final class CrawlFrontier implements Serializable {
      */
     public CrawlFrontier(final CrawlerConfiguration config) {
         this.config = config;
-        allowedCrawlDomains = config.getAllowedCrawlDomains();
         urlFingerprints = new HashSet<>();
         candidates = createPriorityQueue();
 
@@ -75,7 +71,7 @@ public final class CrawlFrontier implements Serializable {
         if (config.isOffsiteRequestFilteringEnabled()) {
             boolean inCrawlDomain = false;
 
-            for (CrawlDomain allowedCrawlDomain : allowedCrawlDomains) {
+            for (CrawlDomain allowedCrawlDomain : config.getAllowedCrawlDomains()) {
                 if (allowedCrawlDomain.contains(request.getDomain())) {
                     inCrawlDomain = true;
                     break;
