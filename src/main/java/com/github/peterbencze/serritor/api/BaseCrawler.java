@@ -30,7 +30,9 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlD
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -62,15 +64,15 @@ public abstract class BaseCrawler {
 
     private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
 
-    private final CrawlerConfiguration config;
-
-    private boolean isStopped;
-    private boolean stopCrawling;
+    private CrawlerConfiguration config;
+    private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
     private HttpClient httpClient;
     private WebDriver webDriver;
-    private CrawlFrontier crawlFrontier;
     private CrawlDelayMechanism crawlDelayMechanism;
+    private boolean isStopped;
+    private boolean isStopping;
+    private boolean canSaveState;
 
     /**
      * Base constructor of all crawlers.
@@ -82,6 +84,9 @@ public abstract class BaseCrawler {
 
         // Indicate that the crawler is not running
         isStopped = true;
+
+        // Cannot save state until the crawler has not been started at least once
+        canSaveState = false;
     }
 
     /**
@@ -97,34 +102,38 @@ public abstract class BaseCrawler {
      * @param webDriver the <code>WebDriver</code> instance to control the browser
      */
     public final void start(final WebDriver webDriver) {
-        start(webDriver, new CrawlFrontier(config));
+        start(webDriver, false);
     }
 
     /**
-     * Initializes and runs the crawler.
+     * Performs initialization and runs the crawler.
      *
-     * @param crawlFrontier the <code>CrawlFrontier</code> instance to be used by the crawler to
-     *                      manage crawl requests
+     * @param isResuming indicates if a previously saved state is to be resumed
      */
-    private void start(final WebDriver webDriver, final CrawlFrontier crawlFrontier) {
+    private void start(final WebDriver webDriver, final boolean isResuming) {
         try {
-            Validate.validState(isStopped, "The crawler is already started.");
+            Validate.validState(isStopped, "The crawler is already running.");
 
-            isStopped = false;
-            cookieStore = new BasicCookieStore();
+            this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
+
+            if (!isResuming) {
+                cookieStore = new BasicCookieStore();
+                crawlFrontier = new CrawlFrontier(config);
+            }
+
             httpClient = HttpClientBuilder.create()
                     .setDefaultCookieStore(cookieStore)
                     .build();
-            this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
-            this.crawlFrontier = crawlFrontier;
             crawlDelayMechanism = createCrawlDelayMechanism();
+            isStopped = false;
+            canSaveState = true;
 
             run();
         } finally {
             // Always close the browser
             webDriver.quit();
 
-            stopCrawling = false;
+            isStopping = false;
             isStopped = true;
         }
     }
@@ -135,12 +144,15 @@ public abstract class BaseCrawler {
      * @param out the output stream
      */
     public final void saveState(final OutputStream out) {
-        // Check if the crawler has been started at least once, otherwise we have nothing to save
-        Validate.validState(crawlFrontier != null,
-                "Cannot save state at this point. The crawler should be started first.");
+        Validate.validState(canSaveState,
+                "Cannot save state at this point. The crawler should be started at least once.");
 
-        // Save the crawl frontier's current state
-        SerializationUtils.serialize(crawlFrontier, out);
+        HashMap<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
+        stateObjects.put(config.getClass(), config);
+        stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
+        stateObjects.put(cookieStore.getClass(), cookieStore);
+
+        SerializationUtils.serialize(stateObjects, out);
     }
 
     /**
@@ -160,10 +172,15 @@ public abstract class BaseCrawler {
      * @param in        the input stream from which the state should be loaded
      */
     public final void resumeState(final WebDriver webDriver, final InputStream in) {
-        // Re-create crawl frontier from the saved state
-        CrawlFrontier deserializedCrawlFrontier = SerializationUtils.deserialize(in);
+        HashMap<Class<? extends Serializable>, Serializable> stateObjects
+                = SerializationUtils.deserialize(in);
 
-        start(webDriver, deserializedCrawlFrontier);
+        config = (CrawlerConfiguration) stateObjects.get(CrawlerConfiguration.class);
+        crawlFrontier = (CrawlFrontier) stateObjects.get(CrawlFrontier.class);
+        cookieStore = (BasicCookieStore) stateObjects.get(BasicCookieStore.class);
+
+        // Resume crawling
+        start(webDriver, true);
     }
 
     /**
@@ -171,10 +188,10 @@ public abstract class BaseCrawler {
      */
     public final void stop() {
         Validate.validState(!isStopped, "The crawler is not started.");
-        Validate.validState(!stopCrawling, "The stop method has already been called.");
+        Validate.validState(!isStopping, "The stop method has already been called.");
 
         // Indicate that the crawling should be stopped
-        stopCrawling = true;
+        isStopping = true;
     }
 
     /**
@@ -207,7 +224,7 @@ public abstract class BaseCrawler {
     private void run() {
         onStart();
 
-        while (!stopCrawling && crawlFrontier.hasNextCandidate()) {
+        while (!isStopping && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             String candidateUrl = currentCandidate.getRequestUrl().toString();
             HttpClientContext context = HttpClientContext.create();
@@ -378,7 +395,7 @@ public abstract class BaseCrawler {
             TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            stopCrawling = true;
+            isStopping = true;
         }
     }
 
