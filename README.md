@@ -61,37 +61,33 @@ public class MyCrawler extends BaseCrawler {
 ```
 By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourceforge.net/):
 ```java
-public static void main(final String[] args) {
-    // Create the configuration
-    CrawlerConfiguration config = new CrawlerConfigurationBuilder()
-            .setOffsiteRequestFiltering(true)
-            .addAllowedCrawlDomain("example.com")
-            .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
-            .build();
+// Create the configuration
+CrawlerConfiguration config = new CrawlerConfigurationBuilder()
+        .setOffsiteRequestFiltering(true)
+        .addAllowedCrawlDomain("example.com")
+        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .build();
 
-    // Create the crawler using the configuration above
-    MyCrawler crawler = new MyCrawler(config);
+// Create the crawler using the configuration above
+MyCrawler crawler = new MyCrawler(config);
 
-    // Start it
-    crawler.start();
-}
+// Start it
+crawler.start();
 ```
 Of course, you can also use any other browsers by specifying a corresponding `WebDriver` instance:
 ```java
-public static void main(final String[] args) {
-    // Create the configuration
-    CrawlerConfiguration config = new CrawlerConfigurationBuilder()
-            .setOffsiteRequestFiltering(true)
-            .addAllowedCrawlDomain("example.com")
-            .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
-            .build();
+// Create the configuration
+CrawlerConfiguration config = new CrawlerConfigurationBuilder()
+        .setOffsiteRequestFiltering(true)
+        .addAllowedCrawlDomain("example.com")
+        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .build();
 
-    // Create the crawler using the configuration above
-    MyCrawler crawler = new MyCrawler(config);
+// Create the crawler using the configuration above
+MyCrawler crawler = new MyCrawler(config);
 
-    // Start it
-    crawler.start(new ChromeDriver());
-}
+// Start it
+crawler.start(new ChromeDriver());
 ```
 
 That's it! In just a few lines you can create a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the `WebDriver` instance, so you can use all the features that are provided by Selenium.
