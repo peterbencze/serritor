@@ -254,19 +254,24 @@ public abstract class BaseCrawler {
                     // Create a new crawl request for the redirected URL
                     handleRequestRedirect(currentCandidate, responseUrl);
                 } else if (isContentHtml(httpHeadResponse)) {
+                    boolean isTimedOut = false;
+
                     try {
                         // Open URL in browser
                         webDriver.get(candidateUrl);
                     } catch (TimeoutException exception) {
+                        isTimedOut = true;
                         onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate, exception));
                     }
 
-                    String loadedPageUrl = webDriver.getCurrentUrl();
-                    if (!loadedPageUrl.equals(candidateUrl)) {
-                        // Create a new crawl request for the redirected URL (JavaScript redirect)
-                        handleRequestRedirect(currentCandidate, loadedPageUrl);
-                    } else {
-                        onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                    if (!isTimedOut) {
+                        String loadedPageUrl = webDriver.getCurrentUrl();
+                        if (!loadedPageUrl.equals(candidateUrl)) {
+                            // Create a new crawl request for the redirected URL (JS redirect)
+                            handleRequestRedirect(currentCandidate, loadedPageUrl);
+                        } else {
+                            onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                        }
                     }
                 } else {
                     // URLs that point to non-HTML content should not be opened in the browser
