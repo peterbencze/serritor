@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+
+package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 /**
- * An interface that every crawl delay mechanism should implement.
- * 
+ * An interface which should be implemented by every crawl delay mechanism.
+ *
  * @author Peter Bencze
  */
 public interface CrawlDelayMechanism {
-    
+
     /**
-     * Returns the delay that should pass between each request.
-     * 
-     * @return The duration of delay in milliseconds
+     * Returns the delay which should pass between each request.
+     *
+     * @return the duration of delay in milliseconds
      */
     long getDelay();
 }

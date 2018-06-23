@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
 
+package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import java.time.Duration;
@@ -25,62 +25,58 @@ import org.mockito.Mockito;
 import org.openqa.selenium.JavascriptExecutor;
 
 /**
- * Test cases for <code>AdaptiveCrawlDelayMechanism</code>.
- * 
+ * Test cases for {@link AdaptiveCrawlDelayMechanism}.
+ *
  * @author Peter Bencze
  */
 public final class AdaptiveCrawlDelayMechanismTest {
-    
+
     private static final long LOWER_DELAY_DURATION_IN_MILLIS = Duration.ZERO.toMillis();
-    private static final long MINIMUM_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(1).toMillis(); 
+    private static final long MINIMUM_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(1).toMillis();
     private static final long IN_RANGE_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(2).toMillis();
     private static final long MAXIMUM_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(3).toMillis();
     private static final long HIGHER_DELAY_DURATION_IN_MILLIS = Duration.ofSeconds(4).toMillis();
-    
+
     private CrawlerConfiguration mockedConfig;
-    private JavascriptExecutor mockedJsExecutor;  
+    private JavascriptExecutor mockedJsExecutor;
     private AdaptiveCrawlDelayMechanism crawlDelayMechanism;
-    
+
     @Before
     public void initialize() {
         mockedConfig = Mockito.mock(CrawlerConfiguration.class);
         Mockito.when(mockedConfig.getMinimumCrawlDelayDurationInMillis())
-                .thenReturn(MINIMUM_DELAY_DURATION_IN_MILLIS);  
+                .thenReturn(MINIMUM_DELAY_DURATION_IN_MILLIS);
         Mockito.when(mockedConfig.getMaximumCrawlDelayDurationInMillis())
                 .thenReturn(MAXIMUM_DELAY_DURATION_IN_MILLIS);
-        
+
         mockedJsExecutor = Mockito.mock(JavascriptExecutor.class);
-        
+
         crawlDelayMechanism = new AdaptiveCrawlDelayMechanism(mockedConfig, mockedJsExecutor);
     }
-    
+
     @Test
     public void testDelayLowerThanMinimum() {
-        // Return a delay which is lower than the predefined minimum
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(LOWER_DELAY_DURATION_IN_MILLIS);
-        
-        // The minimum delay should be returned
-        Assert.assertEquals(mockedConfig.getMinimumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+
+        Assert.assertEquals(mockedConfig.getMinimumCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
-    
+
     @Test
     public void testDelayHigherThanMaximum() {
-        // Return a delay which is higher than the predefined maximum
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(HIGHER_DELAY_DURATION_IN_MILLIS);
-        
-        // The maximum delay should be returned
-        Assert.assertEquals(mockedConfig.getMaximumCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+
+        Assert.assertEquals(mockedConfig.getMaximumCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
-    
+
     @Test
     public void testDelayBetweenRange() {
-        // Return an in range delay
         Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
                 .thenReturn(IN_RANGE_DELAY_DURATION_IN_MILLIS);
-        
-        // The in range delay should be returned
+
         Assert.assertEquals(IN_RANGE_DELAY_DURATION_IN_MILLIS, crawlDelayMechanism.getDelay());
     }
 }

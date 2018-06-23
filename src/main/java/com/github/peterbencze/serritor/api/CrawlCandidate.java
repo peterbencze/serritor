@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
 
-import com.github.peterbencze.serritor.api.CrawlRequest;
+package com.github.peterbencze.serritor.api;
+
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Optional;
 
 /**
- * Represents a candidate for crawling that will be surely processed by the
- * crawler.
+ * Represents a candidate for crawling.
  *
  * @author Peter Bencze
  */
@@ -32,66 +32,69 @@ public final class CrawlCandidate implements Serializable {
     private final int crawlDepth;
     private final CrawlRequest crawlRequest;
 
-    public CrawlCandidate(final CrawlCandidateBuilder builder) {
+    private CrawlCandidate(final CrawlCandidateBuilder builder) {
         this.crawlRequest = builder.crawlRequest;
         this.refererUrl = builder.refererUrl;
         this.crawlDepth = builder.crawlDepth;
     }
 
     /**
-     * Returns the referer's URL.
+     * Returns the referer URL.
      *
-     * @return The URL of the referer
+     * @return the URL of the referer
      */
     public URI getRefererUrl() {
         return refererUrl;
     }
 
     /**
-     * Returns the candidate's URL.
+     * Returns the request URL.
      *
-     * @return The URL of the candidate
+     * @return the URL of the request
      */
-    public URI getCandidateUrl() {
+    public URI getRequestUrl() {
         return crawlRequest.getRequestUrl();
     }
 
     /**
-     * Returns the domain of the candidate's URL.
+     * Returns the domain of the request URL.
      *
-     * @return The domain of the candidate URL
+     * @return the domain of the request URL
      */
     public InternetDomainName getDomain() {
         return crawlRequest.getDomain();
     }
 
     /**
-     * Returns the crawl depth of the candidate.
+     * Returns the crawl depth of the request.
      *
-     * @return The crawl depth
+     * @return the crawl depth of the request
      */
     public int getCrawlDepth() {
         return crawlDepth;
     }
 
     /**
-     * Returns the priority of the candidate.
+     * Returns the priority of the request.
      *
-     * @return The priority
+     * @return the priority of the request
      */
     public int getPriority() {
         return crawlRequest.getPriority();
     }
 
     /**
-     * Returns the crawl request from which this candidate was constructed.
+     * Returns the metadata associated with the request.
      *
-     * @return The <code>CrawlRequest</code> instance
+     * @return the metadata associated with the request
      */
-    public CrawlRequest getCrawlRequest() {
-        return crawlRequest;
+    public Optional<Serializable> getMetadata() {
+        return crawlRequest.getMetadata();
     }
 
+    /**
+     * Builds {@link CrawlCandidate} instances.
+     */
     public static final class CrawlCandidateBuilder {
 
         private final CrawlRequest crawlRequest;
@@ -99,20 +102,44 @@ public final class CrawlCandidate implements Serializable {
         private URI refererUrl;
         private int crawlDepth;
 
+        /**
+         * Creates a {@link CrawlCandidateBuilder} instance.
+         *
+         * @param request the <code>CrawlRequest</code> instance from which this candidate is built
+         */
         public CrawlCandidateBuilder(final CrawlRequest request) {
             crawlRequest = request;
         }
 
+        /**
+         * Sets the referer URL.
+         *
+         * @param refererUrl the referer URL
+         *
+         * @return the <code>CrawlCandidateBuilder</code> instance
+         */
         public CrawlCandidateBuilder setRefererUrl(final URI refererUrl) {
             this.refererUrl = refererUrl;
             return this;
         }
 
+        /**
+         * Sets the crawl depth of the request.
+         *
+         * @param crawlDepth the crawl depth of the request
+         *
+         * @return the <code>CrawlCandidateBuilder</code> instance
+         */
         public CrawlCandidateBuilder setCrawlDepth(final int crawlDepth) {
             this.crawlDepth = crawlDepth;
             return this;
         }
 
+        /**
+         * Builds the configured <code>CrawlCandidate</code> instance.
+         *
+         * @return the configured <code>CrawlCandidate</code> instance
+         */
         public CrawlCandidate build() {
             return new CrawlCandidate(this);
         }

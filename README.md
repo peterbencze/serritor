@@ -1,29 +1,39 @@
 Serritor
 ========
 
-Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. Crawling dynamic web pages is no longer a problem!
+Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. It can be used to crawl dynamic web pages that use JavaScript.
 
-## Installation
-### Using Maven
+## Using Serritor in your build
+### Maven
 
 Add the following dependency to your pom.xml:
 ```xml
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.3.1</version>
+    <version>1.4.0</version>
 </dependency>
 ```
 
-### Without Maven
+### Gradle
+
+Add the following dependency to your build.gradle:
+```groovy
+compile group: 'com.github.peterbencze', name: 'serritor', version: '1.4.0'
+```
+
+### Manual dependencies
 
 The standalone JAR files are available on the [releases](https://github.com/peterbencze/serritor/releases) page.
 
 ## Documentation
-See the [Wiki](https://github.com/peterbencze/serritor/wiki) page.
+* The [Wiki](https://github.com/peterbencze/serritor/wiki) contains usage information and examples
+* The Javadoc is available [here](https://peterbencze.github.io/serritor/)
 
 ## Quickstart
-_BaseCrawler_ provides a skeletal implementation of a crawler to minimize the effort to create your own. First, create a class that extends _BaseCrawler_. In this class, you can implement the behavior of your crawler. There are callbacks available for every stage of crawling. Below you can find an example:
+The `BaseCrawler` abstract class provides a skeletal implementation of a crawler to minimize the effort to create your own. The extending class should define the logic of the crawler.
+
+Below you can find a simple example that is enough to get you started:
 ```java
 public class MyCrawler extends BaseCrawler {
 
@@ -37,60 +47,50 @@ public class MyCrawler extends BaseCrawler {
     }
 
     @Override
-    protected void onResponseComplete(final HtmlResponse response) {
+    protected void onPageLoad(final PageLoadEvent event) {
         // Crawl every URL that match the given pattern
-        urlFinder.findUrlsInResponse(response)
+        urlFinder.findUrlsInPage(event)
                 .stream()
                 .map(CrawlRequestBuilder::new)
                 .map(CrawlRequestBuilder::build)
                 .forEach(this::crawl);
-    }
-
-    @Override
-    protected void onNonHtmlResponse(final NonHtmlResponse response) {
-        System.out.println("Received a non-HTML response from: " + response.getCrawlRequest().getRequestUrl());
-    }
-
-    @Override
-    protected void onUnsuccessfulRequest(final UnsuccessfulRequest request) {
-        System.out.println("Could not get response from: " + request.getCrawlRequest().getRequestUrl());
+        
+        // ...
     }
 }
 ```
 By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourceforge.net/):
 ```java
-public static void main(String[] args) {
-    // Create the configuration
-    CrawlerConfiguration config = new CrawlerConfigurationBuilder().setOffsiteRequestFiltering(true)
-            .addAllowedCrawlDomain("example.com")
-            .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
-            .build();
+// Create the configuration
+CrawlerConfiguration config = new CrawlerConfigurationBuilder()
+        .setOffsiteRequestFiltering(true)
+        .addAllowedCrawlDomain("example.com")
+        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .build();
 
-    // Create the crawler using the configuration above
-    MyCrawler crawler = new MyCrawler(config);
+// Create the crawler using the configuration above
+MyCrawler crawler = new MyCrawler(config);
 
-    // Start it
-    crawler.start();
-}
+// Start it
+crawler.start();
 ```
-Of course, you can also use any other browsers by specifying a corresponding _WebDriver_ instance:
+Of course, you can also use any other browsers by specifying a corresponding `WebDriver` instance:
 ```java
-public static void main(String[] args) {
-    // Create the configuration
-    CrawlerConfiguration config = new CrawlerConfigurationBuilder().setOffsiteRequestFiltering(true)
-            .addAllowedCrawlDomain("example.com")
-            .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
-            .build();
+// Create the configuration
+CrawlerConfiguration config = new CrawlerConfigurationBuilder()
+        .setOffsiteRequestFiltering(true)
+        .addAllowedCrawlDomain("example.com")
+        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .build();
 
-    // Create the crawler using the configuration above
-    MyCrawler crawler = new MyCrawler(config);
+// Create the crawler using the configuration above
+MyCrawler crawler = new MyCrawler(config);
 
-    // Start it
-    crawler.start(new ChromeDriver());
-}
+// Start it
+crawler.start(new ChromeDriver());
 ```
 
-That's it! In just a few lines you can make a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the _WebDriver_ instance, so you can use all the features that are provided by Selenium.
+That's it! In just a few lines you can create a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the `WebDriver` instance, so you can use all the features that are provided by Selenium.
 
 ## License
 The source code of Serritor is made available under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).

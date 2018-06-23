@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2018 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.peterbencze.serritor.internal;
+
+package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration.CrawlerConfigurationBuilder;
@@ -23,24 +24,24 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Test cases for <code>FixedCrawlDelayMechanism</code>.
- * 
+ * Test cases for {@link FixedCrawlDelayMechanism}.
+ *
  * @author Peter Bencze
  */
 public class FixedCrawlDelayMechanismTest {
-    
+
     private CrawlerConfiguration config;
     private FixedCrawlDelayMechanism crawlDelayMechanism;
-    
+
     @Before
     public void initialize() {
         config = Mockito.spy(new CrawlerConfigurationBuilder().build());
         crawlDelayMechanism = new FixedCrawlDelayMechanism(config);
     }
-    
+
     @Test
     public void testGetDelay() {
-        // The delay should be the same as in the configuration
-        Assert.assertEquals(config.getFixedCrawlDelayDurationInMillis(), crawlDelayMechanism.getDelay());
+        Assert.assertEquals(config.getFixedCrawlDelayDurationInMillis(),
+                crawlDelayMechanism.getDelay());
     }
 }

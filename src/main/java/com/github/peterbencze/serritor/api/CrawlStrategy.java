@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.github.peterbencze.serritor.api;
 
 /**
- * Available strategies that can be used while crawling.
+ * Available crawl strategies that define the order in which crawl requests are processed.
  *
  * @author Peter Bencze
  */
