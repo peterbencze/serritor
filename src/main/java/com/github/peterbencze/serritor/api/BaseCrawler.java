@@ -188,7 +188,7 @@ public abstract class BaseCrawler {
      */
     public final void stop() {
         Validate.validState(!isStopped, "The crawler is not started.");
-        Validate.validState(!isStopping, "The stop method has already been called.");
+        Validate.validState(!isStopping, "The crawler is already stopping.");
 
         // Indicate that the crawling should be stopped
         isStopping = true;
