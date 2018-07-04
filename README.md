@@ -1,6 +1,8 @@
 Serritor
 ========
 
+[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://paypal.me/peterbencze)
+
 Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. It can be used to crawl dynamic web pages that use JavaScript.
 
 ## Using Serritor in your build
