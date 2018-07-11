@@ -82,7 +82,7 @@ public abstract class BaseCrawler {
     protected BaseCrawler(final CrawlerConfiguration config) {
         this.config = config;
 
-        // Indicate that the crawler is not running
+        isStopping = false;
         isStopped = true;
 
         // Cannot save state until the crawler has not been started at least once
