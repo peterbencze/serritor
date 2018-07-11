@@ -92,7 +92,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler using HtmlUnit headless browser.
+     * Starts the crawler using HtmlUnit headless browser. This method will block until the crawler
+     * finishes.
      */
     public final void start() {
         start(new HtmlUnitDriver(true));
@@ -100,6 +101,7 @@ public abstract class BaseCrawler {
 
     /**
      * Starts the crawler using the browser specified by the given <code>WebDriver</code> instance.
+     * This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
      */
@@ -158,7 +160,8 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Resumes a previously saved state using HtmlUnit headless browser.
+     * Resumes a previously saved state using HtmlUnit headless browser. This method will block
+     * until the crawler finishes.
      *
      * @param in the input stream from which the state should be loaded
      */
@@ -168,7 +171,7 @@ public abstract class BaseCrawler {
 
     /**
      * Resumes a previously saved state using the browser specified by the given
-     * <code>WebDriver</code> instance.
+     * <code>WebDriver</code> instance. This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
      * @param in        the input stream from which the state should be loaded
@@ -186,7 +189,7 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Stops the crawler.
+     * Gracefully stops the crawler.
      */
     protected final void stop() {
         Validate.validState(!isStopped, "The crawler is not started.");
