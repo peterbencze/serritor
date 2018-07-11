@@ -42,10 +42,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.openqa.selenium.Cookie;
@@ -67,7 +69,7 @@ public abstract class BaseCrawler {
     private CrawlerConfiguration config;
     private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
     private WebDriver webDriver;
     private CrawlDelayMechanism crawlDelayMechanism;
     private boolean isStopped;
@@ -130,7 +132,7 @@ public abstract class BaseCrawler {
 
             run();
         } finally {
-            // Always close the browser
+            HttpClientUtils.closeQuietly(httpClient);
             webDriver.quit();
 
             isStopping = false;
@@ -228,7 +230,7 @@ public abstract class BaseCrawler {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             String candidateUrl = currentCandidate.getRequestUrl().toString();
             HttpClientContext context = HttpClientContext.create();
-            HttpResponse httpHeadResponse = null;
+            CloseableHttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
 
             // Update the client's cookie store, so it will have the same state as the browser
@@ -279,6 +281,7 @@ public abstract class BaseCrawler {
                 }
             }
 
+            HttpClientUtils.closeQuietly(httpHeadResponse);
             performDelay();
         }
 
@@ -320,11 +323,11 @@ public abstract class BaseCrawler {
      *
      * @throws IOException if an error occurs while trying to fulfill the request
      */
-    private HttpResponse getHttpHeadResponse(
+    private CloseableHttpResponse getHttpHeadResponse(
             final String destinationUrl,
             final HttpClientContext context) throws IOException {
-        HttpHead headRequest = new HttpHead(destinationUrl);
-        return httpClient.execute(headRequest, context);
+        HttpHead request = new HttpHead(destinationUrl);
+        return httpClient.execute(request, context);
     }
 
     /**
