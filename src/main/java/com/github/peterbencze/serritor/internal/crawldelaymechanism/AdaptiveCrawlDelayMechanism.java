@@ -17,6 +17,7 @@
 package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
+import org.apache.commons.lang3.Validate;
 import org.openqa.selenium.JavascriptExecutor;
 
 /**
@@ -46,18 +47,12 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     public AdaptiveCrawlDelayMechanism(
             final CrawlerConfiguration config,
             final JavascriptExecutor jsExecutor) {
+        Validate.isTrue(isBrowserCompatible(), "The Navigation Timing API is not supported by the "
+                + "browser.");
+
         minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
         maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
         this.jsExecutor = jsExecutor;
-    }
-
-    /**
-     * Checks if the browser supports the Navigation Timing API.
-     *
-     * @return <code>true</code> if the browser is compatible, <code>false</code> otherwise
-     */
-    public boolean isBrowserCompatible() {
-        return (boolean) jsExecutor.executeScript(BROWSER_COMPATIBILITY_JS);
     }
 
     /**
@@ -78,5 +73,14 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
         }
 
         return delayInMillis;
+    }
+
+    /**
+     * Checks if the browser supports the Navigation Timing API.
+     *
+     * @return <code>true</code> if the browser is compatible, <code>false</code> otherwise
+     */
+    private boolean isBrowserCompatible() {
+        return (boolean) jsExecutor.executeScript(BROWSER_COMPATIBILITY_JS);
     }
 }

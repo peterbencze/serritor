@@ -304,14 +304,7 @@ public abstract class BaseCrawler {
             case RANDOM:
                 return new RandomCrawlDelayMechanism(config);
             case ADAPTIVE:
-                AdaptiveCrawlDelayMechanism mechanism
-                        = new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
-                if (!mechanism.isBrowserCompatible()) {
-                    throw new UnsupportedOperationException("The Navigation Timing API is not "
-                            + "supported by the browser.");
-                }
-
-                return mechanism;
+                return new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
         }
 
         throw new IllegalArgumentException("Unsupported crawl delay strategy.");
