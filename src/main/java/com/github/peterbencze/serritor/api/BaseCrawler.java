@@ -22,6 +22,7 @@ import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
+import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
@@ -38,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -49,8 +49,6 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.cookie.BasicClientCookie;
-import org.openqa.selenium.Cookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -237,7 +235,7 @@ public abstract class BaseCrawler {
             boolean isUnsuccessfulRequest = false;
 
             // Update the client's cookie store, so it will have the same state as the browser
-            updateClientCookieStore();
+            updateHttpClientCookieStore();
 
             try {
                 // Send an HTTP HEAD request to determine its availability and content type
@@ -361,34 +359,12 @@ public abstract class BaseCrawler {
      * Adds all the browser cookies for the current domain to the HTTP client's cookie store,
      * replacing any existing equivalent ones.
      */
-    private void updateClientCookieStore() {
+    private void updateHttpClientCookieStore() {
         webDriver.manage()
                 .getCookies()
                 .stream()
-                .map(BaseCrawler::convertBrowserCookie)
+                .map(CookieConverter::convertToHttpClientCookie)
                 .forEach(cookieStore::addCookie);
-    }
-
-    /**
-     * Converts a browser cookie to a HTTP client one.
-     *
-     * @param browserCookie the browser cookie to be converted
-     *
-     * @return the converted HTTP client cookie
-     */
-    private static BasicClientCookie convertBrowserCookie(final Cookie browserCookie) {
-        BasicClientCookie clientCookie
-                = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
-        clientCookie.setDomain(browserCookie.getDomain());
-        clientCookie.setPath(browserCookie.getPath());
-        clientCookie.setExpiryDate(browserCookie.getExpiry());
-        clientCookie.setSecure(browserCookie.isSecure());
-
-        if (browserCookie.isHttpOnly()) {
-            clientCookie.setAttribute("httponly", StringUtils.EMPTY);
-        }
-
-        return clientCookie;
     }
 
     /**
