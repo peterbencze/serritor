@@ -47,8 +47,8 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     public AdaptiveCrawlDelayMechanism(
             final CrawlerConfiguration config,
             final JavascriptExecutor jsExecutor) {
-        Validate.isTrue(isBrowserCompatible(), "The Navigation Timing API is not supported by the "
-                + "browser.");
+        Validate.isTrue(isBrowserCompatible(jsExecutor), "The Navigation Timing API is not "
+                + "supported by the browser.");
 
         minDelayInMillis = config.getMinimumCrawlDelayDurationInMillis();
         maxDelayInMillis = config.getMaximumCrawlDelayDurationInMillis();
@@ -78,9 +78,12 @@ public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
     /**
      * Checks if the browser supports the Navigation Timing API.
      *
+     * @param jsExecutor the {@link org.openqa.selenium.WebDriver} instance which is capable of
+     *                   executing JavaScript
+     *
      * @return <code>true</code> if the browser is compatible, <code>false</code> otherwise
      */
-    private boolean isBrowserCompatible() {
+    private static boolean isBrowserCompatible(final JavascriptExecutor jsExecutor) {
         return (boolean) jsExecutor.executeScript(BROWSER_COMPATIBILITY_JS);
     }
 }
