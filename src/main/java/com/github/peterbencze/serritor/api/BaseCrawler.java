@@ -206,9 +206,10 @@ public abstract class BaseCrawler {
      * @param request the crawl request
      */
     protected final void crawl(final CrawlRequest request) {
-        Validate.notNull(request, "The request cannot be null.");
         Validate.validState(!isStopped,
                 "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
+        Validate.validState(!isStopping, "Cannot add request when the crawler is stopping.");
+        Validate.notNull(request, "The request cannot be null.");
 
         crawlFrontier.feedRequest(request, false);
     }
