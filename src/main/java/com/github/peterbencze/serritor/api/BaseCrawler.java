@@ -49,6 +49,7 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -117,7 +118,9 @@ public abstract class BaseCrawler {
             Validate.validState(isStopped, "The crawler is already running.");
             this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
 
-            if (!isResuming) {
+            if (isResuming) {
+                syncSeleniumCookies();
+            } else {
                 cookieStore = new BasicCookieStore();
                 crawlFrontier = new CrawlFrontier(config);
             }
@@ -145,9 +148,9 @@ public abstract class BaseCrawler {
     /**
      * Saves the current state of the crawler to the given output stream.
      *
-     * @param out the output stream
+     * @param outStream the output stream
      */
-    public final void saveState(final OutputStream out) {
+    public final void saveState(final OutputStream outStream) {
         Validate.validState(canSaveState,
                 "Cannot save state at this point. The crawler should be started at least once.");
 
@@ -156,17 +159,17 @@ public abstract class BaseCrawler {
         stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
         stateObjects.put(cookieStore.getClass(), cookieStore);
 
-        SerializationUtils.serialize(stateObjects, out);
+        SerializationUtils.serialize(stateObjects, outStream);
     }
 
     /**
      * Resumes a previously saved state using HtmlUnit headless browser. This method will block
      * until the crawler finishes.
      *
-     * @param in the input stream from which the state should be loaded
+     * @param inStream the input stream from which the state should be loaded
      */
-    public final void resumeState(final InputStream in) {
-        resumeState(new HtmlUnitDriver(true), in);
+    public final void resumeState(final InputStream inStream) {
+        resumeState(new HtmlUnitDriver(true), inStream);
     }
 
     /**
@@ -174,11 +177,11 @@ public abstract class BaseCrawler {
      * <code>WebDriver</code> instance. This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
-     * @param in        the input stream from which the state should be loaded
+     * @param inStream  the input stream from which the state should be loaded
      */
-    public final void resumeState(final WebDriver webDriver, final InputStream in) {
+    public final void resumeState(final WebDriver webDriver, final InputStream inStream) {
         HashMap<Class<? extends Serializable>, Serializable> stateObjects
-                = SerializationUtils.deserialize(in);
+                = SerializationUtils.deserialize(inStream);
 
         config = (CrawlerConfiguration) stateObjects.get(CrawlerConfiguration.class);
         crawlFrontier = (CrawlFrontier) stateObjects.get(CrawlFrontier.class);
@@ -237,9 +240,6 @@ public abstract class BaseCrawler {
             CloseableHttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
 
-            // Update the client's cookie store, so it will have the same state as the browser
-            updateHttpClientCookieStore();
-
             try {
                 // Send an HTTP HEAD request to determine its availability and content type
                 httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
@@ -261,16 +261,23 @@ public abstract class BaseCrawler {
                     handleRequestRedirect(currentCandidate, responseUrl);
                 } else if (isContentHtml(httpHeadResponse)) {
                     boolean isTimedOut = false;
+                    TimeoutException requestTimeoutException = null;
 
                     try {
                         // Open URL in browser
                         webDriver.get(candidateUrl);
                     } catch (TimeoutException exception) {
                         isTimedOut = true;
-                        onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate, exception));
+                        requestTimeoutException = exception;
                     }
 
-                    if (!isTimedOut) {
+                    // Ensure the HTTP client and Selenium have the same state
+                    syncHttpClientCookies();
+
+                    if (isTimedOut) {
+                        onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
+                                requestTimeoutException));
+                    } else {
                         String loadedPageUrl = webDriver.getCurrentUrl();
                         if (!loadedPageUrl.equals(candidateUrl)) {
                             // Create a new crawl request for the redirected URL (JS redirect)
@@ -359,15 +366,25 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Adds all the browser cookies for the current domain to the HTTP client's cookie store,
-     * replacing any existing equivalent ones.
+     * Copies all the Selenium cookies for the current domain to the HTTP client cookie store.
      */
-    private void updateHttpClientCookieStore() {
+    private void syncHttpClientCookies() {
         webDriver.manage()
                 .getCookies()
                 .stream()
                 .map(CookieConverter::convertToHttpClientCookie)
                 .forEach(cookieStore::addCookie);
+    }
+
+    /**
+     * Copies all the HTTP client cookies to the Selenium cookie store.
+     */
+    private void syncSeleniumCookies() {
+        cookieStore.getCookies()
+                .stream()
+                .map(BasicClientCookie.class::cast)
+                .map(CookieConverter::convertToSeleniumCookie)
+                .forEach(webDriver.manage()::addCookie);
     }
 
     /**
