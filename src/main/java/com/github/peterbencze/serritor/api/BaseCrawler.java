@@ -115,7 +115,6 @@ public abstract class BaseCrawler {
     private void start(final WebDriver webDriver, final boolean isResuming) {
         try {
             Validate.validState(isStopped, "The crawler is already running.");
-
             this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
 
             if (!isResuming) {
@@ -133,7 +132,10 @@ public abstract class BaseCrawler {
             run();
         } finally {
             HttpClientUtils.closeQuietly(httpClient);
-            webDriver.quit();
+
+            if (this.webDriver != null) {
+                this.webDriver.quit();
+            }
 
             isStopping = false;
             isStopped = true;
