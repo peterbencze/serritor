@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -50,6 +49,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -277,39 +277,43 @@ public abstract class BaseCrawler {
 
             if (!isUnsuccessfulRequest) {
                 String responseUrl = getFinalResponseUrl(context, candidateUrl);
-                if (!responseUrl.equals(candidateUrl)) {
-                    // Create a new crawl request for the redirected URL
-                    handleRequestRedirect(currentCandidate, responseUrl);
-                } else if (isContentHtml(httpHeadResponse)) {
-                    boolean isTimedOut = false;
-                    TimeoutException requestTimeoutException = null;
+                if (responseUrl.equals(candidateUrl)) {
+                    String responseContentType = getResponseContentType(httpHeadResponse);
+                    if (responseContentType.equals(ContentType.TEXT_HTML.toString())) {
+                        boolean isTimedOut = false;
+                        TimeoutException requestTimeoutException = null;
 
-                    try {
-                        // Open URL in browser
-                        webDriver.get(candidateUrl);
-                    } catch (TimeoutException exception) {
-                        isTimedOut = true;
-                        requestTimeoutException = exception;
-                    }
-
-                    // Ensure the HTTP client and Selenium have the same state
-                    syncHttpClientCookies();
-
-                    if (isTimedOut) {
-                        onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
-                                requestTimeoutException));
-                    } else {
-                        String loadedPageUrl = webDriver.getCurrentUrl();
-                        if (!loadedPageUrl.equals(candidateUrl)) {
-                            // Create a new crawl request for the redirected URL (JS redirect)
-                            handleRequestRedirect(currentCandidate, loadedPageUrl);
-                        } else {
-                            onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                        try {
+                            // Open URL in browser
+                            webDriver.get(candidateUrl);
+                        } catch (TimeoutException exception) {
+                            isTimedOut = true;
+                            requestTimeoutException = exception;
                         }
+
+                        // Ensure the HTTP client and Selenium have the same state
+                        syncHttpClientCookies();
+
+                        if (isTimedOut) {
+                            onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
+                                    requestTimeoutException));
+                        } else {
+                            String loadedPageUrl = webDriver.getCurrentUrl();
+                            if (!loadedPageUrl.equals(candidateUrl)) {
+                                // Create a new crawl request for the redirected URL (JS redirect)
+                                handleRequestRedirect(currentCandidate, loadedPageUrl);
+                            } else {
+                                onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                            }
+                        }
+                    } else {
+                        // URLs that point to non-HTML content should not be opened in the browser
+                        onNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
+                                responseContentType));
                     }
                 } else {
-                    // URLs that point to non-HTML content should not be opened in the browser
-                    onNonHtmlContent(new NonHtmlContentEvent(currentCandidate));
+                    // Create a new crawl request for the redirected URL
+                    handleRequestRedirect(currentCandidate, responseUrl);
                 }
             }
 
@@ -376,15 +380,16 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Indicates if the response's content type is HTML.
+     * Returns the Content-Type header value of the HTTP HEAD response, if present. If not, it
+     * returns "text/plain".
      *
      * @param httpHeadResponse the HTTP HEAD response
      *
-     * @return <code>true</code> if the content type is HTML, <code>false</code> otherwise
+     * @return the content type of the response
      */
-    private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
-        Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
-        return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
+    private static String getResponseContentType(final HttpResponse httpHeadResponse) {
+        HttpEntity entity = httpHeadResponse.getEntity();
+        return ContentType.getOrDefault(entity).getMimeType();
     }
 
     /**

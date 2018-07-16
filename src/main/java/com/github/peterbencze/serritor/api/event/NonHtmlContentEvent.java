@@ -26,12 +26,25 @@ import com.github.peterbencze.serritor.internal.EventObject;
  */
 public final class NonHtmlContentEvent extends EventObject {
 
+    private final String contentType;
+
     /**
      * Creates a {@link NonHtmlContentEvent} instance.
      *
      * @param crawlCandidate the current crawl candidate
+     * @param contentType    the content type of the response
      */
-    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate) {
+    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate, final String contentType) {
         super(crawlCandidate);
+        this.contentType = contentType;
+    }
+
+    /**
+     * Returns the content type of the response.
+     *
+     * @return the content type of the response
+     */
+    public String getContentType() {
+        return contentType;
     }
 }
