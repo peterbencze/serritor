@@ -276,13 +276,7 @@ public abstract class BaseCrawler {
             }
 
             if (!isUnsuccessfulRequest) {
-                String responseUrl = candidateUrl;
-                List<URI> redirectLocations = context.getRedirectLocations();
-                if (redirectLocations != null) {
-                    // If the request was redirected, get the final URL
-                    responseUrl = redirectLocations.get(redirectLocations.size() - 1).toString();
-                }
-
+                String responseUrl = getFinalResponseUrl(context, candidateUrl);
                 if (!responseUrl.equals(candidateUrl)) {
                     // Create a new crawl request for the redirected URL
                     handleRequestRedirect(currentCandidate, responseUrl);
@@ -359,6 +353,26 @@ public abstract class BaseCrawler {
             final HttpClientContext context) throws IOException {
         HttpHead request = new HttpHead(destinationUrl);
         return httpClient.execute(request, context);
+    }
+
+    /**
+     * If the HTTP HEAD request was redirected, it returns the final redirected URL. If not, it
+     * returns the original URL of the candidate.
+     *
+     * @param context      the current HTTP client context
+     * @param candidateUrl the URL of the candidate
+     *
+     * @return the final response URL
+     */
+    private static String getFinalResponseUrl(
+            final HttpClientContext context,
+            final String candidateUrl) {
+        List<URI> redirectLocations = context.getRedirectLocations();
+        if (redirectLocations != null) {
+            return redirectLocations.get(redirectLocations.size() - 1).toString();
+        }
+
+        return candidateUrl;
     }
 
     /**
