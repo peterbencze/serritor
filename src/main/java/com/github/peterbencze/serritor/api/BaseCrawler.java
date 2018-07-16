@@ -28,6 +28,7 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCraw
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,11 +39,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.HttpClientUtils;
@@ -225,6 +229,29 @@ public abstract class BaseCrawler {
      */
     protected final void crawl(final List<CrawlRequest> requests) {
         requests.forEach(this::crawl);
+    }
+
+    /**
+     * Downloads the file specified by the URL.
+     *
+     * @param source      the source URL
+     * @param destination the destination file
+     *
+     * @throws IOException if an I/O error occurs while downloading the file
+     */
+    protected final void downloadFile(final URI source, final File destination) throws IOException {
+        Validate.validState(!isStopped, "Cannot download file when the crawler is not started.");
+        Validate.validState(!isStopping, "Cannot download file when the crawler is stopping.");
+        Validate.notNull(source, "The source URL cannot be null.");
+        Validate.notNull(destination, "The destination file cannot be null.");
+
+        HttpGet request = new HttpGet(source);
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                FileUtils.copyInputStreamToFile(entity.getContent(), destination);
+            }
+        }
     }
 
     /**

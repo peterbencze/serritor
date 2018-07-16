@@ -18,9 +18,6 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.EventObject;
-import java.io.File;
-import java.io.IOException;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Event which gets delivered when the content type is not HTML.
@@ -36,17 +33,5 @@ public final class NonHtmlContentEvent extends EventObject {
      */
     public NonHtmlContentEvent(final CrawlCandidate crawlCandidate) {
         super(crawlCandidate);
-    }
-
-    /**
-     * Downloads the file specified by the URL.
-     *
-     * @param destination the destination file
-     *
-     * @throws IOException if the URL cannot be opened or I/O error occurs while downloading the
-     *                     file
-     */
-    public void downloadFile(final File destination) throws IOException {
-        FileUtils.copyURLToFile(getCrawlCandidate().getRequestUrl().toURL(), destination);
     }
 }
