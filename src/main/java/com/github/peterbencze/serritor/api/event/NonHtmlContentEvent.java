@@ -20,31 +20,31 @@ import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
- * Event which gets delivered when the content type is not HTML.
+ * Event which gets delivered when the MIME type of the response is not "text/html".
  *
  * @author Peter Bencze
  */
 public final class NonHtmlContentEvent extends EventObject {
 
-    private final String contentType;
+    private final String mimeType;
 
     /**
      * Creates a {@link NonHtmlContentEvent} instance.
      *
      * @param crawlCandidate the current crawl candidate
-     * @param contentType    the content type of the response
+     * @param mimeType       the MIME type of the response
      */
-    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate, final String contentType) {
+    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate, final String mimeType) {
         super(crawlCandidate);
-        this.contentType = contentType;
+        this.mimeType = mimeType;
     }
 
     /**
-     * Returns the content type of the response.
+     * Returns the MIME type of the response.
      *
-     * @return the content type of the response
+     * @return the MIME type of the response
      */
-    public String getContentType() {
-        return contentType;
+    public String getMimeType() {
+        return mimeType;
     }
 }

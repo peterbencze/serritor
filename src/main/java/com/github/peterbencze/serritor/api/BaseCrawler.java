@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,8 +43,10 @@ import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -278,8 +281,8 @@ public abstract class BaseCrawler {
             if (!isUnsuccessfulRequest) {
                 String responseUrl = getFinalResponseUrl(context, candidateUrl);
                 if (responseUrl.equals(candidateUrl)) {
-                    String responseContentType = getResponseContentType(httpHeadResponse);
-                    if (responseContentType.equals(ContentType.TEXT_HTML.toString())) {
+                    String responseMimeType = getResponseMimeType(httpHeadResponse);
+                    if (responseMimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                         boolean isTimedOut = false;
                         TimeoutException requestTimeoutException = null;
 
@@ -309,7 +312,7 @@ public abstract class BaseCrawler {
                     } else {
                         // URLs that point to non-HTML content should not be opened in the browser
                         onNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
-                                responseContentType));
+                                responseMimeType));
                     }
                 } else {
                     // Create a new crawl request for the redirected URL
@@ -380,16 +383,27 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Returns the Content-Type header value of the HTTP HEAD response, if present. If not, it
-     * returns "text/plain".
+     * Returns the MIME type of the HTTP HEAD response. If the Content-Type header is not present in
+     * the response it returns "text/plain".
      *
      * @param httpHeadResponse the HTTP HEAD response
      *
-     * @return the content type of the response
+     * @return the MIME type of the response
      */
-    private static String getResponseContentType(final HttpResponse httpHeadResponse) {
-        HttpEntity entity = httpHeadResponse.getEntity();
-        return ContentType.getOrDefault(entity).getMimeType();
+    private static String getResponseMimeType(final HttpResponse httpHeadResponse) {
+        Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
+        if (contentTypeHeader != null) {
+            String contentType = contentTypeHeader.getValue();
+            if (contentType != null) {
+                try {
+                    return ContentType.parse(contentType).getMimeType();
+                } catch (ParseException | UnsupportedCharsetException exception) {
+                    return contentType.split(";")[0].trim();
+                }
+            }
+        }
+
+        return ContentType.DEFAULT_TEXT.getMimeType();
     }
 
     /**
