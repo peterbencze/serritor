@@ -16,6 +16,7 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
@@ -124,6 +125,14 @@ public abstract class BaseCrawler {
         try {
             Validate.validState(isStopped, "The crawler is already running.");
             this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
+
+            // If the crawl delay strategy is set to adaptive, we check if the browser supports the
+            // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
+            // before executing JavaScript, so we load a blank page.
+            if (webDriver instanceof HtmlUnitDriver
+                    && config.getCrawlDelayStrategy().equals(CrawlDelayStrategy.ADAPTIVE)) {
+                webDriver.get(WebClient.ABOUT_BLANK);
+            }
 
             if (isResuming) {
                 syncSeleniumCookies();
