@@ -13,7 +13,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
@@ -21,7 +21,7 @@ Add the following dependency to your pom.xml:
 
 Add the following dependency to your build.gradle:
 ```groovy
-compile group: 'com.github.peterbencze', name: 'serritor', version: '1.4.0'
+compile group: 'com.github.peterbencze', name: 'serritor', version: '1.5.0'
 ```
 
 ### Manual dependencies
@@ -43,7 +43,7 @@ public class MyCrawler extends BaseCrawler {
 
     public MyCrawler(final CrawlerConfiguration config) {
         super(config);
-        
+
         // Extract URLs from links on the crawled page
         urlFinder = new UrlFinderBuilder(Pattern.compile(".+")).build();
     }
@@ -56,7 +56,7 @@ public class MyCrawler extends BaseCrawler {
                 .map(CrawlRequestBuilder::new)
                 .map(CrawlRequestBuilder::build)
                 .forEach(this::crawl);
-        
+
         // ...
     }
 }
