@@ -93,7 +93,7 @@ public final class CrawlFrontier implements Serializable {
             urlFingerprints.add(urlFingerprint);
         }
 
-        CrawlCandidateBuilder builder;
+        CrawlCandidateBuilder builder = new CrawlCandidateBuilder(request);
 
         if (!isCrawlSeed) {
             int crawlDepthLimit = config.getMaximumCrawlDepth();
@@ -103,11 +103,9 @@ public final class CrawlFrontier implements Serializable {
                 return;
             }
 
-            builder = new CrawlCandidateBuilder(request)
+            builder = builder
                     .setRefererUrl(currentCandidate.getRequestUrl())
                     .setCrawlDepth(nextCrawlDepth);
-        } else {
-            builder = new CrawlCandidateBuilder(request);
         }
 
         candidates.add(builder.build());
