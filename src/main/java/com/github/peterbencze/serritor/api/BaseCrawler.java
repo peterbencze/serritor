@@ -57,7 +57,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.cookie.BasicClientCookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -134,13 +133,11 @@ public abstract class BaseCrawler {
                 webDriver.get(WebClient.ABOUT_BLANK);
             }
 
-            if (isResuming) {
-                syncSeleniumCookies();
-            } else {
-                cookieStore = new BasicCookieStore();
+            if (!isResuming) {
                 crawlFrontier = new CrawlFrontier(config);
             }
 
+            cookieStore = new BasicCookieStore();
             httpClient = HttpClientBuilder.create()
                     .setDefaultCookieStore(cookieStore)
                     .useSystemProperties()
@@ -174,7 +171,6 @@ public abstract class BaseCrawler {
         HashMap<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
         stateObjects.put(config.getClass(), config);
         stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
-        stateObjects.put(cookieStore.getClass(), cookieStore);
 
         SerializationUtils.serialize(stateObjects, outStream);
     }
@@ -202,7 +198,6 @@ public abstract class BaseCrawler {
 
         config = (CrawlerConfiguration) stateObjects.get(CrawlerConfiguration.class);
         crawlFrontier = (CrawlFrontier) stateObjects.get(CrawlFrontier.class);
-        cookieStore = (BasicCookieStore) stateObjects.get(BasicCookieStore.class);
 
         // Resume crawling
         start(webDriver, true);
@@ -444,17 +439,6 @@ public abstract class BaseCrawler {
                 .stream()
                 .map(CookieConverter::convertToHttpClientCookie)
                 .forEach(cookieStore::addCookie);
-    }
-
-    /**
-     * Copies all the HTTP client cookies to the Selenium cookie store.
-     */
-    private void syncSeleniumCookies() {
-        cookieStore.getCookies()
-                .stream()
-                .map(BasicClientCookie.class::cast)
-                .map(CookieConverter::convertToSeleniumCookie)
-                .forEach(webDriver.manage()::addCookie);
     }
 
     /**

@@ -155,6 +155,30 @@ public class SerritorIT {
         Assert.assertEquals(0, WireMock.findUnmatchedRequests().size());
     }
 
+    @Test
+    public void httpClientCookieSynchronizationTest() {
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
+                .willReturn(WireMock.ok()
+                        .withHeader("Set-Cookie", "foo=bar")
+                        .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
+
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/bar"))
+                .willReturn(WireMock.ok()
+                        .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
+
+        CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
+                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo").build())
+                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/bar").build())
+                .build();
+
+        BaseCrawler crawler = new BaseCrawler(config) {
+        };
+        crawler.start(htmlUnitDriver);
+
+        WireMock.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/bar"))
+                .withCookie("foo", WireMock.equalTo("bar")));
+    }
+
     @After
     public void after() {
         WireMock.reset();

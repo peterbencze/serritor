@@ -50,19 +50,4 @@ public final class CookieConverter {
 
         return httpClientCookie;
     }
-
-    /**
-     * Converts an HTTP client cookie to a Selenium one.
-     *
-     * @param httpClientCookie the HTTP client cookie to be converted
-     *
-     * @return the converted Selenium cookie
-     */
-    public static Cookie convertToSeleniumCookie(final BasicClientCookie httpClientCookie) {
-        boolean isHttpOnly = httpClientCookie.getAttribute(HTTP_ONLY_ATTRIBUTE) != null;
-
-        return new Cookie(httpClientCookie.getName(), httpClientCookie.getValue(),
-                httpClientCookie.getDomain(), httpClientCookie.getPath(),
-                httpClientCookie.getExpiryDate(), httpClientCookie.isSecure(), isHttpOnly);
-    }
 }

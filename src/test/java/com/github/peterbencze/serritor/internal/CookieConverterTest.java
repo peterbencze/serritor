@@ -70,18 +70,4 @@ public final class CookieConverterTest {
         Assert.assertEquals(convertedCookie.getAttribute(HTTP_ONLY_ATTRIBUTE) != null,
                 seleniumCookie.isHttpOnly());
     }
-
-    @Test
-    public void convertToSeleniumCookieTest() {
-        Cookie convertedCookie = CookieConverter.convertToSeleniumCookie(httpClientCookie);
-
-        Assert.assertEquals(convertedCookie.getName(), httpClientCookie.getName());
-        Assert.assertEquals(convertedCookie.getValue(), httpClientCookie.getValue());
-        Assert.assertEquals(convertedCookie.getDomain(), httpClientCookie.getDomain());
-        Assert.assertEquals(convertedCookie.getPath(), httpClientCookie.getPath());
-        Assert.assertEquals(convertedCookie.getExpiry(), httpClientCookie.getExpiryDate());
-        Assert.assertEquals(convertedCookie.isSecure(), httpClientCookie.isSecure());
-        Assert.assertEquals(convertedCookie.isHttpOnly(),
-                httpClientCookie.getAttribute(HTTP_ONLY_ATTRIBUTE) != null);
-    }
 }
