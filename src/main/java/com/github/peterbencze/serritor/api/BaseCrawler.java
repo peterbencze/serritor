@@ -143,6 +143,7 @@ public abstract class BaseCrawler {
 
             httpClient = HttpClientBuilder.create()
                     .setDefaultCookieStore(cookieStore)
+                    .useSystemProperties()
                     .build();
             crawlDelayMechanism = createCrawlDelayMechanism();
             isStopped = false;
