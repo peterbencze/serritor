@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.client.ClientUtil;
@@ -74,7 +75,7 @@ public class SerritorIT {
     @Test
     public void testFileDownload() throws IOException {
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
-                .willReturn(WireMock.aResponse()
+                .willReturn(WireMock.ok()
                         .withHeader("Content-Type", ContentType.APPLICATION_OCTET_STREAM.toString())
                         .withBodyFile("test-file")));
 
@@ -103,21 +104,20 @@ public class SerritorIT {
 
         Assert.assertEquals(0, WireMock.findUnmatchedRequests().size());
 
-        String expected
-                = IOUtils.toString(this.getClass().getResourceAsStream("/__files/test-file"),
-                        Charset.defaultCharset());
+        InputStream input = this.getClass().getResourceAsStream("/__files/test-file");
+        String expected = IOUtils.toString(input, Charset.defaultCharset());
         String actual = IOUtils.toString(destinationFile.toURI(), Charset.defaultCharset());
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testResumptionOfSavedState() throws IOException {
+    public void testResumeState() throws IOException {
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
-                .willReturn(WireMock.aResponse()
+                .willReturn(WireMock.ok()
                         .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
 
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/bar"))
-                .willReturn(WireMock.aResponse()
+                .willReturn(WireMock.ok()
                         .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
 
         File destinationFile = createTempFile();
@@ -129,7 +129,7 @@ public class SerritorIT {
 
         BaseCrawler crawler = new BaseCrawler(config) {
             @Override
-            protected void onPageLoad(PageLoadEvent event) {
+            protected void onPageLoad(final PageLoadEvent event) {
                 super.onPageLoad(event);
 
                 try {
@@ -156,7 +156,7 @@ public class SerritorIT {
     }
 
     @Test
-    public void httpClientCookieSynchronizationTest() {
+    public void testHttpClientCookieSynchronization() {
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
                 .willReturn(WireMock.ok()
                         .withHeader("Set-Cookie", "foo=bar")
