@@ -53,8 +53,7 @@ public class MyCrawler extends BaseCrawler {
         // Crawl every URL that match the given pattern
         urlFinder.findUrlsInPage(event)
                 .stream()
-                .map(CrawlRequestBuilder::new)
-                .map(CrawlRequestBuilder::build)
+                .map(CrawlRequest::createDefault)
                 .forEach(this::crawl);
 
         // ...
@@ -67,7 +66,7 @@ By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourcef
 CrawlerConfiguration config = new CrawlerConfigurationBuilder()
         .setOffsiteRequestFiltering(true)
         .addAllowedCrawlDomain("example.com")
-        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .addCrawlSeed(CrawlRequest.createDefault("http://example.com"))
         .build();
 
 // Create the crawler using the configuration above
@@ -82,7 +81,7 @@ Of course, you can also use any other browsers by specifying a corresponding `We
 CrawlerConfiguration config = new CrawlerConfigurationBuilder()
         .setOffsiteRequestFiltering(true)
         .addAllowedCrawlDomain("example.com")
-        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .addCrawlSeed(CrawlRequest.createDefault("http://example.com"))
         .build();
 
 // Create the crawler using the configuration above
