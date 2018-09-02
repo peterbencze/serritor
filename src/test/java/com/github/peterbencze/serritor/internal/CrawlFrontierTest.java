@@ -62,7 +62,7 @@ public final class CrawlFrontierTest {
     private static final CrawlRequest ROOT_URL_0_CRAWL_REQUEST
             = new CrawlRequestBuilder(ROOT_URL_0).setPriority(ROOT_URL_0_PRIORITY).build();
     private static final CrawlRequest DUPLICATE_ROOT_URL_0_CRAWL_REQUEST
-            = new CrawlRequestBuilder(DUPLICATE_ROOT_URL_0).build();
+            = CrawlRequest.createDefault(DUPLICATE_ROOT_URL_0);
     private static final CrawlRequest ROOT_URL_1_CRAWL_REQUEST
             = new CrawlRequestBuilder(ROOT_URL_1).setPriority(ROOT_URL_1_PRIORITY).build();
     private static final List<CrawlRequest> CRAWL_SEEDS

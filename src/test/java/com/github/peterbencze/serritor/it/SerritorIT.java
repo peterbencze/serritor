@@ -82,7 +82,7 @@ public class SerritorIT {
         File destinationFile = createTempFile();
 
         CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
-                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo").build())
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
                 .build();
 
         BaseCrawler crawler = new BaseCrawler(config) {
@@ -123,8 +123,8 @@ public class SerritorIT {
         File destinationFile = createTempFile();
 
         CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
-                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo").build())
-                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/bar").build())
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/bar"))
                 .build();
 
         BaseCrawler crawler = new BaseCrawler(config) {
@@ -171,7 +171,7 @@ public class SerritorIT {
                 .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo")
                         .setPriority(1)
                         .build())
-                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/bar").build())
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/bar"))
                 .build();
 
         BaseCrawler crawler = new BaseCrawler(config) {

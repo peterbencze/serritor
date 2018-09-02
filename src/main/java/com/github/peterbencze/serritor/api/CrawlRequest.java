@@ -46,6 +46,28 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
+     * Creates a crawl request with the default configuration.
+     *
+     * @param requestUrl the request URL
+     *
+     * @return the crawl request with the default configuration
+     */
+    public static CrawlRequest createDefault(final URI requestUrl) {
+        return new CrawlRequestBuilder(requestUrl).build();
+    }
+
+    /**
+     * Creates a crawl request with the default configuration.
+     *
+     * @param requestUrl the request URL
+     *
+     * @return the crawl request with the default configuration
+     */
+    public static CrawlRequest createDefault(final String requestUrl) {
+        return new CrawlRequestBuilder(requestUrl).build();
+    }
+
+    /**
      * Returns the request URL.
      *
      * @return the request URL
