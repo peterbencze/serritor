@@ -18,35 +18,33 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.EventObject;
-import java.io.File;
-import java.io.IOException;
-import org.apache.commons.io.FileUtils;
 
 /**
- * Event which gets delivered when the content type is not HTML.
+ * Event which gets delivered when the MIME type of the response is not "text/html".
  *
  * @author Peter Bencze
  */
 public final class NonHtmlContentEvent extends EventObject {
 
+    private final String mimeType;
+
     /**
      * Creates a {@link NonHtmlContentEvent} instance.
      *
      * @param crawlCandidate the current crawl candidate
+     * @param mimeType       the MIME type of the response
      */
-    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate) {
+    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate, final String mimeType) {
         super(crawlCandidate);
+        this.mimeType = mimeType;
     }
 
     /**
-     * Downloads the file specified by the URL.
+     * Returns the MIME type of the response.
      *
-     * @param destination the destination file
-     *
-     * @throws IOException if the URL cannot be opened or I/O error occurs while downloading the
-     *                     file
+     * @return the MIME type of the response
      */
-    public void downloadFile(final File destination) throws IOException {
-        FileUtils.copyURLToFile(getCrawlCandidate().getRequestUrl().toURL(), destination);
+    public String getMimeType() {
+        return mimeType;
     }
 }

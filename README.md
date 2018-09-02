@@ -13,7 +13,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
@@ -21,7 +21,7 @@ Add the following dependency to your pom.xml:
 
 Add the following dependency to your build.gradle:
 ```groovy
-compile group: 'com.github.peterbencze', name: 'serritor', version: '1.4.0'
+compile group: 'com.github.peterbencze', name: 'serritor', version: '1.5.0'
 ```
 
 ### Manual dependencies
@@ -43,9 +43,9 @@ public class MyCrawler extends BaseCrawler {
 
     public MyCrawler(final CrawlerConfiguration config) {
         super(config);
-        
+
         // Extract URLs from links on the crawled page
-        urlFinder = new UrlFinderBuilder(Pattern.compile(".+")).build();
+        urlFinder = UrlFinder.createDefault();
     }
 
     @Override
@@ -53,10 +53,9 @@ public class MyCrawler extends BaseCrawler {
         // Crawl every URL that match the given pattern
         urlFinder.findUrlsInPage(event)
                 .stream()
-                .map(CrawlRequestBuilder::new)
-                .map(CrawlRequestBuilder::build)
+                .map(CrawlRequest::createDefault)
                 .forEach(this::crawl);
-        
+
         // ...
     }
 }
@@ -67,7 +66,7 @@ By default, the crawler uses [HtmlUnit headless browser](http://htmlunit.sourcef
 CrawlerConfiguration config = new CrawlerConfigurationBuilder()
         .setOffsiteRequestFiltering(true)
         .addAllowedCrawlDomain("example.com")
-        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .addCrawlSeed(CrawlRequest.createDefault("http://example.com"))
         .build();
 
 // Create the crawler using the configuration above
@@ -82,7 +81,7 @@ Of course, you can also use any other browsers by specifying a corresponding `We
 CrawlerConfiguration config = new CrawlerConfigurationBuilder()
         .setOffsiteRequestFiltering(true)
         .addAllowedCrawlDomain("example.com")
-        .addCrawlSeed(new CrawlRequestBuilder("http://example.com").build())
+        .addCrawlSeed(CrawlRequest.createDefault("http://example.com"))
         .build();
 
 // Create the crawler using the configuration above

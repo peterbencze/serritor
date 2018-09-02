@@ -51,6 +51,10 @@ public final class AdaptiveCrawlDelayMechanismTest {
 
         mockedJsExecutor = Mockito.mock(JavascriptExecutor.class);
 
+        // Mock browser compatibility check
+        Mockito.when(mockedJsExecutor.executeScript(Mockito.anyString()))
+                .thenReturn(true);
+
         crawlDelayMechanism = new AdaptiveCrawlDelayMechanism(mockedConfig, mockedJsExecutor);
     }
 

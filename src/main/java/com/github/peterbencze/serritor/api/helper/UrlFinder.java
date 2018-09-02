@@ -54,6 +54,16 @@ public final class UrlFinder {
     }
 
     /**
+     * Creates a <code>UrlFinder</code> instance with default configuration which matches anything
+     * in the <code>href</code> attribute of the HTML anchor tags.
+     *
+     * @return a <code>UrlFinder</code> instance with default configuration
+     */
+    public static UrlFinder createDefault() {
+        return new UrlFinderBuilder(Pattern.compile(".+")).build();
+    }
+
+    /**
      * Returns a list of validated URLs found in the page's HTML source.
      *
      * @param event the <code>PageLoadEvent</code> instance

@@ -16,39 +16,46 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
+import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
+import com.github.peterbencze.serritor.internal.CrawlerState;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.net.URI;
-import java.util.HashMap;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
+import org.apache.http.ParseException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.cookie.BasicClientCookie;
-import org.openqa.selenium.Cookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -67,30 +74,47 @@ public abstract class BaseCrawler {
     private CrawlerConfiguration config;
     private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
     private WebDriver webDriver;
     private CrawlDelayMechanism crawlDelayMechanism;
     private boolean isStopped;
     private boolean isStopping;
-    private boolean canSaveState;
 
     /**
-     * Base constructor of all crawlers.
+     * Base constructor which is used to configure the crawler.
      *
      * @param config the configuration of the crawler
      */
     protected BaseCrawler(final CrawlerConfiguration config) {
+        this();
+
         this.config = config;
-
-        // Indicate that the crawler is not running
-        isStopped = true;
-
-        // Cannot save state until the crawler has not been started at least once
-        canSaveState = false;
     }
 
     /**
-     * Starts the crawler using HtmlUnit headless browser.
+     * Base constructor which loads a previously saved state.
+     *
+     * @param inStream the input stream from which the state should be loaded
+     */
+    protected BaseCrawler(final InputStream inStream) {
+        this();
+
+        CrawlerState state = SerializationUtils.deserialize(inStream);
+        config = state.getStateObject(CrawlerConfiguration.class);
+        crawlFrontier = state.getStateObject(CrawlFrontier.class);
+    }
+
+    /**
+     * Private base constructor which does simple initialization.
+     */
+    private BaseCrawler() {
+        isStopping = false;
+        isStopped = true;
+    }
+
+    /**
+     * Starts the crawler using HtmlUnit headless browser. This method will block until the crawler
+     * finishes.
      */
     public final void start() {
         start(new HtmlUnitDriver(true));
@@ -98,6 +122,7 @@ public abstract class BaseCrawler {
 
     /**
      * Starts the crawler using the browser specified by the given <code>WebDriver</code> instance.
+     * This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
      */
@@ -113,25 +138,35 @@ public abstract class BaseCrawler {
     private void start(final WebDriver webDriver, final boolean isResuming) {
         try {
             Validate.validState(isStopped, "The crawler is already running.");
-
             this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
 
+            // If the crawl delay strategy is set to adaptive, we check if the browser supports the
+            // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
+            // before executing JavaScript, so we load a blank page.
+            if (webDriver instanceof HtmlUnitDriver
+                    && config.getCrawlDelayStrategy().equals(CrawlDelayStrategy.ADAPTIVE)) {
+                webDriver.get(WebClient.ABOUT_BLANK);
+            }
+
             if (!isResuming) {
-                cookieStore = new BasicCookieStore();
                 crawlFrontier = new CrawlFrontier(config);
             }
 
+            cookieStore = new BasicCookieStore();
             httpClient = HttpClientBuilder.create()
                     .setDefaultCookieStore(cookieStore)
+                    .useSystemProperties()
                     .build();
             crawlDelayMechanism = createCrawlDelayMechanism();
             isStopped = false;
-            canSaveState = true;
 
             run();
         } finally {
-            // Always close the browser
-            webDriver.quit();
+            HttpClientUtils.closeQuietly(httpClient);
+
+            if (this.webDriver != null) {
+                this.webDriver.quit();
+            }
 
             isStopping = false;
             isStopped = true;
@@ -141,52 +176,42 @@ public abstract class BaseCrawler {
     /**
      * Saves the current state of the crawler to the given output stream.
      *
-     * @param out the output stream
+     * @param outStream the output stream
      */
-    public final void saveState(final OutputStream out) {
-        Validate.validState(canSaveState,
-                "Cannot save state at this point. The crawler should be started at least once.");
+    public final void saveState(final OutputStream outStream) {
+        Validate.validState(crawlFrontier != null, "Cannot save state at this point.");
 
-        HashMap<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
-        stateObjects.put(config.getClass(), config);
-        stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
-        stateObjects.put(cookieStore.getClass(), cookieStore);
+        CrawlerState state = new CrawlerState();
+        state.putStateObject(config);
+        state.putStateObject(crawlFrontier);
 
-        SerializationUtils.serialize(stateObjects, out);
+        SerializationUtils.serialize(state, outStream);
     }
 
     /**
-     * Resumes a previously saved state using HtmlUnit headless browser.
-     *
-     * @param in the input stream from which the state should be loaded
+     * Resumes the previously loaded state using HtmlUnit headless browser. This method will block
+     * until the crawler finishes.
      */
-    public final void resumeState(final InputStream in) {
-        resumeState(new HtmlUnitDriver(true), in);
+    public final void resumeState() {
+        resumeState(new HtmlUnitDriver(true));
     }
 
     /**
-     * Resumes a previously saved state using the browser specified by the given
-     * <code>WebDriver</code> instance.
+     * Resumes the previously loaded state using the browser specified by the given
+     * <code>WebDriver</code> instance. This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
-     * @param in        the input stream from which the state should be loaded
      */
-    public final void resumeState(final WebDriver webDriver, final InputStream in) {
-        HashMap<Class<? extends Serializable>, Serializable> stateObjects
-                = SerializationUtils.deserialize(in);
+    public final void resumeState(final WebDriver webDriver) {
+        Validate.validState(crawlFrontier != null, "Cannot resume state at this point.");
 
-        config = (CrawlerConfiguration) stateObjects.get(CrawlerConfiguration.class);
-        crawlFrontier = (CrawlFrontier) stateObjects.get(CrawlFrontier.class);
-        cookieStore = (BasicCookieStore) stateObjects.get(BasicCookieStore.class);
-
-        // Resume crawling
         start(webDriver, true);
     }
 
     /**
-     * Stops the crawler.
+     * Gracefully stops the crawler.
      */
-    public final void stop() {
+    protected final void stop() {
         Validate.validState(!isStopped, "The crawler is not started.");
         Validate.validState(!isStopping, "The crawler is already stopping.");
 
@@ -201,9 +226,10 @@ public abstract class BaseCrawler {
      * @param request the crawl request
      */
     protected final void crawl(final CrawlRequest request) {
-        Validate.notNull(request, "The request cannot be null.");
         Validate.validState(!isStopped,
                 "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
+        Validate.validState(!isStopping, "Cannot add request when the crawler is stopping.");
+        Validate.notNull(request, "The request cannot be null.");
 
         crawlFrontier.feedRequest(request, false);
     }
@@ -219,6 +245,29 @@ public abstract class BaseCrawler {
     }
 
     /**
+     * Downloads the file specified by the URL.
+     *
+     * @param source      the source URL
+     * @param destination the destination file
+     *
+     * @throws IOException if an I/O error occurs while downloading the file
+     */
+    protected final void downloadFile(final URI source, final File destination) throws IOException {
+        Validate.validState(!isStopped, "Cannot download file when the crawler is not started.");
+        Validate.validState(!isStopping, "Cannot download file when the crawler is stopping.");
+        Validate.notNull(source, "The source URL cannot be null.");
+        Validate.notNull(destination, "The destination file cannot be null.");
+
+        HttpGet request = new HttpGet(source);
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                FileUtils.copyInputStreamToFile(entity.getContent(), destination);
+            }
+        }
+    }
+
+    /**
      * Defines the workflow of the crawler.
      */
     private void run() {
@@ -228,11 +277,8 @@ public abstract class BaseCrawler {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             String candidateUrl = currentCandidate.getRequestUrl().toString();
             HttpClientContext context = HttpClientContext.create();
-            HttpResponse httpHeadResponse = null;
+            CloseableHttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
-
-            // Update the client's cookie store, so it will have the same state as the browser
-            updateClientCookieStore();
 
             try {
                 // Send an HTTP HEAD request to determine its availability and content type
@@ -243,42 +289,48 @@ public abstract class BaseCrawler {
             }
 
             if (!isUnsuccessfulRequest) {
-                String responseUrl = candidateUrl;
-                List<URI> redirectLocations = context.getRedirectLocations();
-                if (redirectLocations != null) {
-                    // If the request was redirected, get the final URL
-                    responseUrl = redirectLocations.get(redirectLocations.size() - 1).toString();
-                }
+                String responseUrl = getFinalResponseUrl(context, candidateUrl);
+                if (responseUrl.equals(candidateUrl)) {
+                    String responseMimeType = getResponseMimeType(httpHeadResponse);
+                    if (responseMimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
+                        boolean isTimedOut = false;
+                        TimeoutException requestTimeoutException = null;
 
-                if (!responseUrl.equals(candidateUrl)) {
-                    // Create a new crawl request for the redirected URL
-                    handleRequestRedirect(currentCandidate, responseUrl);
-                } else if (isContentHtml(httpHeadResponse)) {
-                    boolean isTimedOut = false;
-
-                    try {
-                        // Open URL in browser
-                        webDriver.get(candidateUrl);
-                    } catch (TimeoutException exception) {
-                        isTimedOut = true;
-                        onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate, exception));
-                    }
-
-                    if (!isTimedOut) {
-                        String loadedPageUrl = webDriver.getCurrentUrl();
-                        if (!loadedPageUrl.equals(candidateUrl)) {
-                            // Create a new crawl request for the redirected URL (JS redirect)
-                            handleRequestRedirect(currentCandidate, loadedPageUrl);
-                        } else {
-                            onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                        try {
+                            // Open URL in browser
+                            webDriver.get(candidateUrl);
+                        } catch (TimeoutException exception) {
+                            isTimedOut = true;
+                            requestTimeoutException = exception;
                         }
+
+                        // Ensure the HTTP client and Selenium have the same state
+                        syncHttpClientCookies();
+
+                        if (isTimedOut) {
+                            onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
+                                    requestTimeoutException));
+                        } else {
+                            String loadedPageUrl = webDriver.getCurrentUrl();
+                            if (!loadedPageUrl.equals(candidateUrl)) {
+                                // Create a new crawl request for the redirected URL (JS redirect)
+                                handleRequestRedirect(currentCandidate, loadedPageUrl);
+                            } else {
+                                onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                            }
+                        }
+                    } else {
+                        // URLs that point to non-HTML content should not be opened in the browser
+                        onNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
+                                responseMimeType));
                     }
                 } else {
-                    // URLs that point to non-HTML content should not be opened in the browser
-                    onNonHtmlContent(new NonHtmlContentEvent(currentCandidate));
+                    // Create a new crawl request for the redirected URL
+                    handleRequestRedirect(currentCandidate, responseUrl);
                 }
             }
 
+            HttpClientUtils.closeQuietly(httpHeadResponse);
             performDelay();
         }
 
@@ -298,14 +350,7 @@ public abstract class BaseCrawler {
             case RANDOM:
                 return new RandomCrawlDelayMechanism(config);
             case ADAPTIVE:
-                AdaptiveCrawlDelayMechanism mechanism
-                        = new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
-                if (!mechanism.isBrowserCompatible()) {
-                    throw new UnsupportedOperationException("The Navigation Timing API is not "
-                            + "supported by the browser.");
-                }
-
-                return mechanism;
+                return new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
         }
 
         throw new IllegalArgumentException("Unsupported crawl delay strategy.");
@@ -320,23 +365,55 @@ public abstract class BaseCrawler {
      *
      * @throws IOException if an error occurs while trying to fulfill the request
      */
-    private HttpResponse getHttpHeadResponse(
+    private CloseableHttpResponse getHttpHeadResponse(
             final String destinationUrl,
             final HttpClientContext context) throws IOException {
-        HttpHead headRequest = new HttpHead(destinationUrl);
-        return httpClient.execute(headRequest, context);
+        HttpHead request = new HttpHead(destinationUrl);
+        return httpClient.execute(request, context);
     }
 
     /**
-     * Indicates if the response's content type is HTML.
+     * If the HTTP HEAD request was redirected, it returns the final redirected URL. If not, it
+     * returns the original URL of the candidate.
+     *
+     * @param context      the current HTTP client context
+     * @param candidateUrl the URL of the candidate
+     *
+     * @return the final response URL
+     */
+    private static String getFinalResponseUrl(
+            final HttpClientContext context,
+            final String candidateUrl) {
+        List<URI> redirectLocations = context.getRedirectLocations();
+        if (redirectLocations != null) {
+            return redirectLocations.get(redirectLocations.size() - 1).toString();
+        }
+
+        return candidateUrl;
+    }
+
+    /**
+     * Returns the MIME type of the HTTP HEAD response. If the Content-Type header is not present in
+     * the response it returns "text/plain".
      *
      * @param httpHeadResponse the HTTP HEAD response
      *
-     * @return <code>true</code> if the content type is HTML, <code>false</code> otherwise
+     * @return the MIME type of the response
      */
-    private static boolean isContentHtml(final HttpResponse httpHeadResponse) {
+    private static String getResponseMimeType(final HttpResponse httpHeadResponse) {
         Header contentTypeHeader = httpHeadResponse.getFirstHeader("Content-Type");
-        return contentTypeHeader != null && contentTypeHeader.getValue().contains("text/html");
+        if (contentTypeHeader != null) {
+            String contentType = contentTypeHeader.getValue();
+            if (contentType != null) {
+                try {
+                    return ContentType.parse(contentType).getMimeType();
+                } catch (ParseException | UnsupportedCharsetException exception) {
+                    return contentType.split(";")[0].trim();
+                }
+            }
+        }
+
+        return ContentType.DEFAULT_TEXT.getMimeType();
     }
 
     /**
@@ -359,37 +436,14 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Adds all the browser cookies for the current domain to the HTTP client's cookie store,
-     * replacing any existing equivalent ones.
+     * Copies all the Selenium cookies for the current domain to the HTTP client cookie store.
      */
-    private void updateClientCookieStore() {
+    private void syncHttpClientCookies() {
         webDriver.manage()
                 .getCookies()
                 .stream()
-                .map(BaseCrawler::convertBrowserCookie)
+                .map(CookieConverter::convertToHttpClientCookie)
                 .forEach(cookieStore::addCookie);
-    }
-
-    /**
-     * Converts a browser cookie to a HTTP client one.
-     *
-     * @param browserCookie the browser cookie to be converted
-     *
-     * @return the converted HTTP client cookie
-     */
-    private static BasicClientCookie convertBrowserCookie(final Cookie browserCookie) {
-        BasicClientCookie clientCookie
-                = new BasicClientCookie(browserCookie.getName(), browserCookie.getValue());
-        clientCookie.setDomain(browserCookie.getDomain());
-        clientCookie.setPath(browserCookie.getPath());
-        clientCookie.setExpiryDate(browserCookie.getExpiry());
-        clientCookie.setSecure(browserCookie.isSecure());
-
-        if (browserCookie.isHttpOnly()) {
-            clientCookie.setAttribute("httponly", StringUtils.EMPTY);
-        }
-
-        return clientCookie;
     }
 
     /**
