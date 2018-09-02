@@ -25,6 +25,7 @@ import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
+import com.github.peterbencze.serritor.internal.CrawlerState;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
@@ -33,10 +34,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.net.URI;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -83,13 +82,33 @@ public abstract class BaseCrawler {
     private boolean canSaveState;
 
     /**
-     * Base constructor of all crawlers.
+     * Base constructor which is used to configure the crawler.
      *
      * @param config the configuration of the crawler
      */
     protected BaseCrawler(final CrawlerConfiguration config) {
-        this.config = config;
+        this();
 
+        this.config = config;
+    }
+
+    /**
+     * Base constructor which loads a previously saved state.
+     *
+     * @param inStream the input stream from which the state should be loaded
+     */
+    protected BaseCrawler(final InputStream inStream) {
+        this();
+
+        CrawlerState state = SerializationUtils.deserialize(inStream);
+        config = state.getStateObject(CrawlerConfiguration.class);
+        crawlFrontier = state.getStateObject(CrawlFrontier.class);
+    }
+
+    /**
+     * Private base constructor which does simple initialization.
+     */
+    private BaseCrawler() {
         isStopping = false;
         isStopped = true;
 
@@ -168,38 +187,28 @@ public abstract class BaseCrawler {
         Validate.validState(canSaveState,
                 "Cannot save state at this point. The crawler should be started at least once.");
 
-        HashMap<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
-        stateObjects.put(config.getClass(), config);
-        stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
+        CrawlerState state = new CrawlerState();
+        state.putStateObject(config);
+        state.putStateObject(crawlFrontier);
 
-        SerializationUtils.serialize(stateObjects, outStream);
+        SerializationUtils.serialize(state, outStream);
     }
 
     /**
-     * Resumes a previously saved state using HtmlUnit headless browser. This method will block
+     * Resumes the previously loaded state using HtmlUnit headless browser. This method will block
      * until the crawler finishes.
-     *
-     * @param inStream the input stream from which the state should be loaded
      */
-    public final void resumeState(final InputStream inStream) {
-        resumeState(new HtmlUnitDriver(true), inStream);
+    public final void resumeState() {
+        resumeState(new HtmlUnitDriver(true));
     }
 
     /**
-     * Resumes a previously saved state using the browser specified by the given
+     * Resumes the previously loaded state using the browser specified by the given
      * <code>WebDriver</code> instance. This method will block until the crawler finishes.
      *
      * @param webDriver the <code>WebDriver</code> instance to control the browser
-     * @param inStream  the input stream from which the state should be loaded
      */
-    public final void resumeState(final WebDriver webDriver, final InputStream inStream) {
-        HashMap<Class<? extends Serializable>, Serializable> stateObjects
-                = SerializationUtils.deserialize(inStream);
-
-        config = (CrawlerConfiguration) stateObjects.get(CrawlerConfiguration.class);
-        crawlFrontier = (CrawlFrontier) stateObjects.get(CrawlFrontier.class);
-
-        // Resume crawling
+    public final void resumeState(final WebDriver webDriver) {
         start(webDriver, true);
     }
 

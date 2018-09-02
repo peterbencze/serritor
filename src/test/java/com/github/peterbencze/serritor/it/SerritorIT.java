@@ -143,8 +143,9 @@ public class SerritorIT {
 
         };
         crawler.start(htmlUnitDriver);
-        crawler.resumeState(createHtmlUnitDriver(proxyServer),
-                new FileInputStream(destinationFile));
+        crawler = new BaseCrawler(new FileInputStream(destinationFile)) {
+        };
+        crawler.resumeState(createHtmlUnitDriver(proxyServer));
 
         WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
@@ -167,7 +168,9 @@ public class SerritorIT {
                         .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
 
         CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
-                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo").build())
+                .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/foo")
+                        .setPriority(1)
+                        .build())
                 .addCrawlSeed(new CrawlRequest.CrawlRequestBuilder("http://te.st/bar").build())
                 .build();
 
