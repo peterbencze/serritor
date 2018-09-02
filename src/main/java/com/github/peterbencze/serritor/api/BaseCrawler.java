@@ -79,7 +79,6 @@ public abstract class BaseCrawler {
     private CrawlDelayMechanism crawlDelayMechanism;
     private boolean isStopped;
     private boolean isStopping;
-    private boolean canSaveState;
 
     /**
      * Base constructor which is used to configure the crawler.
@@ -111,9 +110,6 @@ public abstract class BaseCrawler {
     private BaseCrawler() {
         isStopping = false;
         isStopped = true;
-
-        // Cannot save state until the crawler has not been started at least once
-        canSaveState = false;
     }
 
     /**
@@ -163,7 +159,6 @@ public abstract class BaseCrawler {
                     .build();
             crawlDelayMechanism = createCrawlDelayMechanism();
             isStopped = false;
-            canSaveState = true;
 
             run();
         } finally {
@@ -184,8 +179,7 @@ public abstract class BaseCrawler {
      * @param outStream the output stream
      */
     public final void saveState(final OutputStream outStream) {
-        Validate.validState(canSaveState,
-                "Cannot save state at this point. The crawler should be started at least once.");
+        Validate.validState(crawlFrontier != null, "Cannot save state at this point.");
 
         CrawlerState state = new CrawlerState();
         state.putStateObject(config);
@@ -209,6 +203,8 @@ public abstract class BaseCrawler {
      * @param webDriver the <code>WebDriver</code> instance to control the browser
      */
     public final void resumeState(final WebDriver webDriver) {
+        Validate.validState(crawlFrontier != null, "Cannot resume state at this point.");
+
         start(webDriver, true);
     }
 
