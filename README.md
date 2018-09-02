@@ -45,7 +45,7 @@ public class MyCrawler extends BaseCrawler {
         super(config);
 
         // Extract URLs from links on the crawled page
-        urlFinder = new UrlFinderBuilder(Pattern.compile(".+")).build();
+        urlFinder = UrlFinder.createDefault();
     }
 
     @Override
