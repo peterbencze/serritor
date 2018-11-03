@@ -17,7 +17,7 @@
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.event.EventObject;
 
 /**
  * Event which gets delivered when the MIME type of the response is not "text/html".
