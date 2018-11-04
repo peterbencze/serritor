@@ -2,8 +2,8 @@ language: java
 jdk:
   - oraclejdk8
   - openjdk8
-install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip -B -V
-script: mvn clean verify
+install: true
+script: mvn clean verify -Dgpg.skip
 cache:
   directories:
   - $HOME/.m2
