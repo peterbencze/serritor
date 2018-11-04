@@ -1,8 +1,6 @@
 Serritor
 ========
 
-[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://paypal.me/peterbencze)
-
 Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) and written in Java. It can be used to crawl dynamic web pages that use JavaScript.
 
 ## Using Serritor in your build
@@ -13,7 +11,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>1.5.0</version>
+    <version>1.6.0</version>
 </dependency>
 ```
 
@@ -21,7 +19,7 @@ Add the following dependency to your pom.xml:
 
 Add the following dependency to your build.gradle:
 ```groovy
-compile group: 'com.github.peterbencze', name: 'serritor', version: '1.5.0'
+compile group: 'com.github.peterbencze', name: 'serritor', version: '1.6.0'
 ```
 
 ### Manual dependencies
@@ -92,6 +90,13 @@ crawler.start(new ChromeDriver());
 ```
 
 That's it! In just a few lines you can create a crawler that crawls every link it finds, while filtering duplicate and offsite requests. You also get access to the `WebDriver` instance, so you can use all the features that are provided by Selenium.
+
+## Support
+If this framework helped you in any way, or you would like to support the development:
+
+[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://paypal.me/peterbencze)
+
+Any amount you choose to give will be greatly appreciated.
 
 ## License
 The source code of Serritor is made available under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).

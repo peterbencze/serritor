@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.internal.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 

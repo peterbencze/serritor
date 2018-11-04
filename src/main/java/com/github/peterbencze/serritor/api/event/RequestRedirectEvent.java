@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlRequest;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.event.EventObject;
 
 /**
  * Event which gets delivered when a request is redirected.

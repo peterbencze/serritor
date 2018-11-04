@@ -18,6 +18,7 @@ package com.github.peterbencze.serritor.api;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.api.event.CrawlEvent;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
@@ -30,6 +31,7 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCraw
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
+import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,6 +74,7 @@ public abstract class BaseCrawler {
     private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
 
     private CrawlerConfiguration config;
+    private EventCallbackManager callbackManager;
     private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
@@ -108,6 +111,16 @@ public abstract class BaseCrawler {
      * Private base constructor which does simple initialization.
      */
     private BaseCrawler() {
+        callbackManager = new EventCallbackManager();
+        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD, this::onPageLoad);
+        callbackManager.setDefaultEventCallback(CrawlEvent.NON_HTML_CONTENT,
+                this::onNonHtmlContent);
+        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD_TIMEOUT,
+                this::onPageLoadTimeout);
+        callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_REDIRECT,
+                this::onRequestRedirect);
+        callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_ERROR, this::onRequestError);
+
         isStopping = false;
         isStopped = true;
     }
@@ -209,6 +222,22 @@ public abstract class BaseCrawler {
     }
 
     /**
+     * Registers an operation which is invoked when the specific event occurs and the provided
+     * pattern matches the request URL.
+     *
+     * @param event    the event for which the callback should be triggered
+     * @param callback the pattern matching callback to invoke
+     */
+    protected final void registerCustomEventCallback(
+            final CrawlEvent event,
+            final PatternMatchingCallback callback) {
+        Validate.notNull(event, "The event cannot be null.");
+        Validate.notNull(callback, "The callback cannot be null.");
+
+        callbackManager.addCustomEventCallback(event, callback);
+    }
+
+    /**
      * Gracefully stops the crawler.
      */
     protected final void stop() {
@@ -284,7 +313,8 @@ public abstract class BaseCrawler {
                 // Send an HTTP HEAD request to determine its availability and content type
                 httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
             } catch (IOException exception) {
-                onRequestError(new RequestErrorEvent(currentCandidate, exception));
+                callbackManager.call(CrawlEvent.REQUEST_ERROR,
+                        new RequestErrorEvent(currentCandidate, exception));
                 isUnsuccessfulRequest = true;
             }
 
@@ -294,35 +324,36 @@ public abstract class BaseCrawler {
                     String responseMimeType = getResponseMimeType(httpHeadResponse);
                     if (responseMimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                         boolean isTimedOut = false;
-                        TimeoutException requestTimeoutException = null;
+                        TimeoutException timeoutException = null;
 
                         try {
                             // Open URL in browser
                             webDriver.get(candidateUrl);
                         } catch (TimeoutException exception) {
                             isTimedOut = true;
-                            requestTimeoutException = exception;
+                            timeoutException = exception;
                         }
 
                         // Ensure the HTTP client and Selenium have the same state
                         syncHttpClientCookies();
 
                         if (isTimedOut) {
-                            onPageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
-                                    requestTimeoutException));
+                            callbackManager.call(CrawlEvent.PAGE_LOAD_TIMEOUT,
+                                    new PageLoadTimeoutEvent(currentCandidate, timeoutException));
                         } else {
                             String loadedPageUrl = webDriver.getCurrentUrl();
                             if (!loadedPageUrl.equals(candidateUrl)) {
                                 // Create a new crawl request for the redirected URL (JS redirect)
                                 handleRequestRedirect(currentCandidate, loadedPageUrl);
                             } else {
-                                onPageLoad(new PageLoadEvent(currentCandidate, webDriver));
+                                callbackManager.call(CrawlEvent.PAGE_LOAD,
+                                        new PageLoadEvent(currentCandidate, webDriver));
                             }
                         }
                     } else {
                         // URLs that point to non-HTML content should not be opened in the browser
-                        onNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
-                                responseMimeType));
+                        callbackManager.call(CrawlEvent.NON_HTML_CONTENT,
+                                new NonHtmlContentEvent(currentCandidate, responseMimeType));
                     }
                 } else {
                     // Create a new crawl request for the redirected URL
@@ -432,7 +463,8 @@ public abstract class BaseCrawler {
         CrawlRequest redirectedRequest = builder.build();
 
         crawlFrontier.feedRequest(redirectedRequest, false);
-        onRequestRedirect(new RequestRedirectEvent(currentCrawlCandidate, redirectedRequest));
+        callbackManager.call(CrawlEvent.REQUEST_REDIRECT,
+                new RequestRedirectEvent(currentCrawlCandidate, redirectedRequest));
     }
 
     /**

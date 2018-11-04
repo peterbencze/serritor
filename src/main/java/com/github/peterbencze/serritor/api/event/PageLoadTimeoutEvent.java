@@ -17,7 +17,7 @@
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.event.EventObject;
 import org.openqa.selenium.TimeoutException;
 
 /**
