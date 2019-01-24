@@ -24,6 +24,7 @@ import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.google.common.net.HttpHeaders;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -180,6 +181,42 @@ public class SerritorIT {
 
         WireMock.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/bar"))
                 .withCookie("foo", WireMock.equalTo("bar")));
+    }
+
+    @Test
+    public void testRedirectHandling() {
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
+                .willReturn(WireMock.permanentRedirect("http://te.st/bar")));
+
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/bar"))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, ContentType.TEXT_HTML.toString())
+                        .withBody("<script>window.location.replace('http://te.st/baz')</script>")));
+
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/baz"))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, ContentType.TEXT_HTML.toString())));
+
+        CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
+                .build();
+
+        BaseCrawler crawler = new BaseCrawler(config) {
+        };
+        crawler.start(htmlUnitDriver);
+
+        WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
+        WireMock.verify(0, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
+
+        WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/bar")));
+        WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/bar")));
+
+        WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/baz")));
+
+        // Visited 2 times because of JS redirect
+        WireMock.verify(2, WireMock.getRequestedFor(WireMock.urlEqualTo("/baz")));
+
+        Assert.assertEquals(0, WireMock.findUnmatchedRequests().size());
     }
 
     @After

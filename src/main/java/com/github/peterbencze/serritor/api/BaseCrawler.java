@@ -47,17 +47,18 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.jetty.http.HttpStatus;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -167,6 +168,7 @@ public abstract class BaseCrawler {
 
             cookieStore = new BasicCookieStore();
             httpClient = HttpClientBuilder.create()
+                    .disableRedirectHandling()
                     .setDefaultCookieStore(cookieStore)
                     .useSystemProperties()
                     .build();
@@ -305,13 +307,12 @@ public abstract class BaseCrawler {
         while (!isStopping && crawlFrontier.hasNextCandidate()) {
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             String candidateUrl = currentCandidate.getRequestUrl().toString();
-            HttpClientContext context = HttpClientContext.create();
             CloseableHttpResponse httpHeadResponse = null;
             boolean isUnsuccessfulRequest = false;
 
             try {
                 // Send an HTTP HEAD request to determine its availability and content type
-                httpHeadResponse = getHttpHeadResponse(candidateUrl, context);
+                httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
             } catch (IOException exception) {
                 callbackManager.call(CrawlEvent.REQUEST_ERROR,
                         new RequestErrorEvent(currentCandidate, exception));
@@ -319,8 +320,13 @@ public abstract class BaseCrawler {
             }
 
             if (!isUnsuccessfulRequest) {
-                String responseUrl = getFinalResponseUrl(context, candidateUrl);
-                if (responseUrl.equals(candidateUrl)) {
+                int statusCode = httpHeadResponse.getStatusLine().getStatusCode();
+                Header locationHeader = httpHeadResponse.getFirstHeader(HttpHeaders.LOCATION);
+
+                if (HttpStatus.isRedirection(statusCode) && locationHeader != null) {
+                    // Create new crawl request for the redirected URL
+                    handleRequestRedirect(currentCandidate, locationHeader.getValue());
+                } else {
                     String responseMimeType = getResponseMimeType(httpHeadResponse);
                     if (responseMimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                         boolean isTimedOut = false;
@@ -355,9 +361,6 @@ public abstract class BaseCrawler {
                         callbackManager.call(CrawlEvent.NON_HTML_CONTENT,
                                 new NonHtmlContentEvent(currentCandidate, responseMimeType));
                     }
-                } else {
-                    // Create a new crawl request for the redirected URL
-                    handleRequestRedirect(currentCandidate, responseUrl);
                 }
             }
 
@@ -385,42 +388,6 @@ public abstract class BaseCrawler {
         }
 
         throw new IllegalArgumentException("Unsupported crawl delay strategy.");
-    }
-
-    /**
-     * Sends an HTTP HEAD request to the given URL and returns the response.
-     *
-     * @param destinationUrl the destination URL
-     *
-     * @return the HTTP HEAD response
-     *
-     * @throws IOException if an error occurs while trying to fulfill the request
-     */
-    private CloseableHttpResponse getHttpHeadResponse(
-            final String destinationUrl,
-            final HttpClientContext context) throws IOException {
-        HttpHead request = new HttpHead(destinationUrl);
-        return httpClient.execute(request, context);
-    }
-
-    /**
-     * If the HTTP HEAD request was redirected, it returns the final redirected URL. If not, it
-     * returns the original URL of the candidate.
-     *
-     * @param context      the current HTTP client context
-     * @param candidateUrl the URL of the candidate
-     *
-     * @return the final response URL
-     */
-    private static String getFinalResponseUrl(
-            final HttpClientContext context,
-            final String candidateUrl) {
-        List<URI> redirectLocations = context.getRedirectLocations();
-        if (redirectLocations != null) {
-            return redirectLocations.get(redirectLocations.size() - 1).toString();
-        }
-
-        return candidateUrl;
     }
 
     /**
