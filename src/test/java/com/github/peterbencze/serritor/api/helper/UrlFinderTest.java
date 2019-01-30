@@ -16,6 +16,7 @@
 
 package com.github.peterbencze.serritor.api.helper;
 
+import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.helper.UrlFinder.UrlFinderBuilder;
 import java.util.Arrays;
@@ -43,30 +44,28 @@ public final class UrlFinderTest {
     private static final String INVALID_URL = "invalid-url";
     private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
 
-    private WebDriver mockedDriver;
     private PageLoadEvent mockedEvent;
-    private WebElement mockedElementWithValidUrl;
-    private WebElement mockedElementWithInvalidUrlFormat;
-    private WebElement mockedElementWithInvalidDomain;
     private UrlFinder urlFinder;
 
     @Before
     public void initialize() {
+        WebDriver mockedDriver = Mockito.mock(WebDriver.class);
+
+        CompleteCrawlResponse mockedCrawlResponse = Mockito.mock(CompleteCrawlResponse.class);
+        Mockito.when(mockedCrawlResponse.getWebDriver()).thenReturn(mockedDriver);
+
         mockedEvent = Mockito.mock(PageLoadEvent.class);
+        Mockito.when(mockedEvent.getCompleteCrawlResponse()).thenReturn(mockedCrawlResponse);
 
-        mockedDriver = Mockito.mock(WebDriver.class);
-        Mockito.when(mockedEvent.getWebDriver())
-                .thenReturn(mockedDriver);
-
-        mockedElementWithValidUrl = Mockito.mock(WebElement.class);
+        WebElement mockedElementWithValidUrl = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(VALID_URL);
 
-        mockedElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
+        WebElement mockedElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithInvalidUrlFormat.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(INVALID_URL);
 
-        mockedElementWithInvalidDomain = Mockito.mock(WebElement.class);
+        WebElement mockedElementWithInvalidDomain = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(URL_WITH_INVALID_DOMAIN);
 

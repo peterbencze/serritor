@@ -75,7 +75,7 @@ public final class UrlFinder {
 
         // Find elements using the specified locating mechanisms
         Set<WebElement> extractedElements = locatingMechanisms.stream()
-                .map(event.getWebDriver()::findElements)
+                .map(event.getCompleteCrawlResponse().getWebDriver()::findElements)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
@@ -89,8 +89,7 @@ public final class UrlFinder {
                     .forEach(foundUrls::add);
         });
 
-        return foundUrls.stream()
-                .collect(Collectors.toList());
+        return new ArrayList<>(foundUrls);
     }
 
     /**

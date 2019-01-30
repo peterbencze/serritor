@@ -18,6 +18,7 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlRequest;
+import com.github.peterbencze.serritor.api.PartialCrawlResponse;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 
 /**
@@ -27,19 +28,33 @@ import com.github.peterbencze.serritor.internal.event.EventObject;
  */
 public final class RequestRedirectEvent extends EventObject {
 
+    private final PartialCrawlResponse partialCrawlResponse;
     private final CrawlRequest redirectedCrawlRequest;
 
     /**
      * Creates a {@link RequestRedirectEvent} instance.
      *
      * @param crawlCandidate         the current crawl candidate
+     * @param partialCrawlResponse   the partial crawl response
      * @param redirectedCrawlRequest the crawl request for the redirected URL
      */
-    public RequestRedirectEvent(final CrawlCandidate crawlCandidate,
+    public RequestRedirectEvent(
+            final CrawlCandidate crawlCandidate,
+            final PartialCrawlResponse partialCrawlResponse,
             final CrawlRequest redirectedCrawlRequest) {
         super(crawlCandidate);
 
+        this.partialCrawlResponse = partialCrawlResponse;
         this.redirectedCrawlRequest = redirectedCrawlRequest;
+    }
+
+    /**
+     * Returns the partial crawl response.
+     *
+     * @return the partial crawl response
+     */
+    public PartialCrawlResponse getPartialCrawlResponse() {
+        return partialCrawlResponse;
     }
 
     /**

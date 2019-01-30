@@ -17,8 +17,8 @@
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.api.PartialCrawlResponse;
 import com.github.peterbencze.serritor.internal.event.EventObject;
-import org.openqa.selenium.TimeoutException;
 
 /**
  * Event which gets delivered when a page does not load in the browser within the timeout period.
@@ -27,27 +27,28 @@ import org.openqa.selenium.TimeoutException;
  */
 public final class PageLoadTimeoutEvent extends EventObject {
 
-    private final TimeoutException exception;
+    private final PartialCrawlResponse partialCrawlResponse;
 
     /**
      * Creates a {@link PageLoadTimeoutEvent} instance.
      *
-     * @param crawlCandidate the current crawl candidate
-     * @param exception      the thrown exception
+     * @param crawlCandidate       the current crawl candidate
+     * @param partialCrawlResponse the partial crawl response
      */
-    public PageLoadTimeoutEvent(final CrawlCandidate crawlCandidate,
-            final TimeoutException exception) {
+    public PageLoadTimeoutEvent(
+            final CrawlCandidate crawlCandidate,
+            final PartialCrawlResponse partialCrawlResponse) {
         super(crawlCandidate);
 
-        this.exception = exception;
+        this.partialCrawlResponse = partialCrawlResponse;
     }
 
     /**
-     * Returns the thrown exception.
+     * Returns the partial crawl response.
      *
-     * @return the thrown exception
+     * @return the partial crawl response
      */
-    public TimeoutException getException() {
-        return exception;
+    public PartialCrawlResponse getPartialCrawlResponse() {
+        return partialCrawlResponse;
     }
 }

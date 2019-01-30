@@ -19,6 +19,7 @@ package com.github.peterbencze.serritor.api;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.event.CrawlEvent;
+import com.github.peterbencze.serritor.api.event.NetworkErrorEvent;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
@@ -27,6 +28,7 @@ import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CrawlerState;
+import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
@@ -36,12 +38,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.lightbody.bmp.BrowserMobProxyServer;
+import net.lightbody.bmp.client.ClientUtil;
+import net.lightbody.bmp.core.har.HarResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
@@ -60,9 +66,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.eclipse.jetty.http.HttpStatus;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
@@ -79,6 +88,7 @@ public abstract class BaseCrawler {
     private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
+    private BrowserMobProxyServer proxyServer;
     private WebDriver webDriver;
     private CrawlDelayMechanism crawlDelayMechanism;
     private boolean isStopped;
@@ -120,6 +130,7 @@ public abstract class BaseCrawler {
                 this::onPageLoadTimeout);
         callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_REDIRECT,
                 this::onRequestRedirect);
+        callbackManager.setDefaultEventCallback(CrawlEvent.NETWORK_ERROR, this::onNetworkError);
         callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_ERROR, this::onRequestError);
 
         isStopping = false;
@@ -127,21 +138,31 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Starts the crawler using HtmlUnit headless browser. This method will block until the crawler
-     * finishes.
+     * Starts the crawler. The crawler will use HtmlUnit headless browser to visit URLs. This method
+     * will block until the crawler finishes.
      */
     public final void start() {
-        start(new HtmlUnitDriver(true));
+        start(Browser.HTML_UNIT);
     }
 
     /**
-     * Starts the crawler using the browser specified by the given <code>WebDriver</code> instance.
-     * This method will block until the crawler finishes.
+     * Starts the crawler. The crawler will use the specified browser to visit URLs. This method
+     * will block until the crawler finishes.
      *
-     * @param webDriver the <code>WebDriver</code> instance to control the browser
+     * @param browser the browser type to use for crawling
      */
-    public final void start(final WebDriver webDriver) {
-        start(webDriver, false);
+    public final void start(final Browser browser) {
+        start(browser, new DesiredCapabilities());
+    }
+
+    /**
+     * Starts the crawler. The crawler will use the specified browser to visit URLs.
+     *
+     * @param browser      the type of the browser to use for crawling
+     * @param capabilities the browser properties
+     */
+    public final void start(final Browser browser, final DesiredCapabilities capabilities) {
+        start(browser, capabilities, false);
     }
 
     /**
@@ -149,10 +170,29 @@ public abstract class BaseCrawler {
      *
      * @param isResuming indicates if a previously saved state is to be resumed
      */
-    private void start(final WebDriver webDriver, final boolean isResuming) {
+    private void start(final Browser browser,
+                       final DesiredCapabilities capabilities,
+                       final boolean isResuming) {
         try {
             Validate.validState(isStopped, "The crawler is already running.");
-            this.webDriver = Validate.notNull(webDriver, "The webdriver cannot be null.");
+
+            DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
+            proxyServer = new BrowserMobProxyServer();
+
+            Proxy chainedProxy = (Proxy) capabilitiesClone.getCapability(CapabilityType.PROXY);
+            if (chainedProxy != null && chainedProxy.getHttpProxy() != null) {
+                String[] urlComponents = chainedProxy.getHttpProxy().split(":");
+                String host = urlComponents[0];
+                int port = Integer.valueOf(urlComponents[1]);
+
+                proxyServer.setChainedProxy(new InetSocketAddress(host, port));
+            }
+
+            proxyServer.start();
+            capabilitiesClone.setCapability(CapabilityType.PROXY,
+                    ClientUtil.createSeleniumProxy(proxyServer));
+
+            webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
 
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
@@ -179,9 +219,11 @@ public abstract class BaseCrawler {
         } finally {
             HttpClientUtils.closeQuietly(httpClient);
 
-            if (this.webDriver != null) {
-                this.webDriver.quit();
+            if (webDriver != null) {
+                webDriver.quit();
             }
+
+            proxyServer.stop();
 
             isStopping = false;
             isStopped = true;
@@ -204,23 +246,34 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Resumes the previously loaded state using HtmlUnit headless browser. This method will block
-     * until the crawler finishes.
+     * Resumes the previously loaded state. The crawler will use HtmlUnit headless browser to visit
+     * URLs. This method will block until the crawler finishes.
      */
     public final void resumeState() {
-        resumeState(new HtmlUnitDriver(true));
+        resumeState(Browser.HTML_UNIT);
     }
 
     /**
-     * Resumes the previously loaded state using the browser specified by the given
-     * <code>WebDriver</code> instance. This method will block until the crawler finishes.
+     * Resumes the previously loaded state. The crawler will use the specified browser to visit
+     * URLs. This method will block until the crawler finishes.
      *
-     * @param webDriver the <code>WebDriver</code> instance to control the browser
+     * @param browser the type of the browser to use for crawling
      */
-    public final void resumeState(final WebDriver webDriver) {
+    public final void resumeState(final Browser browser) {
+        resumeState(browser, new DesiredCapabilities());
+    }
+
+    /**
+     * Resumes the previously loaded state. The crawler will use the specified browser to visit
+     * URLs. This method will block until the crawler finishes.
+     *
+     * @param browser      the type of the browser to use for crawling
+     * @param capabilities the browser properties
+     */
+    public final void resumeState(final Browser browser, final DesiredCapabilities capabilities) {
         Validate.validState(crawlFrontier != null, "Cannot resume state at this point.");
 
-        start(webDriver, true);
+        start(browser, capabilities, true);
     }
 
     /**
@@ -304,68 +357,101 @@ public abstract class BaseCrawler {
     private void run() {
         onStart();
 
+        boolean shouldPerformDelay = false;
+
         while (!isStopping && crawlFrontier.hasNextCandidate()) {
+            // Do not perform delay in the first iteration
+            if (shouldPerformDelay) {
+                performDelay();
+            } else {
+                shouldPerformDelay = true;
+            }
+
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
             String candidateUrl = currentCandidate.getRequestUrl().toString();
             CloseableHttpResponse httpHeadResponse = null;
-            boolean isUnsuccessfulRequest = false;
 
             try {
-                // Send an HTTP HEAD request to determine its availability and content type
-                httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
-            } catch (IOException exception) {
-                callbackManager.call(CrawlEvent.REQUEST_ERROR,
-                        new RequestErrorEvent(currentCandidate, exception));
-                isUnsuccessfulRequest = true;
-            }
+                try {
+                    httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
+                } catch (IOException exception) {
+                    callbackManager.call(CrawlEvent.NETWORK_ERROR,
+                            new NetworkErrorEvent(currentCandidate, exception.toString()));
 
-            if (!isUnsuccessfulRequest) {
+                    continue;
+                }
+
                 int statusCode = httpHeadResponse.getStatusLine().getStatusCode();
                 Header locationHeader = httpHeadResponse.getFirstHeader(HttpHeaders.LOCATION);
-
                 if (HttpStatus.isRedirection(statusCode) && locationHeader != null) {
-                    // Create new crawl request for the redirected URL
-                    handleRequestRedirect(currentCandidate, locationHeader.getValue());
-                } else {
-                    String responseMimeType = getResponseMimeType(httpHeadResponse);
-                    if (responseMimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
-                        boolean isTimedOut = false;
-                        TimeoutException timeoutException = null;
+                    // Create a new crawl request for the redirected URL (HTTP redirect)
+                    handleRequestRedirect(currentCandidate,
+                            new PartialCrawlResponse(httpHeadResponse), locationHeader.getValue());
 
-                        try {
-                            // Open URL in browser
-                            webDriver.get(candidateUrl);
-                        } catch (TimeoutException exception) {
-                            isTimedOut = true;
-                            timeoutException = exception;
-                        }
-
-                        // Ensure the HTTP client and Selenium have the same state
-                        syncHttpClientCookies();
-
-                        if (isTimedOut) {
-                            callbackManager.call(CrawlEvent.PAGE_LOAD_TIMEOUT,
-                                    new PageLoadTimeoutEvent(currentCandidate, timeoutException));
-                        } else {
-                            String loadedPageUrl = webDriver.getCurrentUrl();
-                            if (!loadedPageUrl.equals(candidateUrl)) {
-                                // Create a new crawl request for the redirected URL (JS redirect)
-                                handleRequestRedirect(currentCandidate, loadedPageUrl);
-                            } else {
-                                callbackManager.call(CrawlEvent.PAGE_LOAD,
-                                        new PageLoadEvent(currentCandidate, webDriver));
-                            }
-                        }
-                    } else {
-                        // URLs that point to non-HTML content should not be opened in the browser
-                        callbackManager.call(CrawlEvent.NON_HTML_CONTENT,
-                                new NonHtmlContentEvent(currentCandidate, responseMimeType));
-                    }
+                    continue;
                 }
+
+                String mimeType = getResponseMimeType(httpHeadResponse);
+                if (!mimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
+                    // URLs that point to non-HTML content should not be opened in the browser
+                    callbackManager.call(CrawlEvent.NON_HTML_CONTENT,
+                            new NonHtmlContentEvent(currentCandidate,
+                                    new PartialCrawlResponse(httpHeadResponse)));
+
+                    continue;
+                }
+
+                proxyServer.newHar();
+
+                try {
+                    webDriver.get(candidateUrl);
+
+                    // Ensure HTTP client and Selenium have the same cookies
+                    syncHttpClientCookies();
+                } catch (TimeoutException exception) {
+                    callbackManager.call(CrawlEvent.PAGE_LOAD_TIMEOUT,
+                            new PageLoadTimeoutEvent(currentCandidate,
+                                    new PartialCrawlResponse(httpHeadResponse)));
+
+                    continue;
+                }
+            } finally {
+                HttpClientUtils.closeQuietly(httpHeadResponse);
             }
 
-            HttpClientUtils.closeQuietly(httpHeadResponse);
-            performDelay();
+            HarResponse harResponse = proxyServer.getHar()
+                    .getLog()
+                    .getEntries()
+                    .get(0)
+                    .getResponse();
+            if (harResponse.getError() != null) {
+                callbackManager.call(CrawlEvent.NETWORK_ERROR,
+                        new NetworkErrorEvent(currentCandidate, harResponse.getError()));
+
+                continue;
+            }
+
+            int statusCode = harResponse.getStatus();
+            if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
+                callbackManager.call(CrawlEvent.REQUEST_ERROR,
+                        new RequestErrorEvent(currentCandidate,
+                                new CompleteCrawlResponse(harResponse, webDriver)));
+
+                continue;
+            }
+
+            String loadedPageUrl = webDriver.getCurrentUrl();
+            if (!loadedPageUrl.equals(candidateUrl)) {
+                // Create a new crawl request for the redirected URL (JS redirect)
+                handleRequestRedirect(currentCandidate,
+                        new PartialCrawlResponse(harResponse), loadedPageUrl);
+
+                continue;
+            }
+
+            callbackManager.call(CrawlEvent.PAGE_LOAD,
+                    new PageLoadEvent(currentCandidate,
+                            new CompleteCrawlResponse(harResponse, webDriver)));
         }
 
         onStop();
@@ -418,20 +504,23 @@ public abstract class BaseCrawler {
      * Creates a crawl request for the redirected URL, feeds it to the crawler and calls the
      * appropriate event callback.
      *
-     * @param currentCrawlCandidate the current crawl candidate
-     * @param redirectedUrl         the URL of the redirected request
+     * @param crawlCandidate       the current crawl candidate
+     * @param partialCrawlResponse the partial crawl response
+     * @param redirectedUrl        the URL of the redirected request
      */
     private void handleRequestRedirect(
-            final CrawlCandidate currentCrawlCandidate,
+            final CrawlCandidate crawlCandidate,
+            final PartialCrawlResponse partialCrawlResponse,
             final String redirectedUrl) {
         CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectedUrl)
-                .setPriority(currentCrawlCandidate.getPriority());
-        currentCrawlCandidate.getMetadata().ifPresent(builder::setMetadata);
+                .setPriority(crawlCandidate.getPriority());
+        crawlCandidate.getMetadata().ifPresent(builder::setMetadata);
         CrawlRequest redirectedRequest = builder.build();
 
         crawlFrontier.feedRequest(redirectedRequest, false);
+
         callbackManager.call(CrawlEvent.REQUEST_REDIRECT,
-                new RequestRedirectEvent(currentCrawlCandidate, redirectedRequest));
+                new RequestRedirectEvent(crawlCandidate, partialCrawlResponse, redirectedRequest));
     }
 
     /**
@@ -483,7 +572,17 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Callback which gets called when a request error occurs.
+     * Callback which gets called when a network error occurs.
+     *
+     * @param event the <code>NetworkErrorEvent</code> instance
+     */
+    protected void onNetworkError(final NetworkErrorEvent event) {
+        LOGGER.log(Level.INFO, "onNetworkError: {0}", event.getErrorMessage());
+    }
+
+    /**
+     * Callback which gets called when a request error (an error with HTTP status code 4xx or 5xx)
+     * occurs.
      *
      * @param event the <code>RequestErrorEvent</code> instance
      */
@@ -499,8 +598,8 @@ public abstract class BaseCrawler {
     protected void onRequestRedirect(final RequestRedirectEvent event) {
         LOGGER.log(Level.INFO, "onRequestRedirect: {0} -> {1}",
                 new Object[]{
-                    event.getCrawlCandidate().getRequestUrl(),
-                    event.getRedirectedCrawlRequest().getRequestUrl()
+                        event.getCrawlCandidate().getRequestUrl(),
+                        event.getRedirectedCrawlRequest().getRequestUrl()
                 });
     }
 

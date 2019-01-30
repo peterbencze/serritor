@@ -17,6 +17,7 @@
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.api.PartialCrawlResponse;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 
 /**
@@ -26,25 +27,28 @@ import com.github.peterbencze.serritor.internal.event.EventObject;
  */
 public final class NonHtmlContentEvent extends EventObject {
 
-    private final String mimeType;
+    private final PartialCrawlResponse partialCrawlResponse;
 
     /**
      * Creates a {@link NonHtmlContentEvent} instance.
      *
-     * @param crawlCandidate the current crawl candidate
-     * @param mimeType       the MIME type of the response
+     * @param crawlCandidate       the current crawl candidate
+     * @param partialCrawlResponse the partial crawl response
      */
-    public NonHtmlContentEvent(final CrawlCandidate crawlCandidate, final String mimeType) {
+    public NonHtmlContentEvent(
+            final CrawlCandidate crawlCandidate,
+            final PartialCrawlResponse partialCrawlResponse) {
         super(crawlCandidate);
-        this.mimeType = mimeType;
+
+        this.partialCrawlResponse = partialCrawlResponse;
     }
 
     /**
-     * Returns the MIME type of the response.
+     * Returns the partial crawl response.
      *
-     * @return the MIME type of the response
+     * @return the partial crawl response
      */
-    public String getMimeType() {
-        return mimeType;
+    public PartialCrawlResponse getPartialCrawlResponse() {
+        return partialCrawlResponse;
     }
 }

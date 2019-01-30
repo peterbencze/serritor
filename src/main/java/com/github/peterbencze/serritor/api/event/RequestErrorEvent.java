@@ -16,37 +16,40 @@
 
 package com.github.peterbencze.serritor.api.event;
 
+import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.event.EventObject;
-import java.io.IOException;
 
 /**
- * Event which gets delivered when a request error occurs.
+ * Event which gets delivered when a request error (an error with HTTP status code 4xx or 5xx)
+ * occurs.
  *
  * @author Peter Bencze
  */
 public final class RequestErrorEvent extends EventObject {
 
-    private final IOException exception;
+    private final CompleteCrawlResponse completeCrawlResponse;
 
     /**
      * Creates a {@link RequestErrorEvent} instance.
      *
-     * @param crawlCandidate the current crawl candidate
-     * @param exception      the thrown exception
+     * @param crawlCandidate        the current crawl candidate
+     * @param completeCrawlResponse the complete crawl response
      */
-    public RequestErrorEvent(final CrawlCandidate crawlCandidate, final IOException exception) {
+    public RequestErrorEvent(
+            final CrawlCandidate crawlCandidate,
+            final CompleteCrawlResponse completeCrawlResponse) {
         super(crawlCandidate);
 
-        this.exception = exception;
+        this.completeCrawlResponse = completeCrawlResponse;
     }
 
     /**
-     * Returns the thrown exception.
+     * Returns the complete crawl response.
      *
-     * @return the thrown exception
+     * @return the complete crawl response
      */
-    public IOException getException() {
-        return exception;
+    public CompleteCrawlResponse getCompleteCrawlResponse() {
+        return completeCrawlResponse;
     }
 }

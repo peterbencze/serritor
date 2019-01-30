@@ -17,6 +17,7 @@
 package com.github.peterbencze.serritor.it;
 
 import com.github.peterbencze.serritor.api.BaseCrawler;
+import com.github.peterbencze.serritor.api.Browser;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
@@ -39,7 +40,6 @@ import org.apache.http.entity.ContentType;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
@@ -57,7 +57,7 @@ public class SerritorIT {
     private static WireMockServer mockServer;
     private static BrowserMobProxyServer proxyServer;
 
-    private HtmlUnitDriver htmlUnitDriver;
+    private static DesiredCapabilities capabilities;
 
     @BeforeClass
     public static void beforeClass() {
@@ -66,11 +66,10 @@ public class SerritorIT {
         proxyServer = createProxyServer(mockServer.port());
         System.setProperty("http.proxyHost", "localhost");
         System.setProperty("http.proxyPort", String.valueOf(proxyServer.getPort()));
-    }
 
-    @Before
-    public void before() {
-        htmlUnitDriver = createHtmlUnitDriver(proxyServer);
+        capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.PROXY,
+                ClientUtil.createSeleniumProxy(proxyServer));
     }
 
     @Test
@@ -98,7 +97,7 @@ public class SerritorIT {
                 }
             }
         };
-        crawler.start(htmlUnitDriver);
+        crawler.start(Browser.HTML_UNIT, capabilities);
 
         WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
@@ -143,10 +142,11 @@ public class SerritorIT {
             }
 
         };
-        crawler.start(htmlUnitDriver);
+        crawler.start(Browser.HTML_UNIT, capabilities);
+
         crawler = new BaseCrawler(new FileInputStream(destinationFile)) {
         };
-        crawler.resumeState(createHtmlUnitDriver(proxyServer));
+        crawler.resumeState(Browser.HTML_UNIT, capabilities);
 
         WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
@@ -177,7 +177,7 @@ public class SerritorIT {
 
         BaseCrawler crawler = new BaseCrawler(config) {
         };
-        crawler.start(htmlUnitDriver);
+        crawler.start(Browser.HTML_UNIT, capabilities);
 
         WireMock.verify(WireMock.headRequestedFor(WireMock.urlEqualTo("/bar"))
                 .withCookie("foo", WireMock.equalTo("bar")));
@@ -203,7 +203,7 @@ public class SerritorIT {
 
         BaseCrawler crawler = new BaseCrawler(config) {
         };
-        crawler.start(htmlUnitDriver);
+        crawler.start(Browser.HTML_UNIT, capabilities);
 
         WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
         WireMock.verify(0, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));

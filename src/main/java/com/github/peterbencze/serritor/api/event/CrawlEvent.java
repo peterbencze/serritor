@@ -41,7 +41,12 @@ public enum CrawlEvent {
      */
     REQUEST_REDIRECT,
     /**
-     * Event which gets triggered when a request error occurs.
+     * Event which gets triggered when a network error occurs.
+     */
+    NETWORK_ERROR,
+    /**
+     * Event which gets triggered when a request error (an error with HTTP status code 4xx or 5xx)
+     * occurs.
      */
     REQUEST_ERROR
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Peter Bencze.
+ * Copyright 2019 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,36 @@
 
 package com.github.peterbencze.serritor.api.event;
 
-import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 
 /**
- * Event which gets delivered when the browser loads the page.
+ * Event which gets delivered when a network error occurs.
  *
  * @author Peter Bencze
  */
-public final class PageLoadEvent extends EventObject {
+public final class NetworkErrorEvent extends EventObject {
 
-    private final CompleteCrawlResponse completeCrawlResponse;
+    private final String errorMessage;
 
     /**
-     * Creates a {@link PageLoadEvent} instance.
+     * Creates a {@link NetworkErrorEvent} instance.
      *
-     * @param crawlCandidate        the current crawl candidate
-     * @param completeCrawlResponse the complete crawl response
+     * @param crawlCandidate the current crawl candidate
+     * @param errorMessage   the network error message
      */
-    public PageLoadEvent(
-            final CrawlCandidate crawlCandidate,
-            final CompleteCrawlResponse completeCrawlResponse) {
+    public NetworkErrorEvent(final CrawlCandidate crawlCandidate, final String errorMessage) {
         super(crawlCandidate);
 
-        this.completeCrawlResponse = completeCrawlResponse;
+        this.errorMessage = errorMessage;
     }
 
     /**
-     * Returns the complete crawl response.
+     * Returns the network error message.
      *
-     * @return the complete crawl response
+     * @return the network error message
      */
-    public CompleteCrawlResponse getCompleteCrawlResponse() {
-        return completeCrawlResponse;
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }
