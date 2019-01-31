@@ -17,7 +17,6 @@
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
-import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.helper.UrlFinder.UrlFinderBuilder;
 import java.util.Arrays;
 import java.util.List;
@@ -44,18 +43,12 @@ public final class UrlFinderTest {
     private static final String INVALID_URL = "invalid-url";
     private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
 
-    private PageLoadEvent mockedEvent;
+    private CompleteCrawlResponse mockedCrawlResponse;
     private UrlFinder urlFinder;
 
     @Before
     public void initialize() {
         WebDriver mockedDriver = Mockito.mock(WebDriver.class);
-
-        CompleteCrawlResponse mockedCrawlResponse = Mockito.mock(CompleteCrawlResponse.class);
-        Mockito.when(mockedCrawlResponse.getWebDriver()).thenReturn(mockedDriver);
-
-        mockedEvent = Mockito.mock(PageLoadEvent.class);
-        Mockito.when(mockedEvent.getCompleteCrawlResponse()).thenReturn(mockedCrawlResponse);
 
         WebElement mockedElementWithValidUrl = Mockito.mock(WebElement.class);
         Mockito.when(mockedElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
@@ -69,17 +62,20 @@ public final class UrlFinderTest {
         Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
                 .thenReturn(URL_WITH_INVALID_DOMAIN);
 
-        List<WebElement> elementList
-                = Arrays.asList(mockedElementWithValidUrl, mockedElementWithInvalidUrlFormat,
-                        mockedElementWithInvalidDomain);
+        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl,
+                mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);
         Mockito.when(mockedDriver.findElements(By.tagName(TAG_NAME)))
                 .thenReturn(elementList);
+
+        mockedCrawlResponse = Mockito.mock(CompleteCrawlResponse.class);
+        Mockito.when(mockedCrawlResponse.getWebDriver()).thenReturn(mockedDriver);
 
         urlFinder = new UrlFinderBuilder(URL_PATTERN).build();
     }
 
     @Test
     public void testFindUrlsInPage() {
-        Assert.assertEquals(Arrays.asList(VALID_URL), urlFinder.findUrlsInPage(mockedEvent));
+        Assert.assertEquals(Arrays.asList(VALID_URL),
+                urlFinder.findUrlsInPage(mockedCrawlResponse));
     }
 }
