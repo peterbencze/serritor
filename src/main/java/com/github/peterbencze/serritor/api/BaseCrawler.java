@@ -193,6 +193,7 @@ public abstract class BaseCrawler {
                     ClientUtil.createSeleniumProxy(proxyServer));
 
             webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
+            webDriver.manage().window().maximize();
 
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
