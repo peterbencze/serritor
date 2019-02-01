@@ -46,10 +46,10 @@ public final class CrawlFrontierTest {
 
     // Root URLs
     private static final URI ROOT_URL_0
-            = URI.create("http://root-url-0.com?param1=foo&param2=bar#fragment");
+            = URI.create("http://root-url-0.com/?param1=foo&param2=bar#fragment");
     private static final URI DUPLICATE_ROOT_URL_0
-            = URI.create("https://root-url-0.com?param2=bar&param1=foo");
-    private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com");
+            = URI.create("https://root-url-0.com/?param2=bar&param1=foo");
+    private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com/");
 
     // Root URL crawl depth
     private static final int ROOT_URL_CRAWL_DEPTH = 0;
@@ -96,7 +96,7 @@ public final class CrawlFrontierTest {
             = new CrawlRequestBuilder(CHILD_URL_2).setPriority(CHILD_URL_2_PRIORITY).build();
 
     // Offsite URL
-    private static final URI OFFSITE_URL = URI.create("http://offsite-url.com");
+    private static final URI OFFSITE_URL = URI.create("http://offsite-url.com/");
 
     // Offsite URL priority
     private static final int OFFSITE_URL_PRIORITY = 0;

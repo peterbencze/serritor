@@ -21,8 +21,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.http.client.utils.URIBuilder;
 
 /**
  * Represents a crawl request that may be completed by the crawler. If request filtering is enabled,
@@ -122,7 +125,16 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final URI requestUrl) {
-            this.requestUrl = requestUrl;
+            if (StringUtils.isEmpty(requestUrl.getPath())) {
+                try {
+                    // Define a non-empty path for the URI
+                    this.requestUrl = new URIBuilder(requestUrl).setPath("/").build();
+                } catch (URISyntaxException e) {
+                    throw new IllegalArgumentException(e.getMessage(), e);
+                }
+            } else {
+                this.requestUrl = requestUrl;
+            }
 
             // Extract the domain from the request URL
             domain = InternetDomainName.from(requestUrl.getHost());
