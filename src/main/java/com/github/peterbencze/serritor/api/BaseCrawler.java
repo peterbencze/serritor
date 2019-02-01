@@ -432,20 +432,20 @@ public abstract class BaseCrawler {
                 continue;
             }
 
-            int statusCode = harResponse.getStatus();
-            if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
-                callbackManager.call(CrawlEvent.REQUEST_ERROR,
-                        new RequestErrorEvent(currentCandidate,
-                                new CompleteCrawlResponse(harResponse, webDriver)));
-
-                continue;
-            }
-
             String loadedPageUrl = webDriver.getCurrentUrl();
             if (!loadedPageUrl.equals(candidateUrl)) {
                 // Create a new crawl request for the redirected URL (JS redirect)
                 handleRequestRedirect(currentCandidate,
                         new PartialCrawlResponse(harResponse), loadedPageUrl);
+
+                continue;
+            }
+
+            int statusCode = harResponse.getStatus();
+            if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
+                callbackManager.call(CrawlEvent.REQUEST_ERROR,
+                        new RequestErrorEvent(currentCandidate,
+                                new CompleteCrawlResponse(harResponse, webDriver)));
 
                 continue;
             }
