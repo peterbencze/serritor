@@ -103,8 +103,7 @@ public final class CrawlFrontier implements Serializable {
                 return;
             }
 
-            builder = builder
-                    .setRefererUrl(currentCandidate.getRequestUrl())
+            builder.setRefererUrl(currentCandidate.getRequestUrl())
                     .setCrawlDepth(nextCrawlDepth);
         }
 
@@ -177,7 +176,7 @@ public final class CrawlFrontier implements Serializable {
             case DEPTH_FIRST:
                 Comparator depthFirstComparator
                         = Comparator.comparing(crawlDepthGetter, Comparator.reverseOrder())
-                                .thenComparing(priorityGetter, Comparator.reverseOrder());
+                        .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(depthFirstComparator);
         }
