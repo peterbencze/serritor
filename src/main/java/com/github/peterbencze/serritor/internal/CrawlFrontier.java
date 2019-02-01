@@ -139,12 +139,7 @@ public final class CrawlFrontier implements Serializable {
      * @return the fingerprint of the URL
      */
     private static String createFingerprintForUrl(final URI url) {
-        StringBuilder truncatedUrl = new StringBuilder(url.getHost());
-
-        String path = url.getPath();
-        if (path != null) {
-            truncatedUrl.append(path);
-        }
+        StringBuilder truncatedUrl = new StringBuilder(url.getHost()).append(url.getPath());
 
         String query = url.getQuery();
         if (query != null) {
