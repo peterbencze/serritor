@@ -18,7 +18,6 @@ package com.github.peterbencze.serritor.internal.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.PatternMatchingCallback;
-import com.github.peterbencze.serritor.api.event.CrawlEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import java.net.URI;
 import java.util.function.Consumer;
@@ -49,9 +48,8 @@ public final class EventCallbackManagerTest {
 
     @Test
     public void testCallWithNoCustomEventCallback() {
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedDefaultPageLoadCallback);
-        callbackManager.call(CrawlEvent.PAGE_LOAD, mockedPageLoadEvent);
+        callbackManager.setDefaultEventCallback(PageLoadEvent.class, mockedDefaultPageLoadCallback);
+        callbackManager.call(PageLoadEvent.class, mockedPageLoadEvent);
 
         Mockito.verify(mockedDefaultPageLoadCallback, Mockito.times(1)).accept(mockedPageLoadEvent);
     }
@@ -60,24 +58,22 @@ public final class EventCallbackManagerTest {
     public void testCallWithNoApplicableCustomEventCallback() {
         Consumer<PageLoadEvent> mockedCustomPageLoadCallback = Mockito.mock(Consumer.class);
 
-        PatternMatchingCallback mockedPatternMatchingCallback
+        PatternMatchingCallback<PageLoadEvent> mockedPatternMatchingCallback
                 = Mockito.mock(PatternMatchingCallback.class);
 
         Pattern mockedPattern = createMockedPattern(false);
 
         Mockito.when(mockedPatternMatchingCallback.getUrlPattern()).thenReturn(mockedPattern);
-        Mockito.doReturn(mockedCustomPageLoadCallback)
-                .when(mockedPatternMatchingCallback)
-                .getCallback();
+        Mockito.when(mockedPatternMatchingCallback.getCallback())
+                .thenReturn(mockedCustomPageLoadCallback);
 
         CrawlCandidate mockedCrawlCandidate = createMockedCrawlCandidate();
 
         Mockito.when(mockedPageLoadEvent.getCrawlCandidate()).thenReturn(mockedCrawlCandidate);
 
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedDefaultPageLoadCallback);
-        callbackManager.addCustomEventCallback(CrawlEvent.PAGE_LOAD, mockedPatternMatchingCallback);
-        callbackManager.call(CrawlEvent.PAGE_LOAD, mockedPageLoadEvent);
+        callbackManager.setDefaultEventCallback(PageLoadEvent.class, mockedDefaultPageLoadCallback);
+        callbackManager.addCustomEventCallback(PageLoadEvent.class, mockedPatternMatchingCallback);
+        callbackManager.call(PageLoadEvent.class, mockedPageLoadEvent);
 
         Mockito.verify(mockedDefaultPageLoadCallback, Mockito.times(1)).accept(mockedPageLoadEvent);
         Mockito.verify(mockedCustomPageLoadCallback, Mockito.never()).accept(mockedPageLoadEvent);
@@ -87,24 +83,22 @@ public final class EventCallbackManagerTest {
     public void testCallWithSingleApplicableCustomEventCallback() {
         Consumer<PageLoadEvent> mockedCustomPageLoadCallback = Mockito.mock(Consumer.class);
 
-        PatternMatchingCallback mockedPatternMatchingCallback
+        PatternMatchingCallback<PageLoadEvent> mockedPatternMatchingCallback
                 = Mockito.mock(PatternMatchingCallback.class);
 
         Pattern mockedPattern = createMockedPattern(true);
 
         Mockito.when(mockedPatternMatchingCallback.getUrlPattern()).thenReturn(mockedPattern);
-        Mockito.doReturn(mockedCustomPageLoadCallback)
-                .when(mockedPatternMatchingCallback)
-                .getCallback();
+        Mockito.when(mockedPatternMatchingCallback.getCallback())
+                .thenReturn(mockedCustomPageLoadCallback);
 
         CrawlCandidate mockedCrawlCandidate = createMockedCrawlCandidate();
 
         Mockito.when(mockedPageLoadEvent.getCrawlCandidate()).thenReturn(mockedCrawlCandidate);
 
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedDefaultPageLoadCallback);
-        callbackManager.addCustomEventCallback(CrawlEvent.PAGE_LOAD, mockedPatternMatchingCallback);
-        callbackManager.call(CrawlEvent.PAGE_LOAD, mockedPageLoadEvent);
+        callbackManager.setDefaultEventCallback(PageLoadEvent.class, mockedDefaultPageLoadCallback);
+        callbackManager.addCustomEventCallback(PageLoadEvent.class, mockedPatternMatchingCallback);
+        callbackManager.call(PageLoadEvent.class, mockedPageLoadEvent);
 
         Mockito.verify(mockedDefaultPageLoadCallback, Mockito.never()).accept(mockedPageLoadEvent);
         Mockito.verify(mockedCustomPageLoadCallback, Mockito.times(1)).accept(mockedPageLoadEvent);
@@ -114,34 +108,29 @@ public final class EventCallbackManagerTest {
     public void testCallWithMultipleApplicableCustomEventCallback() {
         Consumer<PageLoadEvent> mockedCustomPageLoadCallback = Mockito.mock(Consumer.class);
 
-        PatternMatchingCallback mockedPatternMatchingCallback1
+        PatternMatchingCallback<PageLoadEvent> mockedPatternMatchingCallback1
                 = Mockito.mock(PatternMatchingCallback.class);
-        PatternMatchingCallback mockedPatternMatchingCallback2
+        PatternMatchingCallback<PageLoadEvent> mockedPatternMatchingCallback2
                 = Mockito.mock(PatternMatchingCallback.class);
 
         Pattern mockedPattern = createMockedPattern(true);
 
         Mockito.when(mockedPatternMatchingCallback1.getUrlPattern()).thenReturn(mockedPattern);
-        Mockito.doReturn(mockedCustomPageLoadCallback)
-                .when(mockedPatternMatchingCallback1)
-                .getCallback();
+        Mockito.when(mockedPatternMatchingCallback1.getCallback())
+                .thenReturn(mockedCustomPageLoadCallback);
 
         Mockito.when(mockedPatternMatchingCallback2.getUrlPattern()).thenReturn(mockedPattern);
-        Mockito.doReturn(mockedCustomPageLoadCallback)
-                .when(mockedPatternMatchingCallback2)
-                .getCallback();
+        Mockito.when(mockedPatternMatchingCallback2.getCallback())
+                .thenReturn(mockedCustomPageLoadCallback);
 
         CrawlCandidate mockedCrawlCandidate = createMockedCrawlCandidate();
 
         Mockito.when(mockedPageLoadEvent.getCrawlCandidate()).thenReturn(mockedCrawlCandidate);
 
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedDefaultPageLoadCallback);
-        callbackManager.addCustomEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedPatternMatchingCallback1);
-        callbackManager.addCustomEventCallback(CrawlEvent.PAGE_LOAD,
-                mockedPatternMatchingCallback2);
-        callbackManager.call(CrawlEvent.PAGE_LOAD, mockedPageLoadEvent);
+        callbackManager.setDefaultEventCallback(PageLoadEvent.class, mockedDefaultPageLoadCallback);
+        callbackManager.addCustomEventCallback(PageLoadEvent.class, mockedPatternMatchingCallback1);
+        callbackManager.addCustomEventCallback(PageLoadEvent.class, mockedPatternMatchingCallback2);
+        callbackManager.call(PageLoadEvent.class, mockedPageLoadEvent);
 
         Mockito.verify(mockedDefaultPageLoadCallback, Mockito.never()).accept(mockedPageLoadEvent);
         Mockito.verify(mockedCustomPageLoadCallback, Mockito.times(2)).accept(mockedPageLoadEvent);

@@ -18,7 +18,6 @@ package com.github.peterbencze.serritor.api;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
-import com.github.peterbencze.serritor.api.event.CrawlEvent;
 import com.github.peterbencze.serritor.api.event.NetworkErrorEvent;
 import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadEvent;
@@ -34,6 +33,7 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMe
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
+import com.github.peterbencze.serritor.internal.event.EventObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -123,15 +123,14 @@ public abstract class BaseCrawler {
      */
     private BaseCrawler() {
         callbackManager = new EventCallbackManager();
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD, this::onPageLoad);
-        callbackManager.setDefaultEventCallback(CrawlEvent.NON_HTML_CONTENT,
-                this::onNonHtmlContent);
-        callbackManager.setDefaultEventCallback(CrawlEvent.PAGE_LOAD_TIMEOUT,
+        callbackManager.setDefaultEventCallback(PageLoadEvent.class, this::onPageLoad);
+        callbackManager.setDefaultEventCallback(NonHtmlContentEvent.class, this::onNonHtmlContent);
+        callbackManager.setDefaultEventCallback(PageLoadTimeoutEvent.class,
                 this::onPageLoadTimeout);
-        callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_REDIRECT,
+        callbackManager.setDefaultEventCallback(RequestRedirectEvent.class,
                 this::onRequestRedirect);
-        callbackManager.setDefaultEventCallback(CrawlEvent.NETWORK_ERROR, this::onNetworkError);
-        callbackManager.setDefaultEventCallback(CrawlEvent.REQUEST_ERROR, this::onRequestError);
+        callbackManager.setDefaultEventCallback(NetworkErrorEvent.class, this::onNetworkError);
+        callbackManager.setDefaultEventCallback(RequestErrorEvent.class, this::onRequestError);
 
         isStopping = false;
         isStopped = true;
@@ -284,9 +283,9 @@ public abstract class BaseCrawler {
      * @param event    the event for which the callback should be triggered
      * @param callback the pattern matching callback to invoke
      */
-    protected final void registerCustomEventCallback(
-            final CrawlEvent event,
-            final PatternMatchingCallback callback) {
+    protected final <T extends EventObject> void registerCustomEventCallback(
+            final Class<T> event,
+            final PatternMatchingCallback<T> callback) {
         Validate.notNull(event, "The event cannot be null.");
         Validate.notNull(callback, "The callback cannot be null.");
 
@@ -376,7 +375,7 @@ public abstract class BaseCrawler {
                 try {
                     httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
                 } catch (IOException exception) {
-                    callbackManager.call(CrawlEvent.NETWORK_ERROR,
+                    callbackManager.call(NetworkErrorEvent.class,
                             new NetworkErrorEvent(currentCandidate, exception.toString()));
 
                     continue;
@@ -395,7 +394,7 @@ public abstract class BaseCrawler {
                 String mimeType = getResponseMimeType(httpHeadResponse);
                 if (!mimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                     // URLs that point to non-HTML content should not be opened in the browser
-                    callbackManager.call(CrawlEvent.NON_HTML_CONTENT,
+                    callbackManager.call(NonHtmlContentEvent.class,
                             new NonHtmlContentEvent(currentCandidate,
                                     new PartialCrawlResponse(httpHeadResponse)));
 
@@ -410,7 +409,7 @@ public abstract class BaseCrawler {
                     // Ensure HTTP client and Selenium have the same cookies
                     syncHttpClientCookies();
                 } catch (TimeoutException exception) {
-                    callbackManager.call(CrawlEvent.PAGE_LOAD_TIMEOUT,
+                    callbackManager.call(PageLoadTimeoutEvent.class,
                             new PageLoadTimeoutEvent(currentCandidate,
                                     new PartialCrawlResponse(httpHeadResponse)));
 
@@ -426,7 +425,7 @@ public abstract class BaseCrawler {
                     .get(0)
                     .getResponse();
             if (harResponse.getError() != null) {
-                callbackManager.call(CrawlEvent.NETWORK_ERROR,
+                callbackManager.call(NetworkErrorEvent.class,
                         new NetworkErrorEvent(currentCandidate, harResponse.getError()));
 
                 continue;
@@ -443,14 +442,14 @@ public abstract class BaseCrawler {
 
             int statusCode = harResponse.getStatus();
             if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
-                callbackManager.call(CrawlEvent.REQUEST_ERROR,
+                callbackManager.call(RequestErrorEvent.class,
                         new RequestErrorEvent(currentCandidate,
                                 new CompleteCrawlResponse(harResponse, webDriver)));
 
                 continue;
             }
 
-            callbackManager.call(CrawlEvent.PAGE_LOAD,
+            callbackManager.call(PageLoadEvent.class,
                     new PageLoadEvent(currentCandidate,
                             new CompleteCrawlResponse(harResponse, webDriver)));
         }
@@ -520,7 +519,7 @@ public abstract class BaseCrawler {
 
         crawlFrontier.feedRequest(redirectedRequest, false);
 
-        callbackManager.call(CrawlEvent.REQUEST_REDIRECT,
+        callbackManager.call(RequestRedirectEvent.class,
                 new RequestRedirectEvent(crawlCandidate, partialCrawlResponse, redirectedRequest));
     }
 

@@ -17,7 +17,6 @@
 package com.github.peterbencze.serritor.internal.event;
 
 import com.github.peterbencze.serritor.api.PatternMatchingCallback;
-import com.github.peterbencze.serritor.api.event.CrawlEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,8 +33,10 @@ import java.util.stream.Collectors;
  */
 public final class EventCallbackManager {
 
-    private final Map<CrawlEvent, Consumer<? extends EventObject>> defaultCallbacks;
-    private final Map<CrawlEvent, List<PatternMatchingCallback>> customCallbacks;
+    private final Map<Class<? extends EventObject>,
+            Consumer<? extends EventObject>> defaultCallbacks;
+    private final Map<Class<? extends EventObject>,
+            List<PatternMatchingCallback<? extends EventObject>>> customCallbacks;
 
     /**
      * Creates an {@link EventCallbackManager} instance.
@@ -48,26 +49,26 @@ public final class EventCallbackManager {
     /**
      * Sets the default callback for the specific event.
      *
-     * @param <T>      the type of the input to the operation
-     * @param event    the event for which the callback should be invoked
-     * @param callback the operation to be performed
+     * @param <T>        the type of the input to the operation
+     * @param eventClass the runtime class of the event for which the callback should be invoked
+     * @param callback   the operation to be performed
      */
     public <T extends EventObject> void setDefaultEventCallback(
-            final CrawlEvent event,
+            final Class<T> eventClass,
             final Consumer<T> callback) {
-        defaultCallbacks.put(event, callback);
+        defaultCallbacks.put(eventClass, callback);
     }
 
     /**
      * Associates a pattern matching callback with the specific event.
      *
-     * @param event    the event for which the callback should be invoked
-     * @param callback the pattern matching callback to invoke
+     * @param eventClass the runtime class of the event for which the callback should be invoked
+     * @param callback   the pattern matching callback to invoke
      */
-    public void addCustomEventCallback(
-            final CrawlEvent event,
-            final PatternMatchingCallback callback) {
-        customCallbacks.computeIfAbsent(event, key -> new ArrayList<>()).add(callback);
+    public <T extends EventObject> void addCustomEventCallback(
+            final Class<T> eventClass,
+            final PatternMatchingCallback<T> callback) {
+        customCallbacks.computeIfAbsent(eventClass, key -> new ArrayList<>()).add(callback);
     }
 
     /**
@@ -76,28 +77,30 @@ public final class EventCallbackManager {
      * request.
      *
      * @param <T>         the type of the input to the operation
-     * @param event       the event for which the callback should be invoked
+     * @param eventClass  the runtime class of the event for which the callback should be invoked
      * @param eventObject the input parameter for the callback
      */
-    public <T extends EventObject> void call(final CrawlEvent event, final T eventObject) {
-        if (!customCallbacks.containsKey(event)) {
-            ((Consumer<T>) defaultCallbacks.get(event)).accept(eventObject);
+    @SuppressWarnings("unchecked")
+    public <T extends EventObject> void call(final Class<T> eventClass, final T eventObject) {
+        if (!customCallbacks.containsKey(eventClass)) {
+            ((Consumer<T>) defaultCallbacks.get(eventClass)).accept(eventObject);
             return;
         }
 
         String requestUrl = eventObject.getCrawlCandidate().getRequestUrl().toString();
-        List<PatternMatchingCallback> applicableCallbacks = customCallbacks.get(event)
-                .stream()
-                .filter(callback -> callback.getUrlPattern().matcher(requestUrl).matches())
-                .collect(Collectors.toList());
+        List<PatternMatchingCallback<? extends EventObject>> applicableCallbacks =
+                customCallbacks.get(eventClass)
+                        .stream()
+                        .filter(callback -> callback.getUrlPattern().matcher(requestUrl).matches())
+                        .collect(Collectors.toList());
 
         if (applicableCallbacks.isEmpty()) {
-            ((Consumer<T>) defaultCallbacks.get(event)).accept(eventObject);
+            ((Consumer<T>) defaultCallbacks.get(eventClass)).accept(eventObject);
             return;
         }
 
         applicableCallbacks.stream()
                 .map(PatternMatchingCallback::getCallback)
-                .forEach(op -> op.accept(eventObject));
+                .forEach(op -> ((Consumer<T>) op).accept(eventObject));
     }
 }

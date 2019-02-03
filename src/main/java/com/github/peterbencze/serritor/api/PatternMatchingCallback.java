@@ -25,21 +25,22 @@ import org.apache.commons.lang3.Validate;
  * Represents an operation which is invoked when the specified regex pattern matches the request
  * URL.
  *
+ * @param <T> the type of the input to the operation
+ *
  * @author Peter Bencze
  */
-public final class PatternMatchingCallback {
+public final class PatternMatchingCallback<T extends EventObject> {
 
     private final Pattern urlPattern;
-    private final Consumer<? extends EventObject> callback;
+    private final Consumer<T> callback;
 
     /**
      * Creates a {@link PatternMatchingCallback} instance.
      *
-     * @param <T>        the type of the input to the operation
      * @param urlPattern the regex pattern used for matching on request URLs
      * @param callback   the operation to be performed when the pattern matches
      */
-    public <T extends EventObject> PatternMatchingCallback(
+    public PatternMatchingCallback(
             final Pattern urlPattern,
             final Consumer<T> callback) {
         Validate.notNull(urlPattern, "The pattern cannot be null.");
@@ -61,11 +62,9 @@ public final class PatternMatchingCallback {
     /**
      * Returns the operation to be performed when the pattern matches.
      *
-     * @param <T> the type of the input to the operation
-     *
      * @return the operation to be performed when the pattern matches
      */
-    public <T extends EventObject> Consumer<T> getCallback() {
-        return (Consumer<T>) callback;
+    public Consumer<T> getCallback() {
+        return callback;
     }
 }
