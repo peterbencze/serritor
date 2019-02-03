@@ -17,6 +17,8 @@
 package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.Browser;
+import java.util.List;
+import java.util.Map;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -74,13 +76,30 @@ public final class WebDriverFactory {
     /**
      * Creates a <code>ChromeDriver</code> instance with the provided properties.
      *
-     * @param extraCapabilities the browser properties
+     * @param capabilities the browser properties
      *
      * @return the preconfigured <code>ChromeDriver</code> instance
      */
-    private static ChromeDriver createChromeDriver(final Capabilities extraCapabilities) {
+    private static ChromeDriver createChromeDriver(final Capabilities capabilities) {
         ChromeOptions options = new ChromeOptions();
-        options.merge(extraCapabilities);
+        options.merge(capabilities);
+
+        // This should have been implemented in ChromeOptions, just like in FirefoxOptions...
+        Object capability = capabilities.getCapability(ChromeOptions.CAPABILITY);
+        if (capability instanceof Map) {
+            Map<?, ?> extraOptions = (Map<?, ?>) capability;
+            extraOptions.forEach((key, value) -> {
+                if ("binary".equals(key)) {
+                    options.setBinary((String) extraOptions.get("binary"));
+                } else if ("args".equals(key)) {
+                    options.addArguments((List<String>) value);
+                } else if ("extensions".equals(key)) {
+                    options.addEncodedExtensions((List<String>) value);
+                } else {
+                    options.setExperimentalOption((String) key, value);
+                }
+            });
+        }
 
         return new ChromeDriver(options);
     }
@@ -88,14 +107,11 @@ public final class WebDriverFactory {
     /**
      * Creates a <code>FirefoxDriver</code> instance with the provided properties.
      *
-     * @param extraCapabilities the browser properties
+     * @param capabilities the browser properties
      *
      * @return the preconfigured <code>FirefoxDriver</code> instance
      */
-    private static FirefoxDriver createFirefoxDriver(final Capabilities extraCapabilities) {
-        FirefoxOptions options = new FirefoxOptions();
-        options.merge(extraCapabilities);
-
-        return new FirefoxDriver(options);
+    private static FirefoxDriver createFirefoxDriver(final Capabilities capabilities) {
+        return new FirefoxDriver(new FirefoxOptions(capabilities));
     }
 }
