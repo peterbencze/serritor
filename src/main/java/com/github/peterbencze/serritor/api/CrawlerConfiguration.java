@@ -32,6 +32,8 @@ import org.apache.commons.lang3.Validate;
  */
 public final class CrawlerConfiguration implements Serializable {
 
+    public static final long DEFAULT_PAGE_LOAD_TIMEOUT_IN_MILLIS = Duration.ofMinutes(3).toMillis();
+
     private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<CrawlRequest> crawlSeeds;
     private final CrawlStrategy crawlStrategy;

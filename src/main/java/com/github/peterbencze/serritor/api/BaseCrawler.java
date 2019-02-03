@@ -69,6 +69,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriver.Options;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -192,7 +193,7 @@ public abstract class BaseCrawler {
                     ClientUtil.createSeleniumProxy(proxyServer));
 
             webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
-            webDriver.manage().window().maximize();
+            onBrowserInit(webDriver.manage());
 
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
@@ -545,6 +546,21 @@ public abstract class BaseCrawler {
             Thread.currentThread().interrupt();
             isStopping = true;
         }
+    }
+
+    /**
+     * Callback which is used to configure the browser before the crawling begins.
+     *
+     * @param options an interface for managing stuff you would do in a browser menu
+     */
+    protected void onBrowserInit(final Options options) {
+        LOGGER.info("onBrowserInit");
+
+        options.timeouts()
+                .pageLoadTimeout(CrawlerConfiguration.DEFAULT_PAGE_LOAD_TIMEOUT_IN_MILLIS,
+                        TimeUnit.MILLISECONDS);
+
+        options.window().maximize();
     }
 
     /**
