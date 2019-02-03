@@ -280,16 +280,17 @@ public abstract class BaseCrawler {
      * Registers an operation which is invoked when the specific event occurs and the provided
      * pattern matches the request URL.
      *
-     * @param event    the event for which the callback should be triggered
-     * @param callback the pattern matching callback to invoke
+     * @param <T>        the type of the input to the operation
+     * @param eventClass the runtime class of the event for which the callback should be invoked
+     * @param callback   the pattern matching callback to invoke
      */
     protected final <T extends EventObject> void registerCustomEventCallback(
-            final Class<T> event,
+            final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
-        Validate.notNull(event, "The event cannot be null.");
+        Validate.notNull(eventClass, "The event cannot be null.");
         Validate.notNull(callback, "The callback cannot be null.");
 
-        callbackManager.addCustomEventCallback(event, callback);
+        callbackManager.addCustomEventCallback(eventClass, callback);
     }
 
     /**

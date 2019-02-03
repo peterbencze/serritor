@@ -62,6 +62,7 @@ public final class EventCallbackManager {
     /**
      * Associates a pattern matching callback with the specific event.
      *
+     * @param <T>        the type of the input to the operation
      * @param eventClass the runtime class of the event for which the callback should be invoked
      * @param callback   the pattern matching callback to invoke
      */
