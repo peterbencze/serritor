@@ -80,6 +80,7 @@ public final class WebDriverFactory {
      *
      * @return the preconfigured <code>ChromeDriver</code> instance
      */
+    @SuppressWarnings("unchecked")
     private static ChromeDriver createChromeDriver(final Capabilities capabilities) {
         ChromeOptions options = new ChromeOptions();
         options.merge(capabilities);
