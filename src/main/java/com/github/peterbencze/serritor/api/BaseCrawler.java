@@ -70,7 +70,6 @@ import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriver.Options;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
@@ -198,8 +197,8 @@ public abstract class BaseCrawler {
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
             // before executing JavaScript, so we load a blank page.
-            if (webDriver instanceof HtmlUnitDriver
-                    && config.getCrawlDelayStrategy().equals(CrawlDelayStrategy.ADAPTIVE)) {
+            if (Browser.HTML_UNIT.equals(browser)
+                    && CrawlDelayStrategy.ADAPTIVE.equals(config.getCrawlDelayStrategy())) {
                 webDriver.get(WebClient.ABOUT_BLANK);
             }
 
