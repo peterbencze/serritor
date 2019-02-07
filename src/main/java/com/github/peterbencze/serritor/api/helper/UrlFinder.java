@@ -71,6 +71,9 @@ public final class UrlFinder {
      * @return the list of found URLs
      */
     public List<String> findUrlsInPage(final CompleteCrawlResponse completeCrawlResponse) {
+        Validate.notNull(completeCrawlResponse,
+                "The completeCrawlResponse parameter cannot be null.");
+
         Set<String> foundUrls = new HashSet<>();
 
         // Find elements using the specified locating mechanisms
@@ -147,7 +150,8 @@ public final class UrlFinder {
          * @param urlPatterns the list of patterns to use to find URLs
          */
         public UrlFinderBuilder(final List<Pattern> urlPatterns) {
-            Validate.noNullElements(urlPatterns, "URL patterns cannot be null.");
+            Validate.noNullElements(urlPatterns,
+                    "The urlPatterns parameter cannot be null or contain null elements.");
 
             this.urlPatterns = Sets.newHashSet(urlPatterns);
             locatingMechanisms = DEFAULT_LOCATING_MECHANISMS;
@@ -176,7 +180,8 @@ public final class UrlFinder {
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setLocatingMechanisms(final List<By> locatingMechanisms) {
-            Validate.noNullElements(locatingMechanisms, "Locating mechanisms cannot be null.");
+            Validate.noNullElements(locatingMechanisms,
+                    "The locatingMechanisms parameter cannot be null or contain null elements.");
 
             this.locatingMechanisms = Sets.newHashSet(locatingMechanisms);
             return this;
@@ -190,7 +195,8 @@ public final class UrlFinder {
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setAttributes(final List<String> attributes) {
-            Validate.noNullElements(attributes, "Attributes cannot be null.");
+            Validate.noNullElements(attributes,
+                    "The attributes parameter cannot be null or contain null elements.");
 
             this.attributes = Sets.newHashSet(attributes);
             return this;
@@ -215,7 +221,7 @@ public final class UrlFinder {
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setValidator(final Predicate<String> validator) {
-            Validate.notNull(validator, "The validator function cannot be null.");
+            Validate.notNull(validator, "The validator parameter cannot be null.");
 
             this.validator = validator;
             return this;

@@ -43,8 +43,8 @@ public final class PatternMatchingCallback<T extends EventObject> {
     public PatternMatchingCallback(
             final Pattern urlPattern,
             final Consumer<T> callback) {
-        Validate.notNull(urlPattern, "The pattern cannot be null.");
-        Validate.notNull(callback, "The callback cannot be null.");
+        Validate.notNull(urlPattern, "The urlPattern parameter cannot be null.");
+        Validate.notNull(callback, "The callback parameter cannot be null.");
 
         this.urlPattern = urlPattern;
         this.callback = callback;

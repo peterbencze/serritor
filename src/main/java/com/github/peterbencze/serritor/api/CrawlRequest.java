@@ -125,6 +125,8 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final URI requestUrl) {
+            Validate.notNull(requestUrl, "The requestUrl parameter cannot be null.");
+
             if (StringUtils.isEmpty(requestUrl.getPath())) {
                 try {
                     // Define a non-empty path for the URI
@@ -149,7 +151,8 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final String requestUrl) {
-            this(URI.create(requestUrl));
+            this(URI.create(Validate.notNull(requestUrl,
+                    "The requestUrl parameter cannot be null")));
         }
 
         /**
@@ -172,7 +175,7 @@ public final class CrawlRequest implements Serializable {
          * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
-            this.metadata = Validate.notNull(metadata, "The metadata cannot be null.");
+            this.metadata = Validate.notNull(metadata, "The metadata parameter cannot be null.");
             return this;
         }
 

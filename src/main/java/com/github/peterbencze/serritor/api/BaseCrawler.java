@@ -290,8 +290,8 @@ public abstract class BaseCrawler {
     protected final <T extends EventObject> void registerCustomEventCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
-        Validate.notNull(eventClass, "The event cannot be null.");
-        Validate.notNull(callback, "The callback cannot be null.");
+        Validate.notNull(eventClass, "The eventClass parameter cannot be null.");
+        Validate.notNull(callback, "The callback parameter cannot be null.");
 
         callbackManager.addCustomEventCallback(eventClass, callback);
     }
@@ -317,7 +317,7 @@ public abstract class BaseCrawler {
         Validate.validState(!isStopped,
                 "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
         Validate.validState(!isStopping, "Cannot add request when the crawler is stopping.");
-        Validate.notNull(request, "The request cannot be null.");
+        Validate.notNull(request, "The request parameter cannot be null.");
 
         crawlFrontier.feedRequest(request, false);
     }
@@ -343,8 +343,8 @@ public abstract class BaseCrawler {
     protected final void downloadFile(final URI source, final File destination) throws IOException {
         Validate.validState(!isStopped, "Cannot download file when the crawler is not started.");
         Validate.validState(!isStopping, "Cannot download file when the crawler is stopping.");
-        Validate.notNull(source, "The source URL cannot be null.");
-        Validate.notNull(destination, "The destination file cannot be null.");
+        Validate.notNull(source, "The source parameter cannot be null.");
+        Validate.notNull(destination, "The destination parameter cannot be null.");
 
         HttpGet request = new HttpGet(source);
         try (CloseableHttpResponse response = httpClient.execute(request)) {

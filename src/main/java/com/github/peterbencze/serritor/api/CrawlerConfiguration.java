@@ -233,7 +233,7 @@ public final class CrawlerConfiguration implements Serializable {
          * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder addCrawlSeed(final CrawlRequest request) {
-            Validate.notNull(request, "The request cannot be null.");
+            Validate.notNull(request, "The request parameter cannot be null.");
 
             crawlSeeds.add(request);
             return this;
@@ -261,7 +261,7 @@ public final class CrawlerConfiguration implements Serializable {
          * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
         public CrawlerConfigurationBuilder setCrawlStrategy(final CrawlStrategy strategy) {
-            Validate.notNull(strategy, "The strategy cannot be null.");
+            Validate.notNull(strategy, "The strategy parameter cannot be null.");
 
             crawlStrategy = strategy;
             return this;
@@ -319,7 +319,7 @@ public final class CrawlerConfiguration implements Serializable {
          */
         public CrawlerConfigurationBuilder setCrawlDelayStrategy(
                 final CrawlDelayStrategy strategy) {
-            Validate.notNull(strategy, "The strategy cannot be null.");
+            Validate.notNull(strategy, "The strategy parameter cannot be null.");
 
             crawlDelayStrategy = strategy;
             return this;
@@ -334,7 +334,8 @@ public final class CrawlerConfiguration implements Serializable {
          */
         public CrawlerConfigurationBuilder setFixedCrawlDelayDuration(
                 final Duration fixedCrawlDelayDuration) {
-            Validate.notNull(fixedCrawlDelayDuration, "The duration cannot be null.");
+            Validate.notNull(fixedCrawlDelayDuration,
+                    "The fixedCrawlDelayDuration parameter cannot be null.");
 
             fixedCrawlDelayDurationInMillis = fixedCrawlDelayDuration.toMillis();
             return this;
@@ -349,7 +350,8 @@ public final class CrawlerConfiguration implements Serializable {
          */
         public CrawlerConfigurationBuilder setMinimumCrawlDelayDuration(
                 final Duration minCrawlDelayDuration) {
-            Validate.notNull(minCrawlDelayDuration, "The duration cannot be null.");
+            Validate.notNull(minCrawlDelayDuration,
+                    "The minCrawlDelayDuration parameter cannot be null.");
             Validate.isTrue(!minCrawlDelayDuration.isNegative(),
                     "The minimum crawl delay cannot be negative.");
 
@@ -371,7 +373,8 @@ public final class CrawlerConfiguration implements Serializable {
          */
         public CrawlerConfigurationBuilder setMaximumCrawlDelayDuration(
                 final Duration maxCrawlDelayDuration) {
-            Validate.notNull(maxCrawlDelayDuration, "The duration cannot be null.");
+            Validate.notNull(maxCrawlDelayDuration,
+                    "The maxCrawlDelayDuration parameter cannot be null.");
 
             long maxDelayDurationInMillis = maxCrawlDelayDuration.toMillis();
 
