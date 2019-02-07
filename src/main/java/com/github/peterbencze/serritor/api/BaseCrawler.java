@@ -161,6 +161,9 @@ public abstract class BaseCrawler {
      * @param capabilities the browser properties
      */
     public final void start(final Browser browser, final DesiredCapabilities capabilities) {
+        Validate.notNull(browser, "The browser parameter cannot be null.");
+        Validate.notNull(capabilities, "The capabilities parameter cannot be null.");
+
         start(browser, capabilities, false);
     }
 
