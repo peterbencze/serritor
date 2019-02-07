@@ -83,8 +83,9 @@ public abstract class BaseCrawler {
 
     private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
 
+    private final EventCallbackManager callbackManager;
+
     private CrawlerConfiguration config;
-    private EventCallbackManager callbackManager;
     private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
