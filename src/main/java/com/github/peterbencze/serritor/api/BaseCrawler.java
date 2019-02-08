@@ -26,7 +26,6 @@ import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
-import com.github.peterbencze.serritor.internal.CrawlerState;
 import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
@@ -36,12 +35,13 @@ import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,7 +49,6 @@ import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -83,15 +82,15 @@ public abstract class BaseCrawler {
 
     private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
 
+    private final CrawlerConfiguration config;
+    private final CrawlFrontier crawlFrontier;
     private final EventCallbackManager callbackManager;
+    private final CrawlDelayMechanism crawlDelayMechanism;
 
-    private CrawlerConfiguration config;
-    private CrawlFrontier crawlFrontier;
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
     private BrowserMobProxyServer proxyServer;
     private WebDriver webDriver;
-    private CrawlDelayMechanism crawlDelayMechanism;
     private boolean isStopped;
     private boolean isStopping;
 
@@ -101,28 +100,29 @@ public abstract class BaseCrawler {
      * @param config the configuration of the crawler
      */
     protected BaseCrawler(final CrawlerConfiguration config) {
-        this();
-
-        this.config = config;
+        this(config, new CrawlFrontier(config));
     }
 
     /**
      * Base constructor which loads a previously saved state.
      *
-     * @param inStream the input stream from which the state should be loaded
+     * @param state the state to be loaded
      */
-    protected BaseCrawler(final InputStream inStream) {
-        this();
-
-        CrawlerState state = SerializationUtils.deserialize(inStream);
-        config = state.getStateObject(CrawlerConfiguration.class);
-        crawlFrontier = state.getStateObject(CrawlFrontier.class);
+    protected BaseCrawler(final CrawlerState state) {
+        this(state.getStateObject(CrawlerConfiguration.class),
+                state.getStateObject(CrawlFrontier.class));
     }
 
     /**
-     * Private base constructor which does simple initialization.
+     * Private base constructor.
+     *
+     * @param config        the configuration of the crawler
+     * @param crawlFrontier the crawl frontier
      */
-    private BaseCrawler() {
+    private BaseCrawler(final CrawlerConfiguration config, final CrawlFrontier crawlFrontier) {
+        this.config = config;
+        this.crawlFrontier = crawlFrontier;
+
         callbackManager = new EventCallbackManager();
         callbackManager.setDefaultEventCallback(PageLoadEvent.class, this::onPageLoad);
         callbackManager.setDefaultEventCallback(NonHtmlContentEvent.class, this::onNonHtmlContent);
@@ -132,6 +132,8 @@ public abstract class BaseCrawler {
                 this::onRequestRedirect);
         callbackManager.setDefaultEventCallback(NetworkErrorEvent.class, this::onNetworkError);
         callbackManager.setDefaultEventCallback(RequestErrorEvent.class, this::onRequestError);
+
+        crawlDelayMechanism = createCrawlDelayMechanism();
 
         isStopping = false;
         isStopped = true;
@@ -206,17 +208,17 @@ public abstract class BaseCrawler {
                 webDriver.get(WebClient.ABOUT_BLANK);
             }
 
-            if (!isResuming) {
-                crawlFrontier = new CrawlFrontier(config);
-            }
-
             cookieStore = new BasicCookieStore();
             httpClient = HttpClientBuilder.create()
                     .disableRedirectHandling()
                     .setDefaultCookieStore(cookieStore)
                     .useSystemProperties()
                     .build();
-            crawlDelayMechanism = createCrawlDelayMechanism();
+
+            if (!isResuming) {
+                crawlFrontier.reset();
+            }
+
             isStopped = false;
 
             run();
@@ -235,48 +237,44 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Saves the current state of the crawler to the given output stream.
+     * Returns the current state of the crawler.
      *
-     * @param outStream the output stream
+     * @return the current state of the crawler
      */
-    public final void saveState(final OutputStream outStream) {
-        Validate.validState(crawlFrontier != null, "Cannot save state at this point.");
+    public final CrawlerState getState() {
+        Map<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
+        stateObjects.put(config.getClass(), config);
+        stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
 
-        CrawlerState state = new CrawlerState();
-        state.putStateObject(config);
-        state.putStateObject(crawlFrontier);
-
-        SerializationUtils.serialize(state, outStream);
+        return new CrawlerState(stateObjects);
     }
 
     /**
-     * Resumes the previously loaded state. The crawler will use HtmlUnit headless browser to visit
-     * URLs. This method will block until the crawler finishes.
+     * Resumes the crawl. The crawler will use HtmlUnit headless browser to visit URLs. This method
+     * will block until the crawler finishes.
      */
-    public final void resumeState() {
-        resumeState(Browser.HTML_UNIT);
+    public final void resume() {
+        resume(Browser.HTML_UNIT);
     }
 
     /**
-     * Resumes the previously loaded state. The crawler will use the specified browser to visit
-     * URLs. This method will block until the crawler finishes.
+     * Resumes the crawl. The crawler will use the specified browser to visit URLs. This method will
+     * block until the crawler finishes.
      *
      * @param browser the type of the browser to use for crawling
      */
-    public final void resumeState(final Browser browser) {
-        resumeState(browser, new DesiredCapabilities());
+    public final void resume(final Browser browser) {
+        resume(browser, new DesiredCapabilities());
     }
 
     /**
-     * Resumes the previously loaded state. The crawler will use the specified browser to visit
-     * URLs. This method will block until the crawler finishes.
+     * Resumes the crawl. The crawler will use the specified browser to visit URLs. This method will
+     * block until the crawler finishes.
      *
      * @param browser      the type of the browser to use for crawling
      * @param capabilities the browser properties
      */
-    public final void resumeState(final Browser browser, final DesiredCapabilities capabilities) {
-        Validate.validState(crawlFrontier != null, "Cannot resume state at this point.");
-
+    public final void resume(final Browser browser, final DesiredCapabilities capabilities) {
         start(browser, capabilities, true);
     }
 

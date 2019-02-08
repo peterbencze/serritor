@@ -27,9 +27,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.common.net.HttpHeaders;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -132,21 +129,15 @@ public class SerritorIT {
             protected void onPageLoad(final PageLoadEvent event) {
                 super.onPageLoad(event);
 
-                try {
-                    saveState(new FileOutputStream(destinationFile));
-                } catch (FileNotFoundException ex) {
-                    Assert.fail(ex.getMessage());
-                }
-
                 stop();
             }
 
         };
         crawler.start(Browser.HTML_UNIT, capabilities);
 
-        crawler = new BaseCrawler(new FileInputStream(destinationFile)) {
+        crawler = new BaseCrawler(crawler.getState()) {
         };
-        crawler.resumeState(Browser.HTML_UNIT, capabilities);
+        crawler.resume(Browser.HTML_UNIT, capabilities);
 
         WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));

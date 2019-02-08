@@ -14,36 +14,29 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.api;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Represents the state of a crawling session. More specifically, it contains a set of state objects
- * that can be later used to resume that session.
+ * Represents the current state of the crawling session. More specifically, it contains a set of
+ * state objects that can be later reused to resume that particular session.
  *
  * @author Peter Bencze
  */
 public final class CrawlerState implements Serializable {
 
-    private final HashMap<Class<? extends Serializable>, Serializable> stateObjects;
+    private final Map<Class<? extends Serializable>, Serializable> stateObjects;
 
     /**
      * Creates a {@link CrawlerState} instance.
-     */
-    public CrawlerState() {
-        stateObjects = new HashMap<>();
-    }
-
-    /**
-     * Inserts the specified state object and its corresponding runtime class into the internal map
-     * used for storing these objects.
      *
-     * @param stateObject the state object that is required for resuming the crawling session
+     * @param stateObjects the map of state objects (that are required for resuming a crawl) and
+     *                     their corresponding runtime classes
      */
-    public void putStateObject(final Serializable stateObject) {
-        stateObjects.put(stateObject.getClass(), stateObject);
+    public CrawlerState(final Map<Class<? extends Serializable>, Serializable> stateObjects) {
+        this.stateObjects = stateObjects;
     }
 
     /**

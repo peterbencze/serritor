@@ -55,10 +55,7 @@ public final class CrawlFrontier implements Serializable {
         urlFingerprints = new HashSet<>();
         candidates = createPriorityQueue();
 
-        config.getCrawlSeeds()
-                .forEach((CrawlRequest request) -> {
-                    feedRequest(request, true);
-                });
+        feedCrawlSeeds();
     }
 
     /**
@@ -127,6 +124,26 @@ public final class CrawlFrontier implements Serializable {
     public CrawlCandidate getNextCandidate() {
         currentCandidate = candidates.poll();
         return currentCandidate;
+    }
+
+    /**
+     * Resets the crawl frontier to its initial state.
+     */
+    public void reset() {
+        urlFingerprints.clear();
+        candidates.clear();
+
+        feedCrawlSeeds();
+    }
+
+    /**
+     * Feeds all the crawl seeds to the crawl frontier.
+     */
+    private void feedCrawlSeeds() {
+        config.getCrawlSeeds()
+                .forEach((CrawlRequest request) -> {
+                    feedRequest(request, true);
+                });
     }
 
     /**
