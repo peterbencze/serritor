@@ -17,7 +17,11 @@
 package com.github.peterbencze.serritor.api;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Represents the current state of the crawling session. More specifically, it contains a set of
@@ -32,11 +36,21 @@ public final class CrawlerState implements Serializable {
     /**
      * Creates a {@link CrawlerState} instance.
      *
-     * @param stateObjects the map of state objects (that are required for resuming a crawl) and
-     *                     their corresponding runtime classes
+     * @param stateObj the state object that is required to restore the state of the crawler
      */
-    public CrawlerState(final Map<Class<? extends Serializable>, Serializable> stateObjects) {
-        this.stateObjects = stateObjects;
+    public CrawlerState(final Serializable stateObj) {
+        this(Collections.singletonList(stateObj));
+    }
+
+    /**
+     * Creates a {@link CrawlerState} instance.
+     *
+     * @param stateObjs the list of state objects that are required to restore the state of the
+     *                  crawler
+     */
+    public CrawlerState(final List<Serializable> stateObjs) {
+        this.stateObjects = stateObjs.stream()
+                .collect(Collectors.toMap(Serializable::getClass, stateObj -> stateObj));
     }
 
     /**
@@ -47,7 +61,7 @@ public final class CrawlerState implements Serializable {
      *
      * @return the state object specified by its class
      */
-    public <T extends Serializable> T getStateObject(final Class<T> stateObjectClass) {
-        return (T) stateObjects.get(stateObjectClass);
+    public <T extends Serializable> Optional<T> getStateObject(final Class<T> stateObjectClass) {
+        return Optional.ofNullable((T) stateObjects.get(stateObjectClass));
     }
 }

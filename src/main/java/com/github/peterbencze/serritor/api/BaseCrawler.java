@@ -35,13 +35,11 @@ import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -95,33 +93,24 @@ public abstract class BaseCrawler {
     private boolean isStopping;
 
     /**
-     * Base constructor which is used to configure the crawler.
+     * Base constructor which sets up the crawler with the provided configuration.
      *
      * @param config the configuration of the crawler
      */
     protected BaseCrawler(final CrawlerConfiguration config) {
-        this(config, new CrawlFrontier(config));
+        this(new CrawlerState(config));
     }
 
     /**
-     * Base constructor which loads a previously saved state.
+     * Base constructor which restores the crawler to the provided state.
      *
-     * @param state the state to be loaded
+     * @param state the state to restore the crawler to
      */
     protected BaseCrawler(final CrawlerState state) {
-        this(state.getStateObject(CrawlerConfiguration.class),
-                state.getStateObject(CrawlFrontier.class));
-    }
-
-    /**
-     * Private base constructor.
-     *
-     * @param config        the configuration of the crawler
-     * @param crawlFrontier the crawl frontier
-     */
-    private BaseCrawler(final CrawlerConfiguration config, final CrawlFrontier crawlFrontier) {
-        this.config = config;
-        this.crawlFrontier = crawlFrontier;
+        this.config = state.getStateObject(CrawlerConfiguration.class)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid crawler state provided"));
+        this.crawlFrontier = state.getStateObject(CrawlFrontier.class)
+                .orElseGet(() -> new CrawlFrontier(config));
 
         callbackManager = new EventCallbackManager();
         callbackManager.setDefaultEventCallback(PageLoadEvent.class, this::onPageLoad);
@@ -242,11 +231,7 @@ public abstract class BaseCrawler {
      * @return the current state of the crawler
      */
     public final CrawlerState getState() {
-        Map<Class<? extends Serializable>, Serializable> stateObjects = new HashMap<>();
-        stateObjects.put(config.getClass(), config);
-        stateObjects.put(crawlFrontier.getClass(), crawlFrontier);
-
-        return new CrawlerState(stateObjects);
+        return new CrawlerState(Arrays.asList(config, crawlFrontier));
     }
 
     /**
