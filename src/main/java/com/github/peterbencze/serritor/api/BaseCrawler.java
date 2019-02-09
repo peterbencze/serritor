@@ -98,7 +98,7 @@ public abstract class BaseCrawler {
      * @param config the configuration of the crawler
      */
     protected BaseCrawler(final CrawlerConfiguration config) {
-        this(new CrawlerState(config));
+        this(new CrawlerState(Validate.notNull(config, "The config parameter cannot be null")));
     }
 
     /**
@@ -107,6 +107,8 @@ public abstract class BaseCrawler {
      * @param state the state to restore the crawler to
      */
     protected BaseCrawler(final CrawlerState state) {
+        Validate.notNull(state, "The state parameter cannot be null");
+
         this.config = state.getStateObject(CrawlerConfiguration.class)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid crawler state provided"));
         this.crawlFrontier = state.getStateObject(CrawlFrontier.class)
