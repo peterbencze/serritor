@@ -27,6 +27,7 @@ import java.io.Serializable;
  */
 public final class CrawlDomain implements Serializable {
 
+    private final String domain;
     private final ImmutableList<String> parts;
 
     /**
@@ -35,7 +36,17 @@ public final class CrawlDomain implements Serializable {
      * @param domain an immutable well-formed internet domain name
      */
     public CrawlDomain(final InternetDomainName domain) {
+        this.domain = domain.toString();
         parts = domain.parts();
+    }
+
+    /**
+     * Returns the domain name, normalized to all lower case.
+     *
+     * @return the domain name
+     */
+    public String getDomain() {
+        return domain;
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.net.InternetDomainName;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -37,8 +38,11 @@ public final class CrawlRequest implements Serializable {
 
     private final URI requestUrl;
     private final int priority;
+
+    @JsonIgnore
     private final Serializable metadata;
 
+    @JsonIgnore
     private transient InternetDomainName domain;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {

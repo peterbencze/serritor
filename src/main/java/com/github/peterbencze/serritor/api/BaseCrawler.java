@@ -41,6 +41,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.lightbody.bmp.BrowserMobProxyServer;
@@ -89,8 +90,8 @@ public abstract class BaseCrawler {
     private CloseableHttpClient httpClient;
     private BrowserMobProxyServer proxyServer;
     private WebDriver webDriver;
-    private boolean isStopped;
-    private boolean isStopping;
+    private AtomicBoolean isStopped;
+    private AtomicBoolean isStopping;
 
     /**
      * Base constructor which sets up the crawler with the provided configuration.
@@ -126,8 +127,17 @@ public abstract class BaseCrawler {
 
         crawlDelayMechanism = createCrawlDelayMechanism();
 
-        isStopping = false;
-        isStopped = true;
+        isStopping = new AtomicBoolean(false);
+        isStopped = new AtomicBoolean(true);
+    }
+
+    /**
+     * Returns the configuration of the crawler.
+     *
+     * @return the configuration of the crawler
+     */
+    public final CrawlerConfiguration getCrawlerConfiguration() {
+        return config;
     }
 
     /**
@@ -170,7 +180,9 @@ public abstract class BaseCrawler {
                        final DesiredCapabilities capabilities,
                        final boolean isResuming) {
         try {
-            Validate.validState(isStopped, "The crawler is already running.");
+            Validate.validState(isStopped.get(), "The crawler is already running.");
+
+            isStopped.set(false);
 
             DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
             proxyServer = new BrowserMobProxyServer();
@@ -210,8 +222,6 @@ public abstract class BaseCrawler {
                 crawlFrontier.reset();
             }
 
-            isStopped = false;
-
             run();
         } finally {
             HttpClientUtils.closeQuietly(httpClient);
@@ -222,8 +232,8 @@ public abstract class BaseCrawler {
 
             proxyServer.stop();
 
-            isStopping = false;
-            isStopped = true;
+            isStopping.set(false);
+            isStopped.set(true);
         }
     }
 
@@ -286,11 +296,10 @@ public abstract class BaseCrawler {
      * Gracefully stops the crawler.
      */
     protected final void stop() {
-        Validate.validState(!isStopped, "The crawler is not started.");
-        Validate.validState(!isStopping, "The crawler is already stopping.");
+        Validate.validState(!isStopped.get(), "The crawler is not started.");
 
         // Indicate that the crawling should be stopped
-        isStopping = true;
+        isStopping.set(true);
     }
 
     /**
@@ -300,9 +309,9 @@ public abstract class BaseCrawler {
      * @param request the crawl request
      */
     protected final void crawl(final CrawlRequest request) {
-        Validate.validState(!isStopped,
+        Validate.validState(!isStopped.get(),
                 "The crawler is not started. Maybe you meant to add this request as a crawl seed?");
-        Validate.validState(!isStopping, "Cannot add request when the crawler is stopping.");
+        Validate.validState(!isStopping.get(), "Cannot add request when the crawler is stopping.");
         Validate.notNull(request, "The request parameter cannot be null.");
 
         crawlFrontier.feedRequest(request, false);
@@ -327,8 +336,10 @@ public abstract class BaseCrawler {
      * @throws IOException if an I/O error occurs while downloading the file
      */
     protected final void downloadFile(final URI source, final File destination) throws IOException {
-        Validate.validState(!isStopped, "Cannot download file when the crawler is not started.");
-        Validate.validState(!isStopping, "Cannot download file when the crawler is stopping.");
+        Validate.validState(!isStopped.get(),
+                "Cannot download file when the crawler is not started.");
+        Validate.validState(!isStopping.get(),
+                "Cannot download file when the crawler is stopping.");
         Validate.notNull(source, "The source parameter cannot be null.");
         Validate.notNull(destination, "The destination parameter cannot be null.");
 
@@ -349,7 +360,7 @@ public abstract class BaseCrawler {
 
         boolean shouldPerformDelay = false;
 
-        while (!isStopping && crawlFrontier.hasNextCandidate()) {
+        while (!isStopping.get() && crawlFrontier.hasNextCandidate()) {
             // Do not perform delay in the first iteration
             if (shouldPerformDelay) {
                 performDelay();
@@ -532,7 +543,7 @@ public abstract class BaseCrawler {
             TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            isStopping = true;
+            isStopping.set(true);
         }
     }
 
