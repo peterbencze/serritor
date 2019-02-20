@@ -42,8 +42,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.core.har.HarResponse;
@@ -70,6 +68,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriver.Options;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
@@ -79,7 +79,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
  */
 public abstract class BaseCrawler {
 
-    private static final Logger LOGGER = Logger.getLogger(BaseCrawler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseCrawler.class);
 
     private final CrawlerConfiguration config;
     private final CrawlFrontier crawlFrontier;
@@ -578,7 +578,7 @@ public abstract class BaseCrawler {
      * @param event the <code>PageLoadEvent</code> instance
      */
     protected void onPageLoad(final PageLoadEvent event) {
-        LOGGER.log(Level.INFO, "onPageLoad: {0}", event.getCrawlCandidate().getRequestUrl());
+        LOGGER.info("onPageLoad: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -587,7 +587,7 @@ public abstract class BaseCrawler {
      * @param event the <code>NonHtmlContentEvent</code> instance
      */
     protected void onNonHtmlContent(final NonHtmlContentEvent event) {
-        LOGGER.log(Level.INFO, "onNonHtmlContent: {0}", event.getCrawlCandidate().getRequestUrl());
+        LOGGER.info("onNonHtmlContent: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -596,7 +596,7 @@ public abstract class BaseCrawler {
      * @param event the <code>NetworkErrorEvent</code> instance
      */
     protected void onNetworkError(final NetworkErrorEvent event) {
-        LOGGER.log(Level.INFO, "onNetworkError: {0}", event.getErrorMessage());
+        LOGGER.info("onNetworkError: {}", event.getErrorMessage());
     }
 
     /**
@@ -606,7 +606,7 @@ public abstract class BaseCrawler {
      * @param event the <code>RequestErrorEvent</code> instance
      */
     protected void onRequestError(final RequestErrorEvent event) {
-        LOGGER.log(Level.INFO, "onRequestError: {0}", event.getCrawlCandidate().getRequestUrl());
+        LOGGER.info("onRequestError: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -615,11 +615,8 @@ public abstract class BaseCrawler {
      * @param event the <code>RequestRedirectEvent</code> instance
      */
     protected void onRequestRedirect(final RequestRedirectEvent event) {
-        LOGGER.log(Level.INFO, "onRequestRedirect: {0} -> {1}",
-                new Object[]{
-                        event.getCrawlCandidate().getRequestUrl(),
-                        event.getRedirectedCrawlRequest().getRequestUrl()
-                });
+        LOGGER.info("onRequestRedirect: {} -> {}", event.getCrawlCandidate().getRequestUrl(),
+                event.getRedirectedCrawlRequest().getRequestUrl());
     }
 
     /**
@@ -629,7 +626,7 @@ public abstract class BaseCrawler {
      * @param event the <code>PageLoadTimeoutEvent</code> instance
      */
     protected void onPageLoadTimeout(final PageLoadTimeoutEvent event) {
-        LOGGER.log(Level.INFO, "onPageLoadTimeout: {0}", event.getCrawlCandidate().getRequestUrl());
+        LOGGER.info("onPageLoadTimeout: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
