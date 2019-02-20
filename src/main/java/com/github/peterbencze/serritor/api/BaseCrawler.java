@@ -84,12 +84,12 @@ public abstract class BaseCrawler {
     private final CrawlerConfiguration config;
     private final CrawlFrontier crawlFrontier;
     private final EventCallbackManager callbackManager;
-    private final CrawlDelayMechanism crawlDelayMechanism;
 
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
     private BrowserMobProxyServer proxyServer;
     private WebDriver webDriver;
+    private CrawlDelayMechanism crawlDelayMechanism;
     private AtomicBoolean isStopped;
     private AtomicBoolean isStopping;
 
@@ -124,8 +124,6 @@ public abstract class BaseCrawler {
                 this::onRequestRedirect);
         callbackManager.setDefaultEventCallback(NetworkErrorEvent.class, this::onNetworkError);
         callbackManager.setDefaultEventCallback(RequestErrorEvent.class, this::onRequestError);
-
-        crawlDelayMechanism = createCrawlDelayMechanism();
 
         isStopping = new AtomicBoolean(false);
         isStopped = new AtomicBoolean(true);
@@ -184,8 +182,18 @@ public abstract class BaseCrawler {
 
             isStopped.set(false);
 
-            DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
+            cookieStore = new BasicCookieStore();
+            httpClient = HttpClientBuilder.create()
+                    .disableRedirectHandling()
+                    .setDefaultCookieStore(cookieStore)
+                    .useSystemProperties()
+                    .build();
+
             proxyServer = new BrowserMobProxyServer();
+
+            // Create a copy of the original capabilities before we make changes to it (we don't
+            // want to cause any unwanted side effects)
+            DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
 
             Proxy chainedProxy = (Proxy) capabilitiesClone.getCapability(CapabilityType.PROXY);
             if (chainedProxy != null && chainedProxy.getHttpProxy() != null) {
@@ -203,6 +211,10 @@ public abstract class BaseCrawler {
             webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
             onBrowserInit(webDriver.manage());
 
+            if (!isResuming) {
+                crawlFrontier.reset();
+            }
+
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
             // before executing JavaScript, so we load a blank page.
@@ -211,16 +223,8 @@ public abstract class BaseCrawler {
                 webDriver.get(WebClient.ABOUT_BLANK);
             }
 
-            cookieStore = new BasicCookieStore();
-            httpClient = HttpClientBuilder.create()
-                    .disableRedirectHandling()
-                    .setDefaultCookieStore(cookieStore)
-                    .useSystemProperties()
-                    .build();
-
-            if (!isResuming) {
-                crawlFrontier.reset();
-            }
+            // Must be created here (the adaptive crawl delay strategy depends on the WebDriver)
+            crawlDelayMechanism = createCrawlDelayMechanism();
 
             run();
         } finally {
@@ -230,7 +234,9 @@ public abstract class BaseCrawler {
                 webDriver.quit();
             }
 
-            proxyServer.stop();
+            if (proxyServer != null && proxyServer.isStarted()) {
+                proxyServer.stop();
+            }
 
             isStopping.set(false);
             isStopped.set(true);
