@@ -386,9 +386,10 @@ public abstract class BaseCrawler {
                 }
 
                 int statusCode = httpHeadResponse.getStatusLine().getStatusCode();
+
+                // Check if there was an HTTP redirect
                 Header locationHeader = httpHeadResponse.getFirstHeader(HttpHeaders.LOCATION);
                 if (HttpStatus.isRedirection(statusCode) && locationHeader != null) {
-                    // Create a new crawl request for the redirected URL (HTTP redirect)
                     handleRequestRedirect(currentCandidate,
                             new PartialCrawlResponse(httpHeadResponse), locationHeader.getValue());
 
@@ -435,9 +436,15 @@ public abstract class BaseCrawler {
                 continue;
             }
 
+            // We need to check both the redirect URL in the HAR response and the URL of the
+            // loaded page to see if there was a JS redirect
             String redirectUrl = harResponse.getRedirectURL();
-            if (!redirectUrl.isEmpty()) {
-                // Create a new crawl request for the redirected URL (JS redirect)
+            String loadedPageUrl = webDriver.getCurrentUrl();
+            if (!redirectUrl.isEmpty() || !loadedPageUrl.equals(candidateUrl)) {
+                if (redirectUrl.isEmpty()) {
+                    redirectUrl = loadedPageUrl;
+                }
+
                 handleRequestRedirect(currentCandidate,
                         new PartialCrawlResponse(harResponse), redirectUrl);
 
@@ -510,13 +517,13 @@ public abstract class BaseCrawler {
      *
      * @param crawlCandidate       the current crawl candidate
      * @param partialCrawlResponse the partial crawl response
-     * @param redirectedUrl        the URL of the redirected request
+     * @param redirectUrl          the redirect URL
      */
     private void handleRequestRedirect(
             final CrawlCandidate crawlCandidate,
             final PartialCrawlResponse partialCrawlResponse,
-            final String redirectedUrl) {
-        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectedUrl)
+            final String redirectUrl) {
+        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectUrl)
                 .setPriority(crawlCandidate.getPriority());
         crawlCandidate.getMetadata().ifPresent(builder::setMetadata);
         CrawlRequest redirectedRequest = builder.build();
