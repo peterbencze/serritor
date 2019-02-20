@@ -435,11 +435,11 @@ public abstract class BaseCrawler {
                 continue;
             }
 
-            String loadedPageUrl = webDriver.getCurrentUrl();
-            if (!loadedPageUrl.equals(candidateUrl)) {
+            String redirectUrl = harResponse.getRedirectURL();
+            if (!redirectUrl.isEmpty()) {
                 // Create a new crawl request for the redirected URL (JS redirect)
                 handleRequestRedirect(currentCandidate,
-                        new PartialCrawlResponse(harResponse), loadedPageUrl);
+                        new PartialCrawlResponse(harResponse), redirectUrl);
 
                 continue;
             }
