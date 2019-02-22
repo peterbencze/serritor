@@ -65,7 +65,7 @@ public final class CrawlFrontier implements Serializable {
      * @param isCrawlSeed indicates if the request is a crawl seed
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
-        if (config.isOffsiteRequestFilteringEnabled()) {
+        if (config.isOffsiteRequestFilterEnabled()) {
             boolean inCrawlDomain = false;
 
             for (CrawlDomain allowedCrawlDomain : config.getAllowedCrawlDomains()) {
@@ -80,7 +80,7 @@ public final class CrawlFrontier implements Serializable {
             }
         }
 
-        if (config.isDuplicateRequestFilteringEnabled()) {
+        if (config.isDuplicateRequestFilterEnabled()) {
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
 
             if (urlFingerprints.contains(urlFingerprint)) {

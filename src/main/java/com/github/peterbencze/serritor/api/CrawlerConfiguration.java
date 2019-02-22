@@ -37,8 +37,8 @@ public final class CrawlerConfiguration implements Serializable {
     private final Set<CrawlDomain> allowedCrawlDomains;
     private final Set<CrawlRequest> crawlSeeds;
     private final CrawlStrategy crawlStrategy;
-    private final boolean filterDuplicateRequests;
-    private final boolean filterOffsiteRequests;
+    private final boolean isDuplicateRequestFilterEnabled;
+    private final boolean isOffsiteRequestFilterEnabled;
     private final int maxCrawlDepth;
     private final CrawlDelayStrategy crawlDelayStrategy;
     private final long fixedCrawlDelayDurationInMillis;
@@ -49,8 +49,8 @@ public final class CrawlerConfiguration implements Serializable {
         allowedCrawlDomains = builder.allowedCrawlDomains;
         crawlSeeds = builder.crawlSeeds;
         crawlStrategy = builder.crawlStrategy;
-        filterDuplicateRequests = builder.filterDuplicateRequests;
-        filterOffsiteRequests = builder.filterOffsiteRequests;
+        isDuplicateRequestFilterEnabled = builder.isDuplicateRequestFilterEnabled;
+        isOffsiteRequestFilterEnabled = builder.isOffsiteRequestFilterEnabled;
         maxCrawlDepth = builder.maxCrawlDepth;
         crawlDelayStrategy = builder.crawlDelayStrategy;
         fixedCrawlDelayDurationInMillis = builder.fixedCrawlDelayDurationInMillis;
@@ -86,21 +86,21 @@ public final class CrawlerConfiguration implements Serializable {
     }
 
     /**
-     * Indicates if duplicate request filtering is enabled.
+     * Indicates if the duplicate request filter is enabled.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
-    public boolean isDuplicateRequestFilteringEnabled() {
-        return filterDuplicateRequests;
+    public boolean isDuplicateRequestFilterEnabled() {
+        return isDuplicateRequestFilterEnabled;
     }
 
     /**
-     * Indicates if offsite request filtering is enabled.
+     * Indicates if the offsite request filter is enabled.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise
      */
-    public boolean isOffsiteRequestFilteringEnabled() {
-        return filterOffsiteRequests;
+    public boolean isOffsiteRequestFilterEnabled() {
+        return isOffsiteRequestFilterEnabled;
     }
 
     /**
@@ -154,8 +154,8 @@ public final class CrawlerConfiguration implements Serializable {
     public static final class CrawlerConfigurationBuilder {
 
         private static final CrawlStrategy DEFAULT_CRAWL_STRATEGY = CrawlStrategy.BREADTH_FIRST;
-        private static final boolean FILTER_DUPLICATE_REQUESTS_BY_DEFAULT = true;
-        private static final boolean FILTER_OFFSITE_REQUESTS_BY_DEFAULT = false;
+        private static final boolean IS_DUPLICATE_REQUEST_FILTER_ENABLED_BY_DEFAULT = true;
+        private static final boolean IS_OFFSITE_REQUEST_FILTER_ENABLED_BY_DEFAULT = false;
         private static final int DEFAULT_MAX_CRAWL_DEPTH = 0;
         private static final CrawlDelayStrategy DEFAULT_CRAWL_DELAY = CrawlDelayStrategy.FIXED;
         private static final long DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS
@@ -169,8 +169,8 @@ public final class CrawlerConfiguration implements Serializable {
         private final Set<CrawlRequest> crawlSeeds;
 
         private CrawlStrategy crawlStrategy;
-        private boolean filterDuplicateRequests;
-        private boolean filterOffsiteRequests;
+        private boolean isDuplicateRequestFilterEnabled;
+        private boolean isOffsiteRequestFilterEnabled;
         private int maxCrawlDepth;
         private CrawlDelayStrategy crawlDelayStrategy;
         private long fixedCrawlDelayDurationInMillis;
@@ -185,8 +185,8 @@ public final class CrawlerConfiguration implements Serializable {
             allowedCrawlDomains = new HashSet<>();
             crawlSeeds = new HashSet<>();
             crawlStrategy = DEFAULT_CRAWL_STRATEGY;
-            filterDuplicateRequests = FILTER_DUPLICATE_REQUESTS_BY_DEFAULT;
-            filterOffsiteRequests = FILTER_OFFSITE_REQUESTS_BY_DEFAULT;
+            isDuplicateRequestFilterEnabled = IS_DUPLICATE_REQUEST_FILTER_ENABLED_BY_DEFAULT;
+            isOffsiteRequestFilterEnabled = IS_OFFSITE_REQUEST_FILTER_ENABLED_BY_DEFAULT;
             maxCrawlDepth = DEFAULT_MAX_CRAWL_DEPTH;
             crawlDelayStrategy = DEFAULT_CRAWL_DELAY;
             fixedCrawlDelayDurationInMillis = DEFAULT_FIXED_CRAWL_DELAY_IN_MILLIS;
@@ -268,30 +268,28 @@ public final class CrawlerConfiguration implements Serializable {
         }
 
         /**
-         * Enables or disables duplicate request filtering.
+         * Enables or disables the duplicate request filter.
          *
-         * @param filterDuplicateRequests <code>true</code> means enabled, <code>false</code> means
-         *                                disabled
+         * @param filterEnabled <code>true</code> enables, <code>false</code> disables the filter
          *
          * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
-        public CrawlerConfigurationBuilder setDuplicateRequestFiltering(
-                final boolean filterDuplicateRequests) {
-            this.filterDuplicateRequests = filterDuplicateRequests;
+        public CrawlerConfigurationBuilder setDuplicateRequestFilterEnabled(
+                final boolean filterEnabled) {
+            this.isDuplicateRequestFilterEnabled = filterEnabled;
             return this;
         }
 
         /**
-         * Enables or disables offsite request filtering.
+         * Enables or disables the offsite request filter.
          *
-         * @param filterOffsiteRequests <code>true</code> means enabled, <code>false</code> means
-         *                              disabled
+         * @param filterEnabled <code>true</code> enables, <code>false</code> disables the filter
          *
          * @return the <code>CrawlerConfigurationBuilder</code> instance
          */
-        public CrawlerConfigurationBuilder setOffsiteRequestFiltering(
-                final boolean filterOffsiteRequests) {
-            this.filterOffsiteRequests = filterOffsiteRequests;
+        public CrawlerConfigurationBuilder setOffsiteRequestFilterEnabled(
+                final boolean filterEnabled) {
+            this.isOffsiteRequestFilterEnabled = filterEnabled;
             return this;
         }
 

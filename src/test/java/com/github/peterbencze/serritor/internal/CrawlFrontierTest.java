@@ -113,7 +113,7 @@ public final class CrawlFrontierTest {
 
     @Before
     public void before() {
-        config = Mockito.spy(new CrawlerConfigurationBuilder().setOffsiteRequestFiltering(true)
+        config = Mockito.spy(new CrawlerConfigurationBuilder().setOffsiteRequestFilterEnabled(true)
                 .addAllowedCrawlDomains(ALLOWED_CRAWL_DOMAINS)
                 .addCrawlSeeds(CRAWL_SEEDS)
                 .build());
@@ -168,7 +168,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testDisabledDuplicateRequestFiltering() {
-        Mockito.when(config.isDuplicateRequestFilteringEnabled()).thenReturn(false);
+        Mockito.when(config.isDuplicateRequestFilterEnabled()).thenReturn(false);
 
         CrawlFrontier crawlFrontier = new CrawlFrontier(config);
 
@@ -190,7 +190,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testDisabledOffsiteRequestFiltering() {
-        Mockito.when(config.isOffsiteRequestFilteringEnabled()).thenReturn(false);
+        Mockito.when(config.isOffsiteRequestFilterEnabled()).thenReturn(false);
         Mockito.when(config.getCrawlSeeds()).thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
 
         CrawlFrontier crawlFrontier = new CrawlFrontier(config);
