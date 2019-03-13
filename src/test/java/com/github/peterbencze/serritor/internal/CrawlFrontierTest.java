@@ -22,6 +22,7 @@ import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.CrawlStrategy;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration.CrawlerConfigurationBuilder;
+import com.github.peterbencze.serritor.internal.stats.StatsCounter;
 import com.google.common.collect.Sets;
 import java.net.URI;
 import java.util.Arrays;
@@ -109,19 +110,23 @@ public final class CrawlFrontierTest {
     // Max crawl depth
     private static final int MAX_CRAWL_DEPTH = 1;
 
-    private CrawlerConfiguration config;
+    private CrawlerConfiguration configMock;
+    private StatsCounter statsCounterMock;
 
     @Before
     public void before() {
-        config = Mockito.spy(new CrawlerConfigurationBuilder().setOffsiteRequestFilterEnabled(true)
+        configMock = Mockito.spy(new CrawlerConfigurationBuilder()
+                .setOffsiteRequestFilterEnabled(true)
                 .addAllowedCrawlDomains(ALLOWED_CRAWL_DOMAINS)
                 .addCrawlSeeds(CRAWL_SEEDS)
                 .build());
+
+        statsCounterMock = Mockito.mock(StatsCounter.class);
     }
 
     @Test
     public void testHasNextCandidateWithNonEmptyQueue() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         Assert.assertTrue(crawlFrontier.hasNextCandidate());
 
@@ -149,16 +154,16 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testHasNextCandidateWithEmptyQueue() {
-        Mockito.when(config.getCrawlSeeds()).thenReturn(Collections.EMPTY_SET);
+        Mockito.when(configMock.getCrawlSeeds()).thenReturn(Collections.EMPTY_SET);
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         Assert.assertFalse(crawlFrontier.hasNextCandidate());
     }
 
     @Test
     public void testEnabledDuplicateRequestFiltering() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         clearCrawlCandidateQueue(crawlFrontier);
         crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, false);
@@ -168,9 +173,9 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testDisabledDuplicateRequestFiltering() {
-        Mockito.when(config.isDuplicateRequestFilterEnabled()).thenReturn(false);
+        Mockito.when(configMock.isDuplicateRequestFilterEnabled()).thenReturn(false);
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         clearCrawlCandidateQueue(crawlFrontier);
         crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, true);
@@ -181,19 +186,21 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testEnabledOffsiteRequestFiltering() {
-        Mockito.when(config.getCrawlSeeds()).thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
+        Mockito.when(configMock.getCrawlSeeds())
+                .thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         Assert.assertFalse(crawlFrontier.hasNextCandidate());
     }
 
     @Test
     public void testDisabledOffsiteRequestFiltering() {
-        Mockito.when(config.isOffsiteRequestFilterEnabled()).thenReturn(false);
-        Mockito.when(config.getCrawlSeeds()).thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
+        Mockito.when(configMock.isOffsiteRequestFilterEnabled()).thenReturn(false);
+        Mockito.when(configMock.getCrawlSeeds())
+                .thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         Assert.assertTrue(crawlFrontier.hasNextCandidate());
         Assert.assertEquals(OFFSITE_URL,
@@ -202,7 +209,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testGetNextCandidateWhenUsingBreadthFirstCrawlStrategy() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         CrawlCandidate nextCandidate = crawlFrontier.getNextCandidate();
         Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
@@ -240,9 +247,9 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testGetNextCandidateWhenUsingDepthFirstCrawlStrategy() {
-        Mockito.when(config.getCrawlStrategy()).thenReturn(CrawlStrategy.DEPTH_FIRST);
+        Mockito.when(configMock.getCrawlStrategy()).thenReturn(CrawlStrategy.DEPTH_FIRST);
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         CrawlCandidate nextCandidate = crawlFrontier.getNextCandidate();
         Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
@@ -279,9 +286,9 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testCrawlDepthLimitation() {
-        Mockito.when(config.getMaximumCrawlDepth()).thenReturn(MAX_CRAWL_DEPTH);
+        Mockito.when(configMock.getMaximumCrawlDepth()).thenReturn(MAX_CRAWL_DEPTH);
 
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         clearCrawlCandidateQueue(crawlFrontier);
         crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
@@ -296,7 +303,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testReset() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(config);
+        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
         crawlFrontier.reset();
 

@@ -16,17 +16,21 @@
 
 package com.github.peterbencze.serritor.internal.stopwatch;
 
+import com.github.peterbencze.serritor.internal.util.FunctionalReentrantReadWriteLock;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import org.apache.commons.lang3.Validate;
 
 /**
- * A serializable stopwatch implementation that can be used to measure elapsed time.
+ * A serializable and thread-safe stopwatch implementation that can be used to measure elapsed
+ * time.
  *
  * @author Peter Bencze
  */
 public final class Stopwatch implements Serializable {
+
+    private final FunctionalReentrantReadWriteLock lock;
 
     private TimeSource timeSource;
     private Instant startTime;
@@ -40,6 +44,7 @@ public final class Stopwatch implements Serializable {
      */
     public Stopwatch(final TimeSource timeSource) {
         this.timeSource = timeSource;
+        lock = new FunctionalReentrantReadWriteLock();
         elapsedDuration = Duration.ZERO;
         isRunning = false;
     }
@@ -55,10 +60,12 @@ public final class Stopwatch implements Serializable {
      * Starts the stopwatch.
      */
     public void start() {
-        Validate.validState(!isRunning, "The stopwatch is already running.");
+        lock.writeWithLock(() -> {
+            Validate.validState(!isRunning, "The stopwatch is already running.");
 
-        startTime = timeSource.getTime();
-        isRunning = true;
+            startTime = timeSource.getTime();
+            isRunning = true;
+        });
     }
 
     /**
@@ -67,17 +74,20 @@ public final class Stopwatch implements Serializable {
      * @return <code>true</code> if the stopwatch is running, <code>false</code> otherwise
      */
     public boolean isRunning() {
-        return isRunning;
+        return lock.readWithLock(() -> isRunning);
     }
 
     /**
      * Stops the stopwatch.
      */
     public void stop() {
-        Validate.validState(isRunning, "The stopwatch is not running.");
+        lock.writeWithLock(() -> {
+            Validate.validState(isRunning, "The stopwatch is not running.");
 
-        elapsedDuration = elapsedDuration.plus(Duration.between(startTime, timeSource.getTime()));
-        isRunning = false;
+            elapsedDuration = elapsedDuration.plus(Duration.between(startTime,
+                    timeSource.getTime()));
+            isRunning = false;
+        });
     }
 
     /**
@@ -86,10 +96,12 @@ public final class Stopwatch implements Serializable {
      * @return the current elapsed duration
      */
     public Duration getElapsedDuration() {
-        if (isRunning) {
-            return Duration.between(startTime, timeSource.getTime()).plus(elapsedDuration);
-        }
+        return lock.readWithLock(() -> {
+            if (isRunning) {
+                return Duration.between(startTime, timeSource.getTime()).plus(elapsedDuration);
+            }
 
-        return elapsedDuration;
+            return elapsedDuration;
+        });
     }
 }

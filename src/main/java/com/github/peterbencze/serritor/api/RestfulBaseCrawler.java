@@ -16,8 +16,11 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.javalin.Javalin;
 import io.javalin.apibuilder.ApiBuilder;
+import io.javalin.json.JavalinJackson;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
@@ -76,6 +79,8 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
         this.config = config;
         restServer = Javalin.create();
 
+        JavalinJackson.configure(new ObjectMapper().registerModule(new Jdk8Module()));
+
         configureRoutes();
     }
 
@@ -118,6 +123,8 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
                     ApiBuilder.delete(ctx -> stop());
 
                     ApiBuilder.get("config", ctx -> ctx.json(getCrawlerConfiguration()));
+
+                    ApiBuilder.get("stats", ctx -> ctx.json(getCrawlStats()));
                 });
             });
         });

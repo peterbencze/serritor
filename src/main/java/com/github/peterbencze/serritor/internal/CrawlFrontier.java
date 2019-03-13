@@ -20,6 +20,7 @@ import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlCandidate.CrawlCandidateBuilder;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
+import com.github.peterbencze.serritor.internal.stats.StatsCounter;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 public final class CrawlFrontier implements Serializable {
 
     private final CrawlerConfiguration config;
+    private final StatsCounter statsCounter;
     private final Set<String> urlFingerprints;
     private final Queue<CrawlCandidate> candidates;
 
@@ -48,10 +50,13 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Creates a {@link CrawlFrontier} instance.
      *
-     * @param config the crawler configuration
+     * @param config       the crawler configuration
+     * @param statsCounter the stats counter which accumulates statistics during the operation of
+     *                     the crawler
      */
-    public CrawlFrontier(final CrawlerConfiguration config) {
+    public CrawlFrontier(final CrawlerConfiguration config, final StatsCounter statsCounter) {
         this.config = config;
+        this.statsCounter = statsCounter;
         urlFingerprints = new HashSet<>();
         candidates = createPriorityQueue();
 
@@ -66,24 +71,20 @@ public final class CrawlFrontier implements Serializable {
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
         if (config.isOffsiteRequestFilterEnabled()) {
-            boolean inCrawlDomain = false;
-
-            for (CrawlDomain allowedCrawlDomain : config.getAllowedCrawlDomains()) {
-                if (allowedCrawlDomain.contains(request.getDomain())) {
-                    inCrawlDomain = true;
-                    break;
-                }
-            }
+            boolean inCrawlDomain = config.getAllowedCrawlDomains()
+                    .stream()
+                    .anyMatch(crawlDomain -> crawlDomain.contains(request.getDomain()));
 
             if (!inCrawlDomain) {
+                statsCounter.recordOffsiteRequest();
                 return;
             }
         }
 
         if (config.isDuplicateRequestFilterEnabled()) {
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
-
             if (urlFingerprints.contains(urlFingerprint)) {
+                statsCounter.recordDuplicateRequest();
                 return;
             }
 
@@ -97,6 +98,7 @@ public final class CrawlFrontier implements Serializable {
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             if (crawlDepthLimit != 0 && nextCrawlDepth > crawlDepthLimit) {
+                statsCounter.recordCrawlDepthLimitExceedingRequest();
                 return;
             }
 
@@ -105,6 +107,7 @@ public final class CrawlFrontier implements Serializable {
         }
 
         candidates.add(builder.build());
+        statsCounter.recordRemainingCrawlCandidate();
     }
 
     /**
@@ -140,10 +143,7 @@ public final class CrawlFrontier implements Serializable {
      * Feeds all the crawl seeds to the crawl frontier.
      */
     private void feedCrawlSeeds() {
-        config.getCrawlSeeds()
-                .forEach((CrawlRequest request) -> {
-                    feedRequest(request, true);
-                });
+        config.getCrawlSeeds().forEach((CrawlRequest request) -> feedRequest(request, true));
     }
 
     /**

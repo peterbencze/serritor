@@ -33,6 +33,8 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDe
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import com.github.peterbencze.serritor.internal.event.EventObject;
+import com.github.peterbencze.serritor.internal.stats.StatsCounter;
+import com.github.peterbencze.serritor.internal.stopwatch.Stopwatch;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -82,6 +84,8 @@ public abstract class BaseCrawler {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseCrawler.class);
 
     private final CrawlerConfiguration config;
+    private final Stopwatch runTimeStopwatch;
+    private final StatsCounter statsCounter;
     private final CrawlFrontier crawlFrontier;
     private final EventCallbackManager callbackManager;
 
@@ -110,10 +114,12 @@ public abstract class BaseCrawler {
     protected BaseCrawler(final CrawlerState state) {
         Validate.notNull(state, "The state parameter cannot be null");
 
-        this.config = state.getStateObject(CrawlerConfiguration.class)
+        config = state.getStateObject(CrawlerConfiguration.class)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid crawler state provided"));
-        this.crawlFrontier = state.getStateObject(CrawlFrontier.class)
-                .orElseGet(() -> new CrawlFrontier(config));
+        runTimeStopwatch = state.getStateObject(Stopwatch.class).orElseGet(Stopwatch::new);
+        statsCounter = state.getStateObject(StatsCounter.class).orElseGet(StatsCounter::new);
+        crawlFrontier = state.getStateObject(CrawlFrontier.class)
+                .orElseGet(() -> new CrawlFrontier(config, statsCounter));
 
         callbackManager = new EventCallbackManager();
         callbackManager.setDefaultEventCallback(PageLoadEvent.class, this::onPageLoad);
@@ -136,6 +142,15 @@ public abstract class BaseCrawler {
      */
     public final CrawlerConfiguration getCrawlerConfiguration() {
         return config;
+    }
+
+    /**
+     * Returns summary statistics about the crawl progress.
+     *
+     * @return summary statistics about the crawl progress
+     */
+    public final CrawlStats getCrawlStats() {
+        return new CrawlStats(runTimeStopwatch.getElapsedDuration(), statsCounter.getSnapshot());
     }
 
     /**
@@ -181,6 +196,8 @@ public abstract class BaseCrawler {
             Validate.validState(isStopped.get(), "The crawler is already running.");
 
             isStopped.set(false);
+
+            runTimeStopwatch.start();
 
             cookieStore = new BasicCookieStore();
             httpClient = HttpClientBuilder.create()
@@ -238,6 +255,8 @@ public abstract class BaseCrawler {
                 proxyServer.stop();
             }
 
+            runTimeStopwatch.stop();
+
             isStopInitiated.set(false);
             isStopped.set(true);
         }
@@ -249,7 +268,8 @@ public abstract class BaseCrawler {
      * @return the current state of the crawler
      */
     public final CrawlerState getState() {
-        return new CrawlerState(Arrays.asList(config, crawlFrontier));
+        return new CrawlerState(Arrays.asList(config, crawlFrontier, runTimeStopwatch,
+                statsCounter));
     }
 
     /**
@@ -379,8 +399,8 @@ public abstract class BaseCrawler {
                 try {
                     httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
                 } catch (IOException exception) {
-                    callbackManager.call(NetworkErrorEvent.class,
-                            new NetworkErrorEvent(currentCandidate, exception.toString()));
+                    handleNetworkError(new NetworkErrorEvent(currentCandidate,
+                            exception.toString()));
 
                     continue;
                 }
@@ -390,8 +410,13 @@ public abstract class BaseCrawler {
                 // Check if there was an HTTP redirect
                 Header locationHeader = httpHeadResponse.getFirstHeader(HttpHeaders.LOCATION);
                 if (HttpStatus.isRedirection(statusCode) && locationHeader != null) {
-                    handleRequestRedirect(currentCandidate,
-                            new PartialCrawlResponse(httpHeadResponse), locationHeader.getValue());
+                    // Create a new crawl request for the redirected URL (HTTP redirect)
+                    CrawlRequest redirectedRequest =
+                            createCrawlRequestForRedirect(currentCandidate,
+                                    locationHeader.getValue());
+
+                    handleRequestRedirect(new RequestRedirectEvent(currentCandidate,
+                            new PartialCrawlResponse(httpHeadResponse), redirectedRequest));
 
                     continue;
                 }
@@ -399,9 +424,8 @@ public abstract class BaseCrawler {
                 String mimeType = getResponseMimeType(httpHeadResponse);
                 if (!mimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                     // URLs that point to non-HTML content should not be opened in the browser
-                    callbackManager.call(NonHtmlContentEvent.class,
-                            new NonHtmlContentEvent(currentCandidate,
-                                    new PartialCrawlResponse(httpHeadResponse)));
+                    handleNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
+                            new PartialCrawlResponse(httpHeadResponse)));
 
                     continue;
                 }
@@ -414,9 +438,8 @@ public abstract class BaseCrawler {
                     // Ensure HTTP client and Selenium have the same cookies
                     syncHttpClientCookies();
                 } catch (TimeoutException exception) {
-                    callbackManager.call(PageLoadTimeoutEvent.class,
-                            new PageLoadTimeoutEvent(currentCandidate,
-                                    new PartialCrawlResponse(httpHeadResponse)));
+                    handlePageLoadTimeout(new PageLoadTimeoutEvent(currentCandidate,
+                            new PartialCrawlResponse(httpHeadResponse)));
 
                     continue;
                 }
@@ -430,8 +453,7 @@ public abstract class BaseCrawler {
                     .get(0)
                     .getResponse();
             if (harResponse.getError() != null) {
-                callbackManager.call(NetworkErrorEvent.class,
-                        new NetworkErrorEvent(currentCandidate, harResponse.getError()));
+                handleNetworkError(new NetworkErrorEvent(currentCandidate, harResponse.getError()));
 
                 continue;
             }
@@ -445,24 +467,24 @@ public abstract class BaseCrawler {
                     redirectUrl = loadedPageUrl;
                 }
 
-                handleRequestRedirect(currentCandidate,
-                        new PartialCrawlResponse(harResponse), redirectUrl);
+                CrawlRequest request = createCrawlRequestForRedirect(currentCandidate, redirectUrl);
+
+                handleRequestRedirect(new RequestRedirectEvent(currentCandidate,
+                        new PartialCrawlResponse(harResponse), request));
 
                 continue;
             }
 
             int statusCode = harResponse.getStatus();
             if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
-                callbackManager.call(RequestErrorEvent.class,
-                        new RequestErrorEvent(currentCandidate,
-                                new CompleteCrawlResponse(harResponse, webDriver)));
+                handleRequestError(new RequestErrorEvent(currentCandidate,
+                        new CompleteCrawlResponse(harResponse, webDriver)));
 
                 continue;
             }
 
-            callbackManager.call(PageLoadEvent.class,
-                    new PageLoadEvent(currentCandidate,
-                            new CompleteCrawlResponse(harResponse, webDriver)));
+            handlePageLoad(new PageLoadEvent(currentCandidate,
+                    new CompleteCrawlResponse(harResponse, webDriver)));
         }
 
         onStop();
@@ -512,26 +534,74 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Creates a crawl request for the redirected URL, feeds it to the crawler and calls the
-     * appropriate event callback.
+     * Handles network errors that occur during the crawl.
      *
-     * @param crawlCandidate       the current crawl candidate
-     * @param partialCrawlResponse the partial crawl response
-     * @param redirectUrl          the redirect URL
+     * @param event the event which gets delivered when a network error occurs
      */
-    private void handleRequestRedirect(
-            final CrawlCandidate crawlCandidate,
-            final PartialCrawlResponse partialCrawlResponse,
-            final String redirectUrl) {
-        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectUrl)
-                .setPriority(crawlCandidate.getPriority());
-        crawlCandidate.getMetadata().ifPresent(builder::setMetadata);
-        CrawlRequest redirectedRequest = builder.build();
+    private void handleNetworkError(final NetworkErrorEvent event) {
+        callbackManager.call(NetworkErrorEvent.class, event);
 
-        crawlFrontier.feedRequest(redirectedRequest, false);
+        statsCounter.recordNetworkError();
+    }
 
-        callbackManager.call(RequestRedirectEvent.class,
-                new RequestRedirectEvent(crawlCandidate, partialCrawlResponse, redirectedRequest));
+    /**
+     * Handles request redirects that occur during the crawl.
+     *
+     * @param event the event which gets delivered when a request is redirected
+     */
+    private void handleRequestRedirect(final RequestRedirectEvent event) {
+        crawl(event.getRedirectedCrawlRequest());
+
+        callbackManager.call(RequestRedirectEvent.class, event);
+
+        statsCounter.recordRequestRedirect();
+    }
+
+    /**
+     * Handles responses with non-HTML content that occur during the crawl.
+     *
+     * @param event the event which gets delivered when the MIME type of the response is not
+     *              text/html
+     */
+    private void handleNonHtmlContent(final NonHtmlContentEvent event) {
+        callbackManager.call(NonHtmlContentEvent.class, event);
+
+        statsCounter.recordNonHtmlContent();
+    }
+
+    /**
+     * Handles page load timeout that occur during the crawl.
+     *
+     * @param event the event which gets delivered when a page does not load in the browser within
+     *              the timeout period
+     */
+    private void handlePageLoadTimeout(final PageLoadTimeoutEvent event) {
+        callbackManager.call(PageLoadTimeoutEvent.class, event);
+
+        statsCounter.recordPageLoadTimeout();
+    }
+
+    /**
+     * Handles request errors that occur during the crawl.
+     *
+     * @param event the event which gets delivered when a request error (an error with HTTP status
+     *              code 4xx or 5xx) occurs
+     */
+    private void handleRequestError(final RequestErrorEvent event) {
+        callbackManager.call(RequestErrorEvent.class, event);
+
+        statsCounter.recordRequestError();
+    }
+
+    /**
+     * Handles successful page loads that occur during the crawl.
+     *
+     * @param event the event which gets delivered when the browser loads the page
+     */
+    private void handlePageLoad(final PageLoadEvent event) {
+        callbackManager.call(PageLoadEvent.class, event);
+
+        statsCounter.recordPageLoad();
     }
 
     /**
@@ -555,6 +625,25 @@ public abstract class BaseCrawler {
             Thread.currentThread().interrupt();
             isStopInitiated.set(true);
         }
+    }
+
+    /**
+     * Helper method that is used to create crawl requests for redirects. The newly created request
+     * will have the same attributes as the redirected one.
+     *
+     * @param currentCandidate the current crawl candidate
+     * @param redirectUrl      the redirect URL
+     *
+     * @return the crawl request for the redirect URL
+     */
+    private static CrawlRequest createCrawlRequestForRedirect(
+            final CrawlCandidate currentCandidate,
+            final String redirectUrl) {
+        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectUrl)
+                .setPriority(currentCandidate.getPriority());
+        currentCandidate.getMetadata().ifPresent(builder::setMetadata);
+
+        return builder.build();
     }
 
     /**
