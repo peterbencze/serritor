@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.internal.util;
 
 import java.util.Date;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,19 +40,11 @@ public final class CookieConverterTest {
     private static final String HTTP_ONLY_ATTRIBUTE = "httponly";
 
     private Cookie seleniumCookie;
-    private BasicClientCookie httpClientCookie;
 
     @Before
-    public void initialize() {
+    public void before() {
         seleniumCookie = new Cookie(NAME, VALUE, DOMAIN, PATH, EXPIRY_DATE, IS_SECURE,
                 IS_HTTP_ONLY);
-
-        httpClientCookie = new BasicClientCookie(NAME, VALUE);
-        httpClientCookie.setDomain(seleniumCookie.getDomain());
-        httpClientCookie.setPath(seleniumCookie.getPath());
-        httpClientCookie.setExpiryDate(seleniumCookie.getExpiry());
-        httpClientCookie.setSecure(seleniumCookie.isSecure());
-        httpClientCookie.setAttribute(HTTP_ONLY_ATTRIBUTE, StringUtils.EMPTY);
     }
 
     @Test

@@ -24,7 +24,6 @@ import com.github.peterbencze.serritor.api.event.PageLoadEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
-import com.github.peterbencze.serritor.internal.CookieConverter;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
@@ -34,6 +33,7 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlD
 import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 import com.github.peterbencze.serritor.internal.stats.StatsCounter;
+import com.github.peterbencze.serritor.internal.util.CookieConverter;
 import com.github.peterbencze.serritor.internal.util.stopwatch.Stopwatch;
 import java.io.File;
 import java.io.IOException;

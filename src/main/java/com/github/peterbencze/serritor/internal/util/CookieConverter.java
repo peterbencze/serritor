@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal;
+package com.github.peterbencze.serritor.internal.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.openqa.selenium.Cookie;
 
 /**
- * Converts Selenium cookies to HTTP client ones and vice-versa.
+ * Converts Selenium cookies to HTTP client ones.
  *
  * @author Peter Bencze
  */
 public final class CookieConverter {
 
     private static final String HTTP_ONLY_ATTRIBUTE = "httponly";
+
+    /**
+     * Private constructor to hide the implicit public one.
+     */
+    private CookieConverter() {
+    }
 
     /**
      * Converts a Selenium cookie to a HTTP client one.
