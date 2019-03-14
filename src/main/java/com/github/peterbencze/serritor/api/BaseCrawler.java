@@ -216,7 +216,7 @@ public abstract class BaseCrawler {
             if (chainedProxy != null && chainedProxy.getHttpProxy() != null) {
                 String[] urlComponents = chainedProxy.getHttpProxy().split(":");
                 String host = urlComponents[0];
-                int port = Integer.valueOf(urlComponents[1]);
+                int port = Integer.parseInt(urlComponents[1]);
 
                 proxyServer.setChainedProxy(new InetSocketAddress(host, port));
             }
