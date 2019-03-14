@@ -639,7 +639,10 @@ public abstract class BaseCrawler {
     private static CrawlRequest createCrawlRequestForRedirect(
             final CrawlCandidate currentCandidate,
             final String redirectUrl) {
-        CrawlRequestBuilder builder = new CrawlRequestBuilder(redirectUrl)
+        // Handle relative redirect URLs
+        URI resolvedUrl = currentCandidate.getRequestUrl().resolve(redirectUrl);
+
+        CrawlRequestBuilder builder = new CrawlRequestBuilder(resolvedUrl)
                 .setPriority(currentCandidate.getPriority());
         currentCandidate.getMetadata().ifPresent(builder::setMetadata);
 
