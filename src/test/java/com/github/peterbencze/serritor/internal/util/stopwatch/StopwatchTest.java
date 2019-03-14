@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal.stopwatch;
+package com.github.peterbencze.serritor.internal.util.stopwatch;
 
 import java.time.Duration;
 import java.time.Instant;

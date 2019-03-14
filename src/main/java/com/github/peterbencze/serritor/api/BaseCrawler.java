@@ -34,7 +34,7 @@ import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlD
 import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
 import com.github.peterbencze.serritor.internal.event.EventObject;
 import com.github.peterbencze.serritor.internal.stats.StatsCounter;
-import com.github.peterbencze.serritor.internal.stopwatch.Stopwatch;
+import com.github.peterbencze.serritor.internal.util.stopwatch.Stopwatch;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
