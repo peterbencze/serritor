@@ -16,7 +16,7 @@
 
 package com.github.peterbencze.serritor.api;
 
-import com.github.peterbencze.serritor.internal.event.EventObject;
+import com.github.peterbencze.serritor.internal.EventObject;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;

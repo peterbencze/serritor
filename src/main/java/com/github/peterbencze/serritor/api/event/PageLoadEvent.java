@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.event.EventObject;
+import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when the browser loads the page.

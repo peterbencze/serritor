@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.PartialCrawlResponse;
-import com.github.peterbencze.serritor.internal.event.EventObject;
+import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when a page does not load in the browser within the timeout period.

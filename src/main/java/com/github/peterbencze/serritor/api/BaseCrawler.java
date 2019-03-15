@@ -25,13 +25,13 @@ import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
+import com.github.peterbencze.serritor.internal.CustomCallbackManager;
+import com.github.peterbencze.serritor.internal.EventObject;
 import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.FixedCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.RandomCrawlDelayMechanism;
-import com.github.peterbencze.serritor.internal.event.EventCallbackManager;
-import com.github.peterbencze.serritor.internal.event.EventObject;
 import com.github.peterbencze.serritor.internal.stats.StatsCounter;
 import com.github.peterbencze.serritor.internal.util.CookieConverter;
 import com.github.peterbencze.serritor.internal.util.stopwatch.Stopwatch;
@@ -87,7 +87,7 @@ public abstract class BaseCrawler {
     private final Stopwatch runTimeStopwatch;
     private final StatsCounter statsCounter;
     private final CrawlFrontier crawlFrontier;
-    private final EventCallbackManager callbackManager;
+    private final CustomCallbackManager callbackManager;
 
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
@@ -121,15 +121,7 @@ public abstract class BaseCrawler {
         crawlFrontier = state.getStateObject(CrawlFrontier.class)
                 .orElseGet(() -> new CrawlFrontier(config, statsCounter));
 
-        callbackManager = new EventCallbackManager();
-        callbackManager.setDefaultEventCallback(PageLoadEvent.class, this::onPageLoad);
-        callbackManager.setDefaultEventCallback(NonHtmlContentEvent.class, this::onNonHtmlContent);
-        callbackManager.setDefaultEventCallback(PageLoadTimeoutEvent.class,
-                this::onPageLoadTimeout);
-        callbackManager.setDefaultEventCallback(RequestRedirectEvent.class,
-                this::onRequestRedirect);
-        callbackManager.setDefaultEventCallback(NetworkErrorEvent.class, this::onNetworkError);
-        callbackManager.setDefaultEventCallback(RequestErrorEvent.class, this::onRequestError);
+        callbackManager = new CustomCallbackManager();
 
         isStopInitiated = new AtomicBoolean(false);
         isStopped = new AtomicBoolean(true);
@@ -309,13 +301,13 @@ public abstract class BaseCrawler {
      * @param eventClass the runtime class of the event for which the callback should be invoked
      * @param callback   the pattern matching callback to invoke
      */
-    protected final <T extends EventObject> void registerCustomEventCallback(
+    protected final <T extends EventObject> void registerCustomCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
         Validate.notNull(eventClass, "The eventClass parameter cannot be null.");
         Validate.notNull(callback, "The callback parameter cannot be null.");
 
-        callbackManager.addCustomEventCallback(eventClass, callback);
+        callbackManager.addCustomCallback(eventClass, callback);
     }
 
     /**
@@ -539,7 +531,7 @@ public abstract class BaseCrawler {
      * @param event the event which gets delivered when a network error occurs
      */
     private void handleNetworkError(final NetworkErrorEvent event) {
-        callbackManager.call(NetworkErrorEvent.class, event);
+        callbackManager.callCustomOrDefault(NetworkErrorEvent.class, event, this::onNetworkError);
 
         statsCounter.recordNetworkError();
     }
@@ -552,7 +544,8 @@ public abstract class BaseCrawler {
     private void handleRequestRedirect(final RequestRedirectEvent event) {
         crawl(event.getRedirectedCrawlRequest());
 
-        callbackManager.call(RequestRedirectEvent.class, event);
+        callbackManager.callCustomOrDefault(RequestRedirectEvent.class, event,
+                this::onRequestRedirect);
 
         statsCounter.recordRequestRedirect();
     }
@@ -564,7 +557,8 @@ public abstract class BaseCrawler {
      *              text/html
      */
     private void handleNonHtmlContent(final NonHtmlContentEvent event) {
-        callbackManager.call(NonHtmlContentEvent.class, event);
+        callbackManager.callCustomOrDefault(NonHtmlContentEvent.class, event,
+                this::onNonHtmlContent);
 
         statsCounter.recordNonHtmlContent();
     }
@@ -576,7 +570,8 @@ public abstract class BaseCrawler {
      *              the timeout period
      */
     private void handlePageLoadTimeout(final PageLoadTimeoutEvent event) {
-        callbackManager.call(PageLoadTimeoutEvent.class, event);
+        callbackManager.callCustomOrDefault(PageLoadTimeoutEvent.class, event,
+                this::onPageLoadTimeout);
 
         statsCounter.recordPageLoadTimeout();
     }
@@ -588,7 +583,7 @@ public abstract class BaseCrawler {
      *              code 4xx or 5xx) occurs
      */
     private void handleRequestError(final RequestErrorEvent event) {
-        callbackManager.call(RequestErrorEvent.class, event);
+        callbackManager.callCustomOrDefault(RequestErrorEvent.class, event, this::onRequestError);
 
         statsCounter.recordRequestError();
     }
@@ -599,7 +594,7 @@ public abstract class BaseCrawler {
      * @param event the event which gets delivered when the browser loads the page
      */
     private void handlePageLoad(final PageLoadEvent event) {
-        callbackManager.call(PageLoadEvent.class, event);
+        callbackManager.callCustomOrDefault(PageLoadEvent.class, event, this::onPageLoad);
 
         statsCounter.recordPageLoad();
     }

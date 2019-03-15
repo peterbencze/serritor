@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Peter Bencze.
+ * Copyright 2017 Peter Bencze.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.api.event;
+package com.github.peterbencze.serritor.internal;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
- * Event which gets delivered when a network error occurs.
+ * Base class from which all event objects shall be derived.
  *
  * @author Peter Bencze
  */
-public final class NetworkErrorEvent extends EventObject {
+public abstract class EventObject {
 
-    private final String errorMessage;
+    private final CrawlCandidate crawlCandidate;
 
     /**
-     * Creates a {@link NetworkErrorEvent} instance.
+     * Base constructor of all event objects.
      *
      * @param crawlCandidate the current crawl candidate
-     * @param errorMessage   the network error message
      */
-    public NetworkErrorEvent(final CrawlCandidate crawlCandidate, final String errorMessage) {
-        super(crawlCandidate);
-
-        this.errorMessage = errorMessage;
+    protected EventObject(final CrawlCandidate crawlCandidate) {
+        this.crawlCandidate = crawlCandidate;
     }
 
     /**
-     * Returns the network error message.
+     * Returns the current crawl candidate.
      *
-     * @return the network error message
+     * @return the current crawl candidate
      */
-    public String getErrorMessage() {
-        return errorMessage;
+    public final CrawlCandidate getCrawlCandidate() {
+        return crawlCandidate;
     }
 }

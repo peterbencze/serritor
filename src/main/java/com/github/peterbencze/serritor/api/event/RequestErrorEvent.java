@@ -18,7 +18,7 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.event.EventObject;
+import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when a request error (an error with HTTP status code 4xx or 5xx)
