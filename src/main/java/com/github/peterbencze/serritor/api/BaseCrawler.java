@@ -235,22 +235,28 @@ public abstract class BaseCrawler {
             // Must be created here (the adaptive crawl delay strategy depends on the WebDriver)
             crawlDelayMechanism = createCrawlDelayMechanism();
 
+            onStart();
+
             run();
         } finally {
-            HttpClientUtils.closeQuietly(httpClient);
+            try {
+                onStop();
+            } finally {
+                HttpClientUtils.closeQuietly(httpClient);
 
-            if (webDriver != null) {
-                webDriver.quit();
+                if (webDriver != null) {
+                    webDriver.quit();
+                }
+
+                if (proxyServer != null && proxyServer.isStarted()) {
+                    proxyServer.stop();
+                }
+
+                runTimeStopwatch.stop();
+
+                isStopInitiated.set(false);
+                isStopped.set(true);
             }
-
-            if (proxyServer != null && proxyServer.isStarted()) {
-                proxyServer.stop();
-            }
-
-            runTimeStopwatch.stop();
-
-            isStopInitiated.set(false);
-            isStopped.set(true);
         }
     }
 
@@ -371,8 +377,6 @@ public abstract class BaseCrawler {
      * Defines the workflow of the crawler.
      */
     private void run() {
-        onStart();
-
         boolean shouldPerformDelay = false;
 
         while (!isStopInitiated.get() && crawlFrontier.hasNextCandidate()) {
@@ -478,8 +482,6 @@ public abstract class BaseCrawler {
             handlePageLoad(new PageLoadEvent(currentCandidate,
                     new CompleteCrawlResponse(harResponse, webDriver)));
         }
-
-        onStop();
     }
 
     /**
