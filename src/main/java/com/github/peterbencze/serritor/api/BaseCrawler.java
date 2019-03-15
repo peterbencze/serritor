@@ -446,7 +446,7 @@ public abstract class BaseCrawler {
             HarResponse harResponse = proxyServer.getHar().getLog().getEntries().stream()
                     .filter(harEntry -> candidateUrl.equals(harEntry.getRequest().getUrl()))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No HAR entry for candidate URL"))
+                    .orElseThrow(() -> new IllegalStateException("No HAR entry for request URL"))
                     .getResponse();
             if (harResponse.getError() != null) {
                 handleNetworkError(new NetworkErrorEvent(currentCandidate, harResponse.getError()));
