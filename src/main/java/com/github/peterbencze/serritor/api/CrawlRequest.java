@@ -26,13 +26,13 @@ import java.net.URISyntaxException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.http.client.utils.URIBuilder;
 
 /**
- * Represents a crawl request that may be completed by the crawler. If request filtering is enabled,
- * it could get filtered out.
- *
- * @author Peter Bencze
+ * Represents a crawl request that may be completed by the crawler in the future. If request
+ * filtering is enabled, it could be filtered out.
  */
 public final class CrawlRequest implements Serializable {
 
@@ -108,6 +108,20 @@ public final class CrawlRequest implements Serializable {
      */
     public Optional<Serializable> getMetadata() {
         return Optional.ofNullable(metadata);
+    }
+
+    /**
+     * Returns a string representation of this crawl request.
+     *
+     * @return a string representation of this crawl request
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("requestUrl", requestUrl)
+                .append("domain", domain)
+                .append("priority", priority)
+                .toString();
     }
 
     /**
