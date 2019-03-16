@@ -181,25 +181,26 @@ public final class CrawlFrontier implements Serializable {
      */
     @SuppressWarnings("checkstyle:MissingSwitchDefault")
     private PriorityQueue<CrawlCandidate> createPriorityQueue() {
-        Function crawlDepthGetter
-                = (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth;
-        Function priorityGetter
-                = (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority;
+        Function<CrawlCandidate, Integer> crawlDepthGetter =
+                (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth;
+        Function<CrawlCandidate, Integer> priorityGetter =
+                (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority;
 
         switch (config.getCrawlStrategy()) {
             case BREADTH_FIRST:
-                Comparator breadthFirstComparator = Comparator.comparing(crawlDepthGetter)
-                        .thenComparing(priorityGetter, Comparator.reverseOrder());
+                Comparator<CrawlCandidate> breadthFirstComparator =
+                        Comparator.comparing(crawlDepthGetter)
+                                .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(breadthFirstComparator);
             case DEPTH_FIRST:
-                Comparator depthFirstComparator
-                        = Comparator.comparing(crawlDepthGetter, Comparator.reverseOrder())
-                        .thenComparing(priorityGetter, Comparator.reverseOrder());
+                Comparator<CrawlCandidate> depthFirstComparator =
+                        Comparator.comparing(crawlDepthGetter, Comparator.reverseOrder())
+                                .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(depthFirstComparator);
         }
 
-        throw new IllegalArgumentException("Unsupported crawl strategy.");
+        throw new IllegalArgumentException("Unsupported crawl strategy");
     }
 }
