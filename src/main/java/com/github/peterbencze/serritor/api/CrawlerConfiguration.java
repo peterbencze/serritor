@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Contains the settings of the crawler.
@@ -146,6 +148,27 @@ public final class CrawlerConfiguration implements Serializable {
      */
     public long getMaximumCrawlDelayDurationInMillis() {
         return maxCrawlDelayDurationInMillis;
+    }
+
+    /**
+     * Returns the string representation of this crawler configuration.
+     *
+     * @return the string representation of this crawler configuration
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("crawlSeeds", crawlSeeds)
+                .append("crawlStrategy", crawlStrategy)
+                .append("maxCrawlDepth", maxCrawlDepth)
+                .append("isDuplicateRequestFilterEnabled", isDuplicateRequestFilterEnabled)
+                .append("isOffsiteRequestFilterEnabled", isOffsiteRequestFilterEnabled)
+                .append("allowedCrawlDomains", allowedCrawlDomains)
+                .append("crawlDelayStrategy", crawlDelayStrategy)
+                .append("fixedCrawlDelayDurationInMillis", fixedCrawlDelayDurationInMillis)
+                .append("minCrawlDelayDurationInMillis", minCrawlDelayDurationInMillis)
+                .append("maxCrawlDelayDurationInMillis", maxCrawlDelayDurationInMillis)
+                .toString();
     }
 
     /**
