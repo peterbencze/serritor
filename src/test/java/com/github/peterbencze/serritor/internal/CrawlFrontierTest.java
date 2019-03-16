@@ -35,8 +35,6 @@ import org.mockito.Mockito;
 
 /**
  * Test cases for {@link CrawlFrontier}.
- *
- * @author Peter Bencze
  */
 public final class CrawlFrontierTest {
 
@@ -50,7 +48,7 @@ public final class CrawlFrontierTest {
     private static final URI ROOT_URL_0
             = URI.create("http://root-url-0.com/?param1=foo&param2=bar#fragment");
     private static final URI DUPLICATE_ROOT_URL_0
-            = URI.create("https://root-url-0.com/?param2=bar&param1=foo");
+            = URI.create("HTTP://ROOT-URL-0.COM/?param2=bar&param1=foo");
     private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com/");
 
     // Root URL crawl depth

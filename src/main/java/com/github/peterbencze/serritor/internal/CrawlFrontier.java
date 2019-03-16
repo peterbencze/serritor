@@ -23,7 +23,6 @@ import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.internal.stats.StatsCounter;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -32,11 +31,11 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 
 /**
  * Manages crawl requests and provides crawl candidates to the crawler.
- *
- * @author Peter Bencze
  */
 public final class CrawlFrontier implements Serializable {
 
@@ -147,29 +146,32 @@ public final class CrawlFrontier implements Serializable {
     }
 
     /**
-     * Creates the fingerprint of the given URL. If the URL contains query parameters, it sorts
-     * them. This way URLs with different order of query parameters get the same fingerprint.
+     * Creates the fingerprint of the given URL. If the URL contains query params, it sorts them by
+     * key and value. This way URLs that have the same query params but in different order will have
+     * the same fingerprint. Fragments are ignored.
      *
      * @param url the URL for which the fingerprint is created
      *
      * @return the fingerprint of the URL
      */
     private static String createFingerprintForUrl(final URI url) {
-        StringBuilder truncatedUrl = new StringBuilder(url.getHost()).append(url.getPath());
+        URIBuilder builder = new URIBuilder(url);
 
-        String query = url.getQuery();
-        if (query != null) {
-            truncatedUrl.append("?");
+        // Change scheme and host to lowercase
+        builder.setScheme(builder.getScheme().toLowerCase())
+                .setHost(builder.getHost().toLowerCase());
 
-            String[] queryParams = url.getQuery().split("&");
+        // Sort query params by key and value
+        List<NameValuePair> queryParams = builder.getQueryParams();
+        queryParams.sort(Comparator.comparing(NameValuePair::getName)
+                .thenComparing(NameValuePair::getValue));
 
-            List<String> queryParamList = Arrays.asList(queryParams);
-            queryParamList.stream()
-                    .sorted(String::compareToIgnoreCase)
-                    .forEachOrdered(truncatedUrl::append);
-        }
+        builder.setParameters(queryParams);
 
-        return DigestUtils.sha256Hex(truncatedUrl.toString());
+        // Remove fragment
+        builder.setFragment(null);
+
+        return DigestUtils.sha256Hex(builder.toString());
     }
 
     /**
