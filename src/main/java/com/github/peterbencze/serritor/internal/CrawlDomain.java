@@ -22,8 +22,6 @@ import java.io.Serializable;
 
 /**
  * Represents an internet domain in which crawling is allowed.
- *
- * @author Peter Bencze
  */
 public final class CrawlDomain implements Serializable {
 
@@ -100,5 +98,15 @@ public final class CrawlDomain implements Serializable {
 
         return parts.reverse()
                 .equals(otherDomainParts);
+    }
+
+    /**
+     * Returns the string representation of this crawl domain.
+     *
+     * @return the string representation of this crawl domain
+     */
+    @Override
+    public String toString() {
+        return domain;
     }
 }
