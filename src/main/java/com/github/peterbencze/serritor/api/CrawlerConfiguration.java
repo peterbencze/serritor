@@ -16,6 +16,7 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.github.peterbencze.serritor.internal.CrawlDomain;
 import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
@@ -29,9 +30,19 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Contains the settings of the crawler.
- *
- * @author Peter Bencze
  */
+@JsonPropertyOrder({
+        "crawlSeeds",
+        "crawlStrategy",
+        "maximumCrawlDepth",
+        "duplicateRequestFilterEnabled",
+        "offsiteRequestFilterEnabled",
+        "allowedCrawlDomains",
+        "crawlDelayStrategy",
+        "fixedCrawlDelayDurationInMillis",
+        "minimumCrawlDelayDurationInMillis",
+        "maximumCrawlDelayDurationInMillis"
+})
 public final class CrawlerConfiguration implements Serializable {
 
     public static final long DEFAULT_PAGE_LOAD_TIMEOUT_IN_MILLIS = Duration.ofMinutes(3).toMillis();
@@ -160,14 +171,14 @@ public final class CrawlerConfiguration implements Serializable {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
                 .append("crawlSeeds", crawlSeeds)
                 .append("crawlStrategy", crawlStrategy)
-                .append("maxCrawlDepth", maxCrawlDepth)
+                .append("maximumCrawlDepth", maxCrawlDepth)
                 .append("isDuplicateRequestFilterEnabled", isDuplicateRequestFilterEnabled)
                 .append("isOffsiteRequestFilterEnabled", isOffsiteRequestFilterEnabled)
                 .append("allowedCrawlDomains", allowedCrawlDomains)
                 .append("crawlDelayStrategy", crawlDelayStrategy)
                 .append("fixedCrawlDelayDurationInMillis", fixedCrawlDelayDurationInMillis)
-                .append("minCrawlDelayDurationInMillis", minCrawlDelayDurationInMillis)
-                .append("maxCrawlDelayDurationInMillis", maxCrawlDelayDurationInMillis)
+                .append("minimumCrawlDelayDurationInMillis", minCrawlDelayDurationInMillis)
+                .append("maximumCrawlDelayDurationInMillis", maxCrawlDelayDurationInMillis)
                 .toString();
     }
 
