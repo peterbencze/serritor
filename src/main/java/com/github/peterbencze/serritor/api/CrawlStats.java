@@ -29,8 +29,6 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 
 /**
  * Summary statistics about the crawl progress.
- *
- * @author Peter Bencze
  */
 @JsonPropertyOrder({
         "runDuration",

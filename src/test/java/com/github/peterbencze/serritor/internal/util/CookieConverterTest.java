@@ -25,8 +25,6 @@ import org.openqa.selenium.Cookie;
 
 /**
  * Test cases for {@link CookieConverter}.
- *
- * @author Peter Bencze
  */
 public final class CookieConverterTest {
 

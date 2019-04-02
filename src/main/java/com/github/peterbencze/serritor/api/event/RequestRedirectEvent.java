@@ -23,8 +23,6 @@ import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when a request is redirected.
- *
- * @author Peter Bencze
  */
 public final class RequestRedirectEvent extends EventObject {
 

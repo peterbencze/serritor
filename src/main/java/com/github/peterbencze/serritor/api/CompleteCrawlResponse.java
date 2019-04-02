@@ -22,8 +22,6 @@ import org.openqa.selenium.WebDriver;
 /**
  * Represents a complete crawl response that provides access to the HTTP header information and the
  * {@link WebDriver} instance to interact with the browser.
- *
- * @author Peter Bencze
  */
 public final class CompleteCrawlResponse extends PartialCrawlResponse {
 

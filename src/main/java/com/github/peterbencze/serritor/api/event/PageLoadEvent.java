@@ -22,8 +22,6 @@ import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when the browser loads the page.
- *
- * @author Peter Bencze
  */
 public final class PageLoadEvent extends EventObject {
 

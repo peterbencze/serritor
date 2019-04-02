@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 /**
  * Represents the current state of the crawling session. More specifically, it contains a set of
  * state objects that can be later reused to resume that particular session.
- *
- * @author Peter Bencze
  */
 public final class CrawlerState implements Serializable {
 

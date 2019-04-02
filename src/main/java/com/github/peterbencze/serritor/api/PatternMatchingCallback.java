@@ -26,8 +26,6 @@ import org.apache.commons.lang3.Validate;
  * URL.
  *
  * @param <T> the type of the input to the operation
- *
- * @author Peter Bencze
  */
 public final class PatternMatchingCallback<T extends EventObject> {
 

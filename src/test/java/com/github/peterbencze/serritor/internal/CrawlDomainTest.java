@@ -22,8 +22,6 @@ import org.junit.Test;
 
 /**
  * Test cases for {@link CrawlDomain}.
- *
- * @author Peter Bencze
  */
 public final class CrawlDomainTest {
 

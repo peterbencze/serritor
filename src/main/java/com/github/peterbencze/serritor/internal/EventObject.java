@@ -20,8 +20,6 @@ import com.github.peterbencze.serritor.api.CrawlCandidate;
 
 /**
  * Base class from which all event objects shall be derived.
- *
- * @author Peter Bencze
  */
 public abstract class EventObject {
 

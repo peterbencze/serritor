@@ -31,8 +31,6 @@ import org.openqa.selenium.WebElement;
 
 /**
  * Test cases for {@link UrlFinder}.
- *
- * @author Peter Bencze
  */
 public final class UrlFinderTest {
 

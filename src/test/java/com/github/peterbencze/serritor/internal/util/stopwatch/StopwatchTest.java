@@ -24,9 +24,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Test cases for {@link Stopwatch}
- *
- * @author Peter Bencze
+ * Test cases for {@link Stopwatch}.
  */
 public final class StopwatchTest {
 

@@ -20,8 +20,6 @@ import java.time.Instant;
 
 /**
  * A source providing access to the current UTC instant.
- *
- * @author Peter Bencze
  */
 public final class UtcTimeSource implements TimeSource {
 

@@ -23,8 +23,6 @@ import com.github.peterbencze.serritor.internal.EventObject;
 /**
  * Event which gets delivered when a request error (an error with HTTP status code 4xx or 5xx)
  * occurs.
- *
- * @author Peter Bencze
  */
 public final class RequestErrorEvent extends EventObject {
 

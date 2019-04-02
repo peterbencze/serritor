@@ -22,8 +22,6 @@ import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when a page does not load in the browser within the timeout period.
- *
- * @author Peter Bencze
  */
 public final class PageLoadTimeoutEvent extends EventObject {
 

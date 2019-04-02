@@ -28,8 +28,6 @@ import org.apache.http.message.BasicHeader;
 
 /**
  * Represents a partial response that only contains HTTP header information.
- *
- * @author Peter Bencze
  */
 public class PartialCrawlResponse {
 

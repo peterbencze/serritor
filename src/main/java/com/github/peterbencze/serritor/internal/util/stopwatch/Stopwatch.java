@@ -25,8 +25,6 @@ import org.apache.commons.lang3.Validate;
 /**
  * A serializable and thread-safe stopwatch implementation that can be used to measure elapsed
  * time.
- *
- * @author Peter Bencze
  */
 public final class Stopwatch implements Serializable {
 

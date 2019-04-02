@@ -22,8 +22,6 @@ import org.openqa.selenium.Cookie;
 
 /**
  * Converts Selenium cookies to HTTP client ones.
- *
- * @author Peter Bencze
  */
 public final class CookieConverter {
 

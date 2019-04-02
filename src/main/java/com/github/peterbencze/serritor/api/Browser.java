@@ -18,8 +18,6 @@ package com.github.peterbencze.serritor.api;
 
 /**
  * Supported browsers that can be used for crawling.
- *
- * @author Peter Bencze
  */
 public enum Browser {
 

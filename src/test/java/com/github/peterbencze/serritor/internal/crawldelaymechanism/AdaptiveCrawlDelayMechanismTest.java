@@ -26,8 +26,6 @@ import org.openqa.selenium.JavascriptExecutor;
 
 /**
  * Test cases for {@link AdaptiveCrawlDelayMechanism}.
- *
- * @author Peter Bencze
  */
 public final class AdaptiveCrawlDelayMechanismTest {
 

@@ -18,8 +18,6 @@ package com.github.peterbencze.serritor.api;
 
 /**
  * Available crawl strategies that define the order in which crawl requests are processed.
- *
- * @author Peter Bencze
  */
 public enum CrawlStrategy {
 

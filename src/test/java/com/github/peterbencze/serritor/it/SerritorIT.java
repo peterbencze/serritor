@@ -46,8 +46,6 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 /**
  * Integration test cases for Serritor.
- *
- * @author Peter Bencze
  */
 public class SerritorIT {
 

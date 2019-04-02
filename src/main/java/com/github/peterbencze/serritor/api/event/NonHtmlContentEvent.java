@@ -22,8 +22,6 @@ import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
  * Event which gets delivered when the MIME type of the response is not "text/html".
- *
- * @author Peter Bencze
  */
 public final class NonHtmlContentEvent extends EventObject {
 

@@ -25,8 +25,6 @@ import org.mockito.Mockito;
 
 /**
  * Test cases for {@link FixedCrawlDelayMechanism}.
- *
- * @author Peter Bencze
  */
 public class FixedCrawlDelayMechanismTest {
 

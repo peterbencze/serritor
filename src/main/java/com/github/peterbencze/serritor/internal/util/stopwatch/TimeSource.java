@@ -21,8 +21,6 @@ import java.time.Instant;
 
 /**
  * A source providing access to the current instant. All implementations should be serializable.
- *
- * @author Peter Bencze
  */
 public interface TimeSource extends Serializable {
 
