@@ -30,10 +30,14 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 /**
  * Provides preconfigured {@link WebDriver} instances.
- *
- * @author Peter Bencze
  */
 public final class WebDriverFactory {
+
+    /**
+     * Private constructor to hide the implicit public one.
+     */
+    private WebDriverFactory() {
+    }
 
     /**
      * Creates the specific <code>WebDriver</code> instance with the provided properties.
@@ -43,7 +47,6 @@ public final class WebDriverFactory {
      *
      * @return the preconfigured <code>WebDriver</code> instance
      */
-    @SuppressWarnings("checkstyle:MissingSwitchDefault")
     public static WebDriver createWebDriver(final Browser browser,
                                             final Capabilities capabilities) {
         switch (browser) {
@@ -53,9 +56,9 @@ public final class WebDriverFactory {
                 return createChromeDriver(capabilities);
             case FIREFOX:
                 return createFirefoxDriver(capabilities);
+            default:
+                throw new IllegalArgumentException("Unsupported browser");
         }
-
-        throw new IllegalArgumentException("Unsupported browser.");
     }
 
     /**

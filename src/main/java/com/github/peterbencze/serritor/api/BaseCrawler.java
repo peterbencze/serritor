@@ -76,8 +76,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
  * their own.
- *
- * @author Peter Bencze
  */
 public abstract class BaseCrawler {
 
@@ -489,7 +487,6 @@ public abstract class BaseCrawler {
      *
      * @return the created crawl delay mechanism
      */
-    @SuppressWarnings("checkstyle:MissingSwitchDefault")
     private CrawlDelayMechanism createCrawlDelayMechanism() {
         switch (config.getCrawlDelayStrategy()) {
             case FIXED:
@@ -498,9 +495,9 @@ public abstract class BaseCrawler {
                 return new RandomCrawlDelayMechanism(config);
             case ADAPTIVE:
                 return new AdaptiveCrawlDelayMechanism(config, (JavascriptExecutor) webDriver);
+            default:
+                throw new IllegalArgumentException("Unsupported crawl delay strategy");
         }
-
-        throw new IllegalArgumentException("Unsupported crawl delay strategy.");
     }
 
     /**

@@ -21,7 +21,7 @@ import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,8 +36,6 @@ import org.openqa.selenium.WebElement;
 
 /**
  * Finds URLs in HTML page sources using regular expressions.
- *
- * @author Peter Bencze
  */
 public final class UrlFinder {
 
@@ -77,20 +75,18 @@ public final class UrlFinder {
         Set<String> foundUrls = new HashSet<>();
 
         // Find elements using the specified locating mechanisms
-        Set<WebElement> extractedElements = locatingMechanisms.stream()
+        List<WebElement> extractedElements = locatingMechanisms.stream()
                 .map(completeCrawlResponse.getWebDriver()::findElements)
                 .flatMap(List::stream)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
         // Find URLs in the attribute values of the found elements
-        extractedElements.forEach((WebElement element) -> {
-            attributes.stream()
-                    .map(element::getAttribute)
-                    .filter(StringUtils::isNotBlank)
-                    .map(this::findUrlsInAttributeValue)
-                    .flatMap(List::stream)
-                    .forEach(foundUrls::add);
-        });
+        extractedElements.forEach((WebElement element) -> attributes.stream()
+                .map(element::getAttribute)
+                .filter(StringUtils::isNotBlank)
+                .map(this::findUrlsInAttributeValue)
+                .flatMap(List::stream)
+                .forEach(foundUrls::add));
 
         return new ArrayList<>(foundUrls);
     }
@@ -141,7 +137,7 @@ public final class UrlFinder {
          * @param urlPattern the pattern to use to find URLs
          */
         public UrlFinderBuilder(final Pattern urlPattern) {
-            this(Arrays.asList(urlPattern));
+            this(Collections.singletonList(urlPattern));
         }
 
         /**
@@ -168,7 +164,7 @@ public final class UrlFinder {
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setLocatingMechanism(final By locatingMechanism) {
-            return setLocatingMechanisms(Arrays.asList(locatingMechanism));
+            return setLocatingMechanisms(Collections.singletonList(locatingMechanism));
         }
 
         /**
@@ -210,7 +206,7 @@ public final class UrlFinder {
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setAttribute(final String attribute) {
-            return setAttributes(Arrays.asList(attribute));
+            return setAttributes(Collections.singletonList(attribute));
         }
 
         /**

@@ -179,7 +179,6 @@ public final class CrawlFrontier implements Serializable {
      *
      * @return the priority queue using the strategy specified in the configuration
      */
-    @SuppressWarnings("checkstyle:MissingSwitchDefault")
     private PriorityQueue<CrawlCandidate> createPriorityQueue() {
         Function<CrawlCandidate, Integer> crawlDepthGetter =
                 (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth;
@@ -199,8 +198,8 @@ public final class CrawlFrontier implements Serializable {
                                 .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(depthFirstComparator);
+            default:
+                throw new IllegalArgumentException("Unsupported crawl strategy");
         }
-
-        throw new IllegalArgumentException("Unsupported crawl strategy");
     }
 }
