@@ -23,11 +23,11 @@ public final class StatsCounterSnapshot {
 
     private final int remainingCrawlCandidateCount;
     private final int processedCrawlCandidateCount;
-    private final int pageLoadCount;
+    private final int responseSuccessCount;
     private final int pageLoadTimeoutCount;
     private final int requestRedirectCount;
-    private final int nonHtmlContentCount;
-    private final int requestErrorCount;
+    private final int nonHtmlResponseCount;
+    private final int responseErrorCount;
     private final int networkErrorCount;
     private final int filteredDuplicateRequestCount;
     private final int filteredOffsiteRequestCount;
@@ -41,11 +41,11 @@ public final class StatsCounterSnapshot {
     public StatsCounterSnapshot(final StatsCounter statsCounter) {
         remainingCrawlCandidateCount = statsCounter.getRemainingCrawlCandidateCount();
         processedCrawlCandidateCount = statsCounter.getProcessedCrawlCandidateCount();
-        pageLoadCount = statsCounter.getPageLoadCount();
+        responseSuccessCount = statsCounter.getResponseSuccessCount();
         pageLoadTimeoutCount = statsCounter.getPageLoadTimeoutCount();
         requestRedirectCount = statsCounter.getRequestRedirectCount();
-        nonHtmlContentCount = statsCounter.getNonHtmlContentCount();
-        requestErrorCount = statsCounter.getRequestErrorCount();
+        nonHtmlResponseCount = statsCounter.getNonHtmlResponseCount();
+        responseErrorCount = statsCounter.getResponseErrorCount();
         networkErrorCount = statsCounter.getNetworkErrorCount();
         filteredDuplicateRequestCount = statsCounter.getFilteredDuplicateRequestCount();
         filteredOffsiteRequestCount = statsCounter.getFilteredOffsiteRequestCount();
@@ -72,12 +72,14 @@ public final class StatsCounterSnapshot {
     }
 
     /**
-     * Returns the number of successful page loads that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * success (2xx).
      *
-     * @return the number of successful page loads that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         success (2xx)
      */
-    public int getPageLoadCount() {
-        return pageLoadCount;
+    public int getResponseSuccessCount() {
+        return responseSuccessCount;
     }
 
     /**
@@ -99,21 +101,23 @@ public final class StatsCounterSnapshot {
     }
 
     /**
-     * Returns the number of responses with non-HTML content that occurred during the crawl.
+     * Returns the number of responses received with non-HTML content.
      *
-     * @return the number of responses with non-HTML content that occurred during the crawl
+     * @return the number of responses received with non-HTML content
      */
-    public int getNonHtmlContentCount() {
-        return nonHtmlContentCount;
+    public int getNonHtmlResponseCount() {
+        return nonHtmlResponseCount;
     }
 
     /**
-     * Returns the number of request errors that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * error (4xx or 5xx).
      *
-     * @return the number of request errors that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         error (4xx or 5xx)
      */
-    public int getRequestErrorCount() {
-        return requestErrorCount;
+    public int getResponseErrorCount() {
+        return responseErrorCount;
     }
 
     /**

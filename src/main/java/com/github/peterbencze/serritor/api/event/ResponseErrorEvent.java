@@ -16,37 +16,38 @@
 
 package com.github.peterbencze.serritor.api.event;
 
+import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.api.PartialCrawlResponse;
 import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
- * Event which gets delivered when the MIME type of the response is not "text/html".
+ * Event which gets delivered when the browser loads the page and the HTTP status code indicates
+ * error (4xx or 5xx).
  */
-public final class NonHtmlContentEvent extends EventObject {
+public final class ResponseErrorEvent extends EventObject {
 
-    private final PartialCrawlResponse partialCrawlResponse;
+    private final CompleteCrawlResponse completeCrawlResponse;
 
     /**
-     * Creates a {@link NonHtmlContentEvent} instance.
+     * Creates a {@link ResponseErrorEvent} instance.
      *
-     * @param crawlCandidate       the current crawl candidate
-     * @param partialCrawlResponse the partial crawl response
+     * @param crawlCandidate        the current crawl candidate
+     * @param completeCrawlResponse the complete crawl response
      */
-    public NonHtmlContentEvent(
+    public ResponseErrorEvent(
             final CrawlCandidate crawlCandidate,
-            final PartialCrawlResponse partialCrawlResponse) {
+            final CompleteCrawlResponse completeCrawlResponse) {
         super(crawlCandidate);
 
-        this.partialCrawlResponse = partialCrawlResponse;
+        this.completeCrawlResponse = completeCrawlResponse;
     }
 
     /**
-     * Returns the partial crawl response.
+     * Returns the complete crawl response.
      *
-     * @return the partial crawl response
+     * @return the complete crawl response
      */
-    public PartialCrawlResponse getPartialCrawlResponse() {
-        return partialCrawlResponse;
+    public CompleteCrawlResponse getCompleteCrawlResponse() {
+        return completeCrawlResponse;
     }
 }

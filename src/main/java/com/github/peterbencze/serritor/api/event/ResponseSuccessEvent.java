@@ -21,20 +21,20 @@ import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
- * Event which gets delivered when a request error (an error with HTTP status code 4xx or 5xx)
- * occurs.
+ * Event which gets delivered when the browser loads the page and the HTTP status code indicates
+ * success (2xx).
  */
-public final class RequestErrorEvent extends EventObject {
+public final class ResponseSuccessEvent extends EventObject {
 
     private final CompleteCrawlResponse completeCrawlResponse;
 
     /**
-     * Creates a {@link RequestErrorEvent} instance.
+     * Creates a {@link ResponseSuccessEvent} instance.
      *
      * @param crawlCandidate        the current crawl candidate
      * @param completeCrawlResponse the complete crawl response
      */
-    public RequestErrorEvent(
+    public ResponseSuccessEvent(
             final CrawlCandidate crawlCandidate,
             final CompleteCrawlResponse completeCrawlResponse) {
         super(crawlCandidate);

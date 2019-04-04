@@ -16,37 +16,37 @@
 
 package com.github.peterbencze.serritor.api.event;
 
-import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
+import com.github.peterbencze.serritor.api.PartialCrawlResponse;
 import com.github.peterbencze.serritor.internal.EventObject;
 
 /**
- * Event which gets delivered when the browser loads the page.
+ * Event which gets delivered when the content type of the response is not text/html.
  */
-public final class PageLoadEvent extends EventObject {
+public final class NonHtmlResponseEvent extends EventObject {
 
-    private final CompleteCrawlResponse completeCrawlResponse;
+    private final PartialCrawlResponse partialCrawlResponse;
 
     /**
-     * Creates a {@link PageLoadEvent} instance.
+     * Creates a {@link NonHtmlResponseEvent} instance.
      *
-     * @param crawlCandidate        the current crawl candidate
-     * @param completeCrawlResponse the complete crawl response
+     * @param crawlCandidate       the current crawl candidate
+     * @param partialCrawlResponse the partial crawl response
      */
-    public PageLoadEvent(
+    public NonHtmlResponseEvent(
             final CrawlCandidate crawlCandidate,
-            final CompleteCrawlResponse completeCrawlResponse) {
+            final PartialCrawlResponse partialCrawlResponse) {
         super(crawlCandidate);
 
-        this.completeCrawlResponse = completeCrawlResponse;
+        this.partialCrawlResponse = partialCrawlResponse;
     }
 
     /**
-     * Returns the complete crawl response.
+     * Returns the partial crawl response.
      *
-     * @return the complete crawl response
+     * @return the partial crawl response
      */
-    public CompleteCrawlResponse getCompleteCrawlResponse() {
-        return completeCrawlResponse;
+    public PartialCrawlResponse getPartialCrawlResponse() {
+        return partialCrawlResponse;
     }
 }

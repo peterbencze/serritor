@@ -29,11 +29,11 @@ public final class StatsCounter implements Serializable {
 
     private int remainingCrawlCandidateCount;
     private int processedCrawlCandidateCount;
-    private int pageLoadCount;
+    private int responseSuccessCount;
     private int pageLoadTimeoutCount;
     private int requestRedirectCount;
-    private int nonHtmlContentCount;
-    private int requestErrorCount;
+    private int nonHtmlResponseCount;
+    private int responseErrorCount;
     private int networkErrorCount;
     private int filteredDuplicateRequestCount;
     private int filteredOffsiteRequestCount;
@@ -73,23 +73,24 @@ public final class StatsCounter implements Serializable {
     }
 
     /**
-     * Returns the number of successful page loads that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * success (2xx).
      *
-     * @return the number of successful page loads that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         success (2xx)
      */
-    public int getPageLoadCount() {
-        return lock.readWithLock(() -> pageLoadCount);
+    public int getResponseSuccessCount() {
+        return lock.readWithLock(() -> responseSuccessCount);
     }
 
     /**
-     * Records a successful page load. This should be called when the status code of the response is
-     * successful.
+     * Records the receipt of a response whose HTTP status code indicates success (2xx).
      */
-    public void recordPageLoad() {
+    public void recordResponseSuccess() {
         lock.writeWithLock(() -> {
             decrementRemainingCrawlCandidateCount();
 
-            ++pageLoadCount;
+            ++responseSuccessCount;
             incrementProcessedCrawlCandidateCount();
         });
     }
@@ -104,8 +105,7 @@ public final class StatsCounter implements Serializable {
     }
 
     /**
-     * Records a page load timeout. This should be called when a page does not load in the browser
-     * within the timeout period.
+     * Records a page load timeout.
      */
     public void recordPageLoadTimeout() {
         lock.writeWithLock(() -> {
@@ -119,14 +119,14 @@ public final class StatsCounter implements Serializable {
     /**
      * Returns the number of request redirects that occurred during the crawl.
      *
-     * @return the number of request redirects that occurred during the crawl.
+     * @return the number of request redirects that occurred during the crawl
      */
     public int getRequestRedirectCount() {
         return lock.readWithLock(() -> requestRedirectCount);
     }
 
     /**
-     * Records a request redirect. This should be called when a request is redirected.
+     * Records a request redirect.
      */
     public void recordRequestRedirect() {
         lock.writeWithLock(() -> {
@@ -138,45 +138,45 @@ public final class StatsCounter implements Serializable {
     }
 
     /**
-     * Returns the number of responses with non-HTML content that occurred during the crawl.
+     * Returns the number of responses received with non-HTML content.
      *
-     * @return the number of responses with non-HTML content that occurred during the crawl
+     * @return the number of responses received with non-HTML content
      */
-    public int getNonHtmlContentCount() {
-        return lock.readWithLock(() -> nonHtmlContentCount);
+    public int getNonHtmlResponseCount() {
+        return lock.readWithLock(() -> nonHtmlResponseCount);
     }
 
     /**
-     * Records a response with non-HTML content. This should be called when the MIME type of a
-     * response is not text/html.
+     * Records the receipt of a response with non-HTML content.
      */
-    public void recordNonHtmlContent() {
+    public void recordNonHtmlResponse() {
         lock.writeWithLock(() -> {
             decrementRemainingCrawlCandidateCount();
 
-            ++nonHtmlContentCount;
+            ++nonHtmlResponseCount;
             incrementProcessedCrawlCandidateCount();
         });
     }
 
     /**
-     * Returns the number of request errors that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * error (4xx or 5xx).
      *
-     * @return the number of request errors that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         error (4xx or 5xx)
      */
-    public int getRequestErrorCount() {
-        return lock.readWithLock(() -> requestErrorCount);
+    public int getResponseErrorCount() {
+        return lock.readWithLock(() -> responseErrorCount);
     }
 
     /**
-     * Records an error response. This should be called when the status code of the response is 4xx
-     * or 5xx.
+     * Records the receipt of a response whose HTTP status code indicates error (4xx or 5xx).
      */
-    public void recordRequestError() {
+    public void recordResponseError() {
         lock.writeWithLock(() -> {
             decrementRemainingCrawlCandidateCount();
 
-            ++requestErrorCount;
+            ++responseErrorCount;
             incrementProcessedCrawlCandidateCount();
         });
     }

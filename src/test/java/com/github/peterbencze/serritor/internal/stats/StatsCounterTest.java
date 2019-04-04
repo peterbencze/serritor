@@ -33,18 +33,18 @@ public final class StatsCounterTest {
     }
 
     @Test
-    public void testRecordPageLoad() {
+    public void testRecordResponseSuccess() {
         statsCounter.recordRemainingCrawlCandidate();
 
         int remainingCrawlCandidateCountBefore = statsCounter.getRemainingCrawlCandidateCount();
-        int pageLoadCountBefore = statsCounter.getPageLoadCount();
+        int responseSuccessCountBefore = statsCounter.getResponseSuccessCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(pageLoadCountBefore + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(responseSuccessCountBefore + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }
@@ -57,11 +57,11 @@ public final class StatsCounterTest {
         int pageLoadTimeoutCountBefore = statsCounter.getPageLoadTimeoutCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(pageLoadTimeoutCountBefore + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(pageLoadTimeoutCountBefore + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }
@@ -74,45 +74,45 @@ public final class StatsCounterTest {
         int requestRedirectCountBefore = statsCounter.getRequestRedirectCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(requestRedirectCountBefore + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(requestRedirectCountBefore + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }
 
     @Test
-    public void testRecordNonHtmlContent() {
+    public void testRecordNonHtmlResponse() {
         statsCounter.recordRemainingCrawlCandidate();
 
         int remainingCrawlCandidateCountBefore = statsCounter.getRemainingCrawlCandidateCount();
-        int nonHtmlContentCount = statsCounter.getNonHtmlContentCount();
+        int nonHtmlResponseCount = statsCounter.getNonHtmlResponseCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(nonHtmlContentCount + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(nonHtmlResponseCount + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }
 
     @Test
-    public void testRecordRequestError() {
+    public void testRecordResponseError() {
         statsCounter.recordRemainingCrawlCandidate();
 
         int remainingCrawlCandidateCountBefore = statsCounter.getRemainingCrawlCandidateCount();
-        int requestErrorCount = statsCounter.getRequestErrorCount();
+        int responseErrorCount = statsCounter.getResponseErrorCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(requestErrorCount + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(responseErrorCount + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }
@@ -125,11 +125,11 @@ public final class StatsCounterTest {
         int networkErrorCount = statsCounter.getNetworkErrorCount();
         int processedCrawlCandidateCountBefore = statsCounter.getProcessedCrawlCandidateCount();
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
 
         Assert.assertEquals(remainingCrawlCandidateCountBefore - 1,
                 statsCounter.getRemainingCrawlCandidateCount());
-        Assert.assertEquals(networkErrorCount + 1, statsCounter.getPageLoadCount());
+        Assert.assertEquals(networkErrorCount + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
     }

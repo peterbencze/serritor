@@ -36,11 +36,11 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
         "remainingDurationEstimate",
         "remainingCrawlCandidateCount",
         "processedCrawlCandidateCount",
-        "pageLoadCount",
+        "responseSuccessCount",
         "pageLoadTimeoutCount",
         "requestRedirectCount",
-        "nonHtmlContentCount",
-        "requestErrorCount",
+        "nonHtmlResponseCount",
+        "responseErrorCount",
         "networkErrorCount",
         "filteredDuplicateRequestCount",
         "filteredOffsiteRequestCount",
@@ -129,12 +129,14 @@ public final class CrawlStats {
     }
 
     /**
-     * Returns the number of successful page loads that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * success (2xx).
      *
-     * @return the number of successful page loads that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         success (2xx)
      */
-    public int getPageLoadCount() {
-        return statsCounterSnapshot.getPageLoadCount();
+    public int getResponseSuccessCount() {
+        return statsCounterSnapshot.getResponseSuccessCount();
     }
 
     /**
@@ -156,21 +158,23 @@ public final class CrawlStats {
     }
 
     /**
-     * Returns the number of responses with non-HTML content that occurred during the crawl.
+     * Returns the number of responses received with non-HTML content.
      *
-     * @return the number of responses with non-HTML content that occurred during the crawl
+     * @return the number of responses received with non-HTML content
      */
-    public int getNonHtmlContentCount() {
-        return statsCounterSnapshot.getNonHtmlContentCount();
+    public int getNonHtmlResponseCount() {
+        return statsCounterSnapshot.getNonHtmlResponseCount();
     }
 
     /**
-     * Returns the number of request errors that occurred during the crawl.
+     * Returns the number of responses received during the crawl, whose HTTP status code indicated
+     * error (4xx or 5xx).
      *
-     * @return the number of request errors that occurred during the crawl
+     * @return the number of responses received during the crawl, whose HTTP status code indicated
+     *         error (4xx or 5xx)
      */
-    public int getRequestErrorCount() {
-        return statsCounterSnapshot.getRequestErrorCount();
+    public int getResponseErrorCount() {
+        return statsCounterSnapshot.getResponseErrorCount();
     }
 
     /**
@@ -225,11 +229,11 @@ public final class CrawlStats {
                                 remainingDurationEstimate.toMillis(), true, true))
                 .append("remainingCrawlCandidateCount", getRemainingCrawlCandidateCount())
                 .append("processedCrawlCandidateCount", getProcessedCrawlCandidateCount())
-                .append("pageLoadCount", getPageLoadCount())
+                .append("responseSuccessCount", getResponseSuccessCount())
                 .append("pageLoadTimeoutCount", getPageLoadTimeoutCount())
                 .append("requestRedirectCount", getRequestRedirectCount())
-                .append("nonHtmlContentCount", getNonHtmlContentCount())
-                .append("requestErrorCount", getRequestErrorCount())
+                .append("nonHtmlResponseCount", getNonHtmlResponseCount())
+                .append("responseErrorCount", getResponseErrorCount())
                 .append("networkErrorCount", getNetworkErrorCount())
                 .append("filteredDuplicateRequestCount", getFilteredDuplicateRequestCount())
                 .append("filteredOffsiteRequestCount", getFilteredOffsiteRequestCount())

@@ -20,8 +20,8 @@ import com.github.peterbencze.serritor.api.BaseCrawler;
 import com.github.peterbencze.serritor.api.Browser;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
-import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
-import com.github.peterbencze.serritor.api.event.PageLoadEvent;
+import com.github.peterbencze.serritor.api.event.NonHtmlResponseEvent;
+import com.github.peterbencze.serritor.api.event.ResponseSuccessEvent;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -82,8 +82,8 @@ public class SerritorIT {
 
         BaseCrawler crawler = new BaseCrawler(config) {
             @Override
-            protected void onNonHtmlContent(final NonHtmlContentEvent event) {
-                super.onNonHtmlContent(event);
+            protected void onNonHtmlResponse(final NonHtmlResponseEvent event) {
+                super.onNonHtmlResponse(event);
 
                 try {
                     downloadFile(event.getCrawlCandidate().getRequestUrl(), destinationFile);
@@ -124,8 +124,8 @@ public class SerritorIT {
 
         BaseCrawler crawler = new BaseCrawler(config) {
             @Override
-            protected void onPageLoad(final PageLoadEvent event) {
-                super.onPageLoad(event);
+            protected void onResponseSuccess(final ResponseSuccessEvent event) {
+                super.onResponseSuccess(event);
 
                 stop();
             }

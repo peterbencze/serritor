@@ -19,11 +19,11 @@ package com.github.peterbencze.serritor.api;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
 import com.github.peterbencze.serritor.api.event.NetworkErrorEvent;
-import com.github.peterbencze.serritor.api.event.NonHtmlContentEvent;
-import com.github.peterbencze.serritor.api.event.PageLoadEvent;
+import com.github.peterbencze.serritor.api.event.NonHtmlResponseEvent;
 import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
-import com.github.peterbencze.serritor.api.event.RequestErrorEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
+import com.github.peterbencze.serritor.api.event.ResponseErrorEvent;
+import com.github.peterbencze.serritor.api.event.ResponseSuccessEvent;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CustomCallbackManager;
 import com.github.peterbencze.serritor.internal.EventObject;
@@ -418,7 +418,7 @@ public abstract class BaseCrawler {
                 String mimeType = getResponseMimeType(httpHeadResponse);
                 if (!mimeType.equals(ContentType.TEXT_HTML.getMimeType())) {
                     // URLs that point to non-HTML content should not be opened in the browser
-                    handleNonHtmlContent(new NonHtmlContentEvent(currentCandidate,
+                    handleNonHtmlResponse(new NonHtmlResponseEvent(currentCandidate,
                             new PartialCrawlResponse(httpHeadResponse)));
 
                     continue;
@@ -471,13 +471,13 @@ public abstract class BaseCrawler {
 
             int statusCode = harResponse.getStatus();
             if (HttpStatus.isClientError(statusCode) || HttpStatus.isServerError(statusCode)) {
-                handleRequestError(new RequestErrorEvent(currentCandidate,
+                handleResponseError(new ResponseErrorEvent(currentCandidate,
                         new CompleteCrawlResponse(harResponse, webDriver)));
 
                 continue;
             }
 
-            handlePageLoad(new PageLoadEvent(currentCandidate,
+            handleResponseSuccess(new ResponseSuccessEvent(currentCandidate,
                     new CompleteCrawlResponse(harResponse, webDriver)));
         }
     }
@@ -525,7 +525,7 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Handles network errors that occur during the crawl.
+     * Handles network errors.
      *
      * @param event the event which gets delivered when a network error occurs
      */
@@ -536,7 +536,7 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Handles request redirects that occur during the crawl.
+     * Handles request redirects.
      *
      * @param event the event which gets delivered when a request is redirected
      */
@@ -550,20 +550,20 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Handles responses with non-HTML content that occur during the crawl.
+     * Handles responses with non-HTML content.
      *
-     * @param event the event which gets delivered when the MIME type of the response is not
+     * @param event the event which gets delivered when the content type of the response is not
      *              text/html
      */
-    private void handleNonHtmlContent(final NonHtmlContentEvent event) {
-        callbackManager.callCustomOrDefault(NonHtmlContentEvent.class, event,
-                this::onNonHtmlContent);
+    private void handleNonHtmlResponse(final NonHtmlResponseEvent event) {
+        callbackManager.callCustomOrDefault(NonHtmlResponseEvent.class, event,
+                this::onNonHtmlResponse);
 
-        statsCounter.recordNonHtmlContent();
+        statsCounter.recordNonHtmlResponse();
     }
 
     /**
-     * Handles page load timeout that occur during the crawl.
+     * Handles page load timeouts.
      *
      * @param event the event which gets delivered when a page does not load in the browser within
      *              the timeout period
@@ -576,26 +576,28 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Handles request errors that occur during the crawl.
+     * Handles responses whose HTTP status code indicates an error.
      *
      * @param event the event which gets delivered when a request error (an error with HTTP status
      *              code 4xx or 5xx) occurs
      */
-    private void handleRequestError(final RequestErrorEvent event) {
-        callbackManager.callCustomOrDefault(RequestErrorEvent.class, event, this::onRequestError);
+    private void handleResponseError(final ResponseErrorEvent event) {
+        callbackManager.callCustomOrDefault(ResponseErrorEvent.class, event, this::onResponseError);
 
-        statsCounter.recordRequestError();
+        statsCounter.recordResponseError();
     }
 
     /**
-     * Handles successful page loads that occur during the crawl.
+     * Handles responses whose HTTP status code indicates success.
      *
-     * @param event the event which gets delivered when the browser loads the page
+     * @param event the event which gets delivered when the browser loads the page and the HTTP
+     *              status code indicates success (2xx)
      */
-    private void handlePageLoad(final PageLoadEvent event) {
-        callbackManager.callCustomOrDefault(PageLoadEvent.class, event, this::onPageLoad);
+    private void handleResponseSuccess(final ResponseSuccessEvent event) {
+        callbackManager.callCustomOrDefault(ResponseSuccessEvent.class, event,
+                this::onResponseSuccess);
 
-        statsCounter.recordPageLoad();
+        statsCounter.recordResponseSuccess();
     }
 
     /**
@@ -659,28 +661,29 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Callback which gets called when the crawler is started.
+     * Callback which gets called when the crawler starts.
      */
     protected void onStart() {
         LOGGER.info("onStart");
     }
 
     /**
-     * Callback which gets called when the browser loads the page.
+     * Callback which gets called when the browser loads the page and the HTTP status code of the
+     * response indicates success (2xx).
      *
-     * @param event the <code>PageLoadEvent</code> instance
+     * @param event the <code>ResponseSuccessEvent</code> instance
      */
-    protected void onPageLoad(final PageLoadEvent event) {
-        LOGGER.info("onPageLoad: {}", event.getCrawlCandidate().getRequestUrl());
+    protected void onResponseSuccess(final ResponseSuccessEvent event) {
+        LOGGER.info("onResponseSuccess: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
-     * Callback which gets called when the content type is not HTML.
+     * Callback which gets called when the content type of the response is not text/html.
      *
-     * @param event the <code>NonHtmlContentEvent</code> instance
+     * @param event the <code>NonHtmlResponseEvent</code> instance
      */
-    protected void onNonHtmlContent(final NonHtmlContentEvent event) {
-        LOGGER.info("onNonHtmlContent: {}", event.getCrawlCandidate().getRequestUrl());
+    protected void onNonHtmlResponse(final NonHtmlResponseEvent event) {
+        LOGGER.info("onNonHtmlResponse: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -693,13 +696,13 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Callback which gets called when a request error (an error with HTTP status code 4xx or 5xx)
-     * occurs.
+     * Callback which gets called when the browser loads the page and the HTTP status code of the
+     * response indicates error (4xx or 5xx).
      *
-     * @param event the <code>RequestErrorEvent</code> instance
+     * @param event the <code>ResponseErrorEvent</code> instance
      */
-    protected void onRequestError(final RequestErrorEvent event) {
-        LOGGER.info("onRequestError: {}", event.getCrawlCandidate().getRequestUrl());
+    protected void onResponseError(final ResponseErrorEvent event) {
+        LOGGER.info("onResponseError: {}", event.getCrawlCandidate().getRequestUrl());
     }
 
     /**
@@ -723,7 +726,7 @@ public abstract class BaseCrawler {
     }
 
     /**
-     * Callback which gets called when the crawler is stopped.
+     * Callback which gets called when the crawler stops.
      */
     protected void onStop() {
         LOGGER.info("onStop");
