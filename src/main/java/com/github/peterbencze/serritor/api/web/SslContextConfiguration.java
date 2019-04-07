@@ -18,6 +18,8 @@ package com.github.peterbencze.serritor.api.web;
 
 import java.util.Optional;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Configuration of the SSL context.
@@ -83,5 +85,17 @@ public final class SslContextConfiguration {
      */
     public Optional<String> getKeyManagerPassword() {
         return Optional.ofNullable(keyManagerPassword);
+    }
+
+    /**
+     * Returns a string representation of this SSL context configuration instance.
+     *
+     * @return a string representation of this SSL context configuration instance
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("keyStorePath", keyStorePath)
+                .toString();
     }
 }

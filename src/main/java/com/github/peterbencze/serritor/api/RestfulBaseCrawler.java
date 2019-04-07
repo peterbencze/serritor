@@ -162,6 +162,7 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
         super.onStart();
 
         LOGGER.debug("Starting web server");
+        LOGGER.debug("Using configuration: {}", webApiConfig);
         webServer.start();
     }
 

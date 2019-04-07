@@ -17,6 +17,8 @@
 package com.github.peterbencze.serritor.api.web;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Represents a user of the web API.
@@ -58,6 +60,18 @@ public final class User {
      */
     public String getPasswordHash() {
         return passwordHash;
+    }
+
+    /**
+     * Returns a string representation of this user instance.
+     *
+     * @return a string representation of this user instance
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("username", username)
+                .toString();
     }
 
     /**

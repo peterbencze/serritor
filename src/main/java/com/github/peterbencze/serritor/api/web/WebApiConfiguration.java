@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Configuration for the web API.
@@ -81,6 +83,21 @@ public final class WebApiConfiguration {
      */
     public Optional<AccessControlConfiguration> getAccessControlConfiguration() {
         return Optional.ofNullable(accessControlConfig);
+    }
+
+    /**
+     * Returns a string representation of this web API configuration.
+     *
+     * @return a string representation of this web API configuration
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("port", port)
+                .append("corsOrigins", corsOrigins)
+                .append("sslContextConfiguration", sslContextConfig)
+                .append("accessControlConfiguration", accessControlConfig)
+                .toString();
     }
 
     /**

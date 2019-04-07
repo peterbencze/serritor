@@ -22,6 +22,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Configuration of the access management.
@@ -67,6 +69,19 @@ public final class AccessControlConfiguration {
      */
     public boolean isCookieAuthenticationEnabled() {
         return isCookieAuthenticationEnabled;
+    }
+
+    /**
+     * Returns a string representation of this access control configuration instance.
+     *
+     * @return a string representation of this access control configuration instance
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("users", users)
+                .append("isCookieAuthenticationEnabled", isCookieAuthenticationEnabled)
+                .toString();
     }
 
     /**
