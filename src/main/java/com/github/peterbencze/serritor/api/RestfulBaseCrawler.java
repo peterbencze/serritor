@@ -38,6 +38,8 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
@@ -45,6 +47,8 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
  * it is running.
  */
 public abstract class RestfulBaseCrawler extends BaseCrawler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestfulBaseCrawler.class);
 
     private final WebApiConfiguration webApiConfig;
     private final Javalin webServer;
@@ -118,6 +122,8 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
 
             byte[] secretKey = accessControlConfig.getSecretKey()
                     .orElseGet(() -> {
+                        LOGGER.debug("Generating secret key for signer algorithm");
+
                         try {
                             return KeyGenerator.getInstance("HmacSHA256")
                                     .generateKey()
@@ -155,6 +161,7 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
     protected void onStart() {
         super.onStart();
 
+        LOGGER.debug("Starting web server");
         webServer.start();
     }
 
@@ -165,6 +172,7 @@ public abstract class RestfulBaseCrawler extends BaseCrawler {
     protected void onStop() {
         super.onStop();
 
+        LOGGER.debug("Stopping web server");
         webServer.stop();
     }
 

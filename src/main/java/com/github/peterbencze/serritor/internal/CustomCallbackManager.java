@@ -24,11 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages custom callbacks associated with events.
  */
 public final class CustomCallbackManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomCallbackManager.class);
 
     private final Map<Class<? extends EventObject>,
             List<PatternMatchingCallback<? extends EventObject>>> customCallbacks;
@@ -50,6 +54,9 @@ public final class CustomCallbackManager {
     public <T extends EventObject> void addCustomCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
+        LOGGER.debug("Adding custom callback for event {} with URL pattern {}",
+                eventClass.getSimpleName(), callback.getUrlPattern());
+
         customCallbacks.computeIfAbsent(eventClass, key -> new ArrayList<>()).add(callback);
     }
 
@@ -70,16 +77,22 @@ public final class CustomCallbackManager {
             final T eventObject,
             final Consumer<T> defaultCallback) {
         String requestUrl = eventObject.getCrawlCandidate().getRequestUrl().toString();
-        List<Consumer<? extends EventObject>> applicableCustomCallbacks =
+        List<PatternMatchingCallback<? extends EventObject>> applicableCustomCallbacks =
                 customCallbacks.getOrDefault(eventClass, Collections.emptyList())
                         .stream()
                         .filter(callback -> callback.getUrlPattern().matcher(requestUrl).matches())
-                        .map(PatternMatchingCallback::getCallback)
                         .collect(Collectors.toList());
 
         if (!applicableCustomCallbacks.isEmpty()) {
-            applicableCustomCallbacks.forEach(op -> ((Consumer<T>) op).accept(eventObject));
+            applicableCustomCallbacks.forEach(callback -> {
+                LOGGER.debug("Calling custom callback for event {} with URL pattern {}",
+                        eventClass.getSimpleName(), callback.getUrlPattern());
+
+                ((Consumer<T>) callback.getCallback()).accept(eventObject);
+            });
         } else {
+            LOGGER.debug("Calling default callback for event {}", eventClass.getSimpleName());
+
             defaultCallback.accept(eventObject);
         }
     }

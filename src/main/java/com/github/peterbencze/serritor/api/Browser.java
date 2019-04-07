@@ -21,7 +21,18 @@ package com.github.peterbencze.serritor.api;
  */
 public enum Browser {
 
-    HTML_UNIT,
-    CHROME,
-    FIREFOX
+    HTML_UNIT("HtmlUnit"),
+    CHROME("Chrome"),
+    FIREFOX("Firefox");
+
+    private final String textualRepresentation;
+
+    Browser(final String textualRepresentation) {
+        this.textualRepresentation = textualRepresentation;
+    }
+
+    @Override
+    public String toString() {
+        return textualRepresentation;
+    }
 }

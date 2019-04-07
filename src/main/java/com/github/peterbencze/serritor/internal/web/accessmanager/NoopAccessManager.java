@@ -21,11 +21,15 @@ import io.javalin.Handler;
 import io.javalin.security.AccessManager;
 import io.javalin.security.Role;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A no-operation access manager that is used when access control is disabled.
  */
 public final class NoopAccessManager implements AccessManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NoopAccessManager.class);
 
     /**
      * Simply lets the request pass through without credential checking.
@@ -39,6 +43,8 @@ public final class NoopAccessManager implements AccessManager {
             final Handler handler,
             final Context ctx,
             final Set<Role> permittedRoles) throws Exception {
+        LOGGER.debug("Incoming request from {} to path {}", ctx.ip(), ctx.path());
+        LOGGER.debug("Letting request through");
         handler.handle(ctx);
     }
 }

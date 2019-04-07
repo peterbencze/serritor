@@ -33,11 +33,15 @@ import java.util.function.Function;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages crawl requests and provides crawl candidates to the crawler.
  */
 public final class CrawlFrontier implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlFrontier.class);
 
     private final CrawlerConfiguration config;
     private final StatsCounter statsCounter;
@@ -69,12 +73,16 @@ public final class CrawlFrontier implements Serializable {
      * @param isCrawlSeed indicates if the request is a crawl seed
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
+        LOGGER.debug("Feeding request: {}", request);
+
         if (config.isOffsiteRequestFilterEnabled()) {
             boolean inCrawlDomain = config.getAllowedCrawlDomains()
                     .stream()
                     .anyMatch(crawlDomain -> crawlDomain.contains(request.getDomain()));
 
             if (!inCrawlDomain) {
+                LOGGER.debug("Filtering offsite request");
+
                 statsCounter.recordOffsiteRequest();
                 return;
             }
@@ -83,6 +91,8 @@ public final class CrawlFrontier implements Serializable {
         if (config.isDuplicateRequestFilterEnabled()) {
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
             if (urlFingerprints.contains(urlFingerprint)) {
+                LOGGER.debug("Filtering duplicate request");
+
                 statsCounter.recordDuplicateRequest();
                 return;
             }
@@ -97,6 +107,8 @@ public final class CrawlFrontier implements Serializable {
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             if (crawlDepthLimit != 0 && nextCrawlDepth > crawlDepthLimit) {
+                LOGGER.debug("Filtering crawl depth limit exceeding request");
+
                 statsCounter.recordCrawlDepthLimitExceedingRequest();
                 return;
             }
@@ -105,6 +117,7 @@ public final class CrawlFrontier implements Serializable {
                     .setCrawlDepth(nextCrawlDepth);
         }
 
+        LOGGER.debug("Adding request to the list of crawl candidates");
         candidates.add(builder.build());
         statsCounter.recordRemainingCrawlCandidate();
     }
@@ -132,6 +145,8 @@ public final class CrawlFrontier implements Serializable {
      * Resets the crawl frontier to its initial state.
      */
     public void reset() {
+        LOGGER.debug("Setting crawl frontier to its initial state");
+
         urlFingerprints.clear();
         candidates.clear();
 
@@ -142,6 +157,8 @@ public final class CrawlFrontier implements Serializable {
      * Feeds all the crawl seeds to the crawl frontier.
      */
     private void feedCrawlSeeds() {
+        LOGGER.debug("Feeding crawl seeds");
+
         config.getCrawlSeeds().forEach((CrawlRequest request) -> feedRequest(request, true));
     }
 

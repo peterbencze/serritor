@@ -28,11 +28,15 @@ import io.javalin.UnauthorizedResponse;
 import io.javalin.security.AccessManager;
 import io.javalin.security.Role;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A JWT-based access manager.
  */
 public final class JwtAccessManager implements AccessManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAccessManager.class);
 
     private final Algorithm signerAlgorithm;
 
@@ -57,20 +61,30 @@ public final class JwtAccessManager implements AccessManager {
             final Handler handler,
             final Context ctx,
             final Set<Role> permittedRoles) throws Exception {
+        LOGGER.debug("Incoming request from {} to path {}", ctx.ip(), ctx.path());
+
         if (!permittedRoles.contains(UserRole.UNAUTHENTICATED)) {
+            LOGGER.debug("Checking JWT");
+
             String jwt = ctx.attribute(JwtHandler.CONTEXT_ATTRIBUTE_NAME);
             if (jwt == null) {
+                LOGGER.debug("Returning unauthorized response: no JWT present in context");
+
                 throw new UnauthorizedResponse();
             }
 
             JWTVerifier verifier = JWT.require(signerAlgorithm).build();
             try {
                 verifier.verify(jwt);
+                LOGGER.debug("JWT verified");
             } catch (JWTVerificationException e) {
+                LOGGER.debug("Returning unauthorized response: JWT verification failed");
+
                 throw new UnauthorizedResponse();
             }
         }
 
+        LOGGER.debug("Letting request through");
         handler.handle(ctx);
     }
 }

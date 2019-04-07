@@ -185,6 +185,9 @@ public abstract class BaseCrawler {
         try {
             Validate.validState(isStopped.get(), "The crawler is already running.");
 
+            LOGGER.debug("Crawler is starting (resuming crawl: {})", isResuming);
+            LOGGER.debug("Using configuration: {}", config);
+
             isStopped.set(false);
 
             runTimeStopwatch.start();
@@ -208,14 +211,21 @@ public abstract class BaseCrawler {
                 String host = urlComponents[0];
                 int port = Integer.parseInt(urlComponents[1]);
 
+                LOGGER.debug("Using chained proxy on address {}:{}", host, port);
+
                 proxyServer.setChainedProxy(new InetSocketAddress(host, port));
             }
 
             proxyServer.start();
+            LOGGER.debug("Proxy server started on port {}", proxyServer.getPort());
+
             capabilitiesClone.setCapability(CapabilityType.PROXY,
                     ClientUtil.createSeleniumProxy(proxyServer));
 
+            LOGGER.debug("Starting {} browser", browser);
             webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
+
+            LOGGER.debug("Calling onBrowserInit callback");
             onBrowserInit(webDriver.manage());
 
             if (!isResuming) {
@@ -233,20 +243,26 @@ public abstract class BaseCrawler {
             // Must be created here (the adaptive crawl delay strategy depends on the WebDriver)
             crawlDelayMechanism = createCrawlDelayMechanism();
 
+            LOGGER.debug("Calling onStart callback");
             onStart();
 
             run();
         } finally {
+            LOGGER.debug("Crawler is stopping");
+
             try {
+                LOGGER.debug("Calling onStop callback");
                 onStop();
             } finally {
                 HttpClientUtils.closeQuietly(httpClient);
 
                 if (webDriver != null) {
+                    LOGGER.debug("Closing browser");
                     webDriver.quit();
                 }
 
                 if (proxyServer != null && proxyServer.isStarted()) {
+                    LOGGER.debug("Stopping proxy server");
                     proxyServer.stop();
                 }
 
@@ -320,6 +336,8 @@ public abstract class BaseCrawler {
     protected final void stop() {
         Validate.validState(!isStopped.get(), "The crawler is not started.");
 
+        LOGGER.debug("Initiating stop");
+
         // Indicate that the crawling should be stopped
         isStopInitiated.set(true);
     }
@@ -362,6 +380,8 @@ public abstract class BaseCrawler {
         Validate.notNull(source, "The source parameter cannot be null.");
         Validate.notNull(destination, "The destination parameter cannot be null.");
 
+        LOGGER.debug("Downloading file from {} to {}", source, destination);
+
         HttpGet request = new HttpGet(source);
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
@@ -386,10 +406,14 @@ public abstract class BaseCrawler {
             }
 
             CrawlCandidate currentCandidate = crawlFrontier.getNextCandidate();
+            LOGGER.debug("Next crawl candidate: {}", currentCandidate);
+
             String candidateUrl = currentCandidate.getRequestUrl().toString();
             CloseableHttpResponse httpHeadResponse = null;
 
             try {
+                LOGGER.debug("Sending HTTP head request to URL {}", candidateUrl);
+
                 try {
                     httpHeadResponse = httpClient.execute(new HttpHead(candidateUrl));
                 } catch (IOException exception) {
@@ -426,6 +450,7 @@ public abstract class BaseCrawler {
 
                 proxyServer.newHar();
 
+                LOGGER.debug("Opening URL {} in browser", candidateUrl);
                 try {
                     webDriver.get(candidateUrl);
 
@@ -530,6 +555,8 @@ public abstract class BaseCrawler {
      * @param event the event which gets delivered when a network error occurs
      */
     private void handleNetworkError(final NetworkErrorEvent event) {
+        LOGGER.debug("Network error occurred: {}", event.getErrorMessage());
+
         callbackManager.callCustomOrDefault(NetworkErrorEvent.class, event, this::onNetworkError);
 
         statsCounter.recordNetworkError();
@@ -541,6 +568,10 @@ public abstract class BaseCrawler {
      * @param event the event which gets delivered when a request is redirected
      */
     private void handleRequestRedirect(final RequestRedirectEvent event) {
+        LOGGER.debug("Request redirected from {} to {}",
+                event.getCrawlCandidate().getRequestUrl(),
+                event.getRedirectedCrawlRequest().getRequestUrl());
+
         crawl(event.getRedirectedCrawlRequest());
 
         callbackManager.callCustomOrDefault(RequestRedirectEvent.class, event,
@@ -556,6 +587,8 @@ public abstract class BaseCrawler {
      *              text/html
      */
     private void handleNonHtmlResponse(final NonHtmlResponseEvent event) {
+        LOGGER.debug("Received response with non-HTML content");
+
         callbackManager.callCustomOrDefault(NonHtmlResponseEvent.class, event,
                 this::onNonHtmlResponse);
 
@@ -569,6 +602,8 @@ public abstract class BaseCrawler {
      *              the timeout period
      */
     private void handlePageLoadTimeout(final PageLoadTimeoutEvent event) {
+        LOGGER.debug("Page did not load in the browser within the timeout period");
+
         callbackManager.callCustomOrDefault(PageLoadTimeoutEvent.class, event,
                 this::onPageLoadTimeout);
 
@@ -578,10 +613,13 @@ public abstract class BaseCrawler {
     /**
      * Handles responses whose HTTP status code indicates an error.
      *
-     * @param event the event which gets delivered when a request error (an error with HTTP status
-     *              code 4xx or 5xx) occurs
+     * @param event the event which gets delivered when the browser loads the page and the HTTP
+     *              status code indicates error (4xx or 5xx)
      */
     private void handleResponseError(final ResponseErrorEvent event) {
+        LOGGER.debug("Received response whose status code ({}) indicates error",
+                event.getCompleteCrawlResponse().getStatusCode());
+
         callbackManager.callCustomOrDefault(ResponseErrorEvent.class, event, this::onResponseError);
 
         statsCounter.recordResponseError();
@@ -594,6 +632,9 @@ public abstract class BaseCrawler {
      *              status code indicates success (2xx)
      */
     private void handleResponseSuccess(final ResponseSuccessEvent event) {
+        LOGGER.debug("Received response whose status code ({}) indicates success",
+                event.getCompleteCrawlResponse().getStatusCode());
+
         callbackManager.callCustomOrDefault(ResponseSuccessEvent.class, event,
                 this::onResponseSuccess);
 
@@ -604,6 +645,8 @@ public abstract class BaseCrawler {
      * Copies all the Selenium cookies for the current domain to the HTTP client cookie store.
      */
     private void syncHttpClientCookies() {
+        LOGGER.debug("Synchronizing HTTP client cookies");
+
         webDriver.manage()
                 .getCookies()
                 .stream()
@@ -615,9 +658,12 @@ public abstract class BaseCrawler {
      * Delays the next request.
      */
     private void performDelay() {
+        LOGGER.debug("Performing delay");
+
         try {
             TimeUnit.MILLISECONDS.sleep(crawlDelayMechanism.getDelay());
         } catch (InterruptedException ex) {
+            LOGGER.debug("Delay interrupted, stopping crawler");
             Thread.currentThread().interrupt();
             isStopInitiated.set(true);
         }

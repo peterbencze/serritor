@@ -19,11 +19,15 @@ package com.github.peterbencze.serritor.internal.web.handler;
 import io.javalin.Context;
 import io.javalin.Handler;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A before-handler which extracts the JWT from the Authorization header or the cookie.
  */
 public final class JwtHandler implements Handler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtHandler.class);
 
     public static final String CONTEXT_ATTRIBUTE_NAME = "JWT";
     static final String COOKIE_NAME = "JWT";
@@ -34,12 +38,18 @@ public final class JwtHandler implements Handler {
      * @param ctx the context object
      */
     @Override
-    public void handle(final Context ctx) throws Exception {
+    public void handle(final Context ctx) {
         Optional<String> jwtFromHeaderOpt = extractJwtFromHeader(ctx);
         if (jwtFromHeaderOpt.isPresent()) {
+            LOGGER.debug("JWT found in headers");
+
             ctx.attribute(CONTEXT_ATTRIBUTE_NAME, jwtFromHeaderOpt.get());
         } else {
-            extractJwtFromCookie(ctx).ifPresent(jwt -> ctx.attribute(CONTEXT_ATTRIBUTE_NAME, jwt));
+            extractJwtFromCookie(ctx).ifPresent(jwt -> {
+                LOGGER.debug("JWT found in cookies");
+
+                ctx.attribute(CONTEXT_ATTRIBUTE_NAME, jwt);
+            });
         }
     }
 

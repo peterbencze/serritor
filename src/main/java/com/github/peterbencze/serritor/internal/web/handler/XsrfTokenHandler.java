@@ -23,12 +23,16 @@ import io.javalin.UnauthorizedResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A before-handler that is responsible for the validation of the XSRF token header if an XSRF
  * cookie is present in the request.
  */
 public final class XsrfTokenHandler implements Handler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(XsrfTokenHandler.class);
 
     static final String COOKIE_NAME = "XSRF-TOKEN";
     static final String HEADER_NAME = "X-XSRF-TOKEN";
@@ -42,14 +46,18 @@ public final class XsrfTokenHandler implements Handler {
      * @param ctx the context object
      */
     @Override
-    public void handle(final Context ctx) throws Exception {
+    public void handle(final Context ctx) {
         HttpMethod requestMethod = HttpMethod.valueOf(ctx.method());
         if (XSRF_SAFE_HTTP_METHODS.contains(requestMethod)) {
+            LOGGER.debug("The request method is safe, not checking XSRF token");
             return;
         }
 
+        LOGGER.debug("Checking XSRF token");
         Optional.ofNullable(ctx.cookie(COOKIE_NAME)).ifPresent(xsrfTokenInCookie -> {
             if (!xsrfTokenInCookie.equals(ctx.header(HEADER_NAME))) {
+                LOGGER.debug("Returning unauthorized response: XSRF token missing or incorrect");
+
                 throw new UnauthorizedResponse("XSRF token missing or incorrect");
             }
         });

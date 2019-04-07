@@ -31,11 +31,15 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import org.mindrot.jbcrypt.BCrypt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A handler that is used to verify the authentication credentials of the user.
  */
 public final class LoginHandler implements Handler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginHandler.class);
 
     private final AccessControlConfiguration accessControlConfig;
     private final Algorithm signerAlgorithm;
@@ -59,13 +63,20 @@ public final class LoginHandler implements Handler {
      * @param ctx the context object
      */
     @Override
-    public void handle(final Context ctx) throws Exception {
+    public void handle(final Context ctx) {
         LoginDto loginDto = ctx.bodyAsClass(LoginDto.class);
 
-        User user = accessControlConfig.getUser(loginDto.getUsername())
-                .orElseThrow(UnauthorizedResponse::new);
+        String username = loginDto.getUsername();
+        User user = accessControlConfig.getUser(username)
+                .<UnauthorizedResponse>orElseThrow(() -> { // type inference bug, see JDK-8047338
+                    LOGGER.debug("Failed login for user {}: user does not exist", username);
+
+                    throw new UnauthorizedResponse();
+                });
 
         if (!BCrypt.checkpw(loginDto.getPassword(), user.getPasswordHash())) {
+            LOGGER.debug("Failed login for user {}: incorrect password", username);
+
             throw new UnauthorizedResponse();
         }
 
@@ -73,7 +84,7 @@ public final class LoginHandler implements Handler {
         Date expiryDate = Date.from(Instant.now().plus(tokenValidDuration));
         String jwt = JWT.create()
                 .withExpiresAt(expiryDate)
-                .withClaim("username", user.getUsername())
+                .withClaim("username", username)
                 .sign(signerAlgorithm);
 
         if (accessControlConfig.isCookieAuthenticationEnabled()) {
@@ -82,8 +93,10 @@ public final class LoginHandler implements Handler {
             ctx.cookie(JwtHandler.COOKIE_NAME, jwt, cookieAgeInSeconds);
             ctx.cookie(XsrfTokenHandler.COOKIE_NAME, generateXsrfToken(), cookieAgeInSeconds);
         } else {
-            ctx.json(new JwtDto(user.getUsername(), expiryDate, jwt));
+            ctx.json(new JwtDto(username, expiryDate, jwt));
         }
+
+        LOGGER.debug("User {} logged in", username);
     }
 
     /**
