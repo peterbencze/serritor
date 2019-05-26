@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal.web.dto;
+package com.github.peterbencze.serritor.internal.web.http.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
+import java.util.Set;
 
 /**
- * A DTO that is used to send back the generated JWT to the user.
+ * A DTO that is used to transfer the JWT between the client and the web server.
  */
 public final class JwtDto {
 
     private final String username;
+    private final Set<String> roles;
     private final Date expiryDate;
     private final String jwt;
 
@@ -31,11 +34,17 @@ public final class JwtDto {
      * Creates a {@link JwtDto} instance.
      *
      * @param username   the username of the authenticated user
+     * @param roles      the roles of the user
      * @param expiryDate the expiry date of the JWT
      * @param jwt        the generated JWT
      */
-    public JwtDto(final String username, final Date expiryDate, final String jwt) {
+    public JwtDto(
+            @JsonProperty(value = "username", required = true) final String username,
+            @JsonProperty(value = "roles", required = true) final Set<String> roles,
+            @JsonProperty(value = "expiryDate", required = true) final Date expiryDate,
+            @JsonProperty(value = "jwt", required = true) final String jwt) {
         this.username = username;
+        this.roles = roles;
         this.expiryDate = expiryDate;
         this.jwt = jwt;
     }
@@ -47,6 +56,15 @@ public final class JwtDto {
      */
     public String getUsername() {
         return username;
+    }
+
+    /**
+     * Returns the roles of the user.
+     *
+     * @return the roles of the user
+     */
+    public Set<String> getRoles() {
+        return roles;
     }
 
     /**

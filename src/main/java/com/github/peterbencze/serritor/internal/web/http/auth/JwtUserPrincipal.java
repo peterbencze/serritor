@@ -14,19 +14,31 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal.web;
+package com.github.peterbencze.serritor.internal.web.http.auth;
+
+import java.security.Principal;
 
 /**
- * Specifies the possible HTTP methods.
+ * Represents a user principal.
  */
-public enum HttpMethod {
-    HEAD,
-    GET,
-    POST,
-    PUT,
-    PATCH,
-    DELETE,
-    CONNECT,
-    OPTIONS,
-    TRACE
+public final class JwtUserPrincipal implements Principal {
+
+    private final String name;
+
+    /**
+     * Creates a {@link JwtUserPrincipal}.
+     *
+     * @param name the name of the user
+     */
+    public JwtUserPrincipal(final String name) {
+        this.name = name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName() {
+        return name;
+    }
 }

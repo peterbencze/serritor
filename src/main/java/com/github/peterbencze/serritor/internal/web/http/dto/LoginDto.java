@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal.web.dto;
+package com.github.peterbencze.serritor.internal.web.http.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A DTO that is used to send the user authentication credentials to the web server.
+ * A DTO that is used by the client to transfer user authentication credentials to the web server.
  */
 public final class LoginDto {
 
@@ -29,29 +29,29 @@ public final class LoginDto {
     /**
      * Creates a {@link LoginDto} instance.
      *
-     * @param username the username of the user
-     * @param password the password of the user
+     * @param username the username provided by the user
+     * @param password the password provided by the user
      */
     public LoginDto(
-            @JsonProperty("username") final String username,
-            @JsonProperty("password") final String password) {
+            @JsonProperty(value = "username", required = true) final String username,
+            @JsonProperty(value = "password", required = true) final String password) {
         this.username = username;
         this.password = password;
     }
 
     /**
-     * Returns the username of the user.
+     * Returns the username provided by the user.
      *
-     * @return the username of the user
+     * @return the username provided by the user
      */
     public String getUsername() {
         return username;
     }
 
     /**
-     * Returns the password of the user.
+     * Returns the password provided by the user.
      *
-     * @return the password of the user
+     * @return the password provided by the user
      */
     public String getPassword() {
         return password;

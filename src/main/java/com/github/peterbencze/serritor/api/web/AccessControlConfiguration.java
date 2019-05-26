@@ -16,10 +16,10 @@
 
 package com.github.peterbencze.serritor.api.web;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -30,27 +30,36 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  */
 public final class AccessControlConfiguration {
 
+    private final String authenticationPath;
     private final List<User> users;
-    private final byte[] secretKey;
+    private final String secretKey;
     private final boolean isCookieAuthenticationEnabled;
+    private final Duration jwtExpirationDuration;
 
     private AccessControlConfiguration(final AccessControlConfigurationBuilder builder) {
+        authenticationPath = builder.authenticationPath;
         users = builder.users;
         secretKey = builder.secretKey;
         isCookieAuthenticationEnabled = builder.isCookieAuthenticationEnabled;
+        jwtExpirationDuration = builder.jwtExpirationDuration;
     }
 
     /**
-     * Returns the user with the given username.
+     * Returns the authentication path.
      *
-     * @param username the username of the user
-     *
-     * @return the user with the given username
+     * @return the authentication path
      */
-    public Optional<User> getUser(final String username) {
-        return users.stream()
-                .filter(user -> StringUtils.equalsIgnoreCase(user.getUsername(), username))
-                .findFirst();
+    public String getAuthenticationPath() {
+        return authenticationPath;
+    }
+
+    /**
+     * Returns the list of users who have access to the web API.
+     *
+     * @return the list of users who have access to the web API
+     */
+    public List<User> getUsers() {
+        return users;
     }
 
     /**
@@ -58,7 +67,7 @@ public final class AccessControlConfiguration {
      *
      * @return the secret key to be used for the JWT signing algorithm
      */
-    public Optional<byte[]> getSecretKey() {
+    public Optional<String> getSecretKey() {
         return Optional.ofNullable(secretKey);
     }
 
@@ -72,6 +81,15 @@ public final class AccessControlConfiguration {
     }
 
     /**
+     * Returns the expiration duration of the JWT which is used to authenticate.
+     *
+     * @return the expiration duration of the JWT which is used to authenticate
+     */
+    public Duration getJwtExpirationDuration() {
+        return jwtExpirationDuration;
+    }
+
+    /**
      * Returns a string representation of this access control configuration instance.
      *
      * @return a string representation of this access control configuration instance
@@ -79,8 +97,10 @@ public final class AccessControlConfiguration {
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("authenticationPath", authenticationPath)
                 .append("users", users)
                 .append("isCookieAuthenticationEnabled", isCookieAuthenticationEnabled)
+                .append("jwtExpirationDuration", jwtExpirationDuration)
                 .toString();
     }
 
@@ -89,10 +109,15 @@ public final class AccessControlConfiguration {
      */
     public static final class AccessControlConfigurationBuilder {
 
+        private static final String DEFAULT_AUTHENTICATION_PATH = "/api/auth";
+        private static final Duration DEFAULT_JWT_EXPIRATION_DURATION = Duration.ofHours(1);
+
         private final List<User> users;
 
-        private byte[] secretKey;
+        private String authenticationPath;
+        private String secretKey;
         private boolean isCookieAuthenticationEnabled;
+        private Duration jwtExpirationDuration;
 
         /**
          * Creates a {@link AccessControlConfigurationBuilder} instance.
@@ -104,6 +129,25 @@ public final class AccessControlConfiguration {
 
             users = new ArrayList<>();
             users.add(rootUser);
+
+            authenticationPath = DEFAULT_AUTHENTICATION_PATH;
+            jwtExpirationDuration = DEFAULT_JWT_EXPIRATION_DURATION;
+        }
+
+        /**
+         * Sets the authentication path. The default path is /api/auth.
+         *
+         * @param authenticationPath the authentication path
+         *
+         * @return the <code>AccessControlConfigurationBuilder</code> instance
+         */
+        public AccessControlConfigurationBuilder setAuthenticationPath(
+                final String authenticationPath) {
+            Validate.notBlank(authenticationPath,
+                    "The authenticationPath parameter cannot be null or blank");
+
+            this.authenticationPath = authenticationPath;
+            return this;
         }
 
         /**
@@ -129,20 +173,44 @@ public final class AccessControlConfiguration {
          *
          * @return the <code>AccessControlConfigurationBuilder</code> instance
          */
-        public AccessControlConfigurationBuilder setSecretKey(final Byte[] secretKey) {
-            Validate.notEmpty(secretKey, "The secretKey parameter cannot be empty");
-            this.secretKey = ArrayUtils.toPrimitive(secretKey);
+        public AccessControlConfigurationBuilder setSecretKey(final String secretKey) {
+            Validate.notBlank(secretKey, "The secretKey parameter cannot be null or blank");
 
+            this.secretKey = secretKey;
             return this;
         }
 
         /**
          * If enabled, the JWT will be stored in a cookie.
          *
+         * @param isCookieAuthenticationEnabled <code>true</code> enables, <code>false</code>
+         *                                      disables cookie authentication
+         *
          * @return the <code>AccessControlConfigurationBuilder</code> instance
          */
-        public AccessControlConfigurationBuilder enableCookieAuthentication() {
-            isCookieAuthenticationEnabled = true;
+        public AccessControlConfigurationBuilder setCookieAuthenticationEnabled(
+                final boolean isCookieAuthenticationEnabled) {
+            this.isCookieAuthenticationEnabled = isCookieAuthenticationEnabled;
+            return this;
+        }
+
+        /**
+         * Sets the expiration duration of the JWT which is used to authenticate.
+         *
+         * @param jwtExpirationDuration the expiration duration of the JWT
+         *
+         * @return the <code>AccessControlConfigurationBuilder</code> instance
+         */
+        public AccessControlConfigurationBuilder setJwtExpirationDuration(
+                final Duration jwtExpirationDuration) {
+            Validate.notNull(jwtExpirationDuration,
+                    "The jwtExpirationDuration parameter cannot be null");
+            Validate.isTrue(!jwtExpirationDuration.isZero(),
+                    "The JWT expiration duration cannot be zero");
+            Validate.isTrue(!jwtExpirationDuration.isNegative(),
+                    "The JWT expiration duration cannot be negative");
+
+            this.jwtExpirationDuration = jwtExpirationDuration;
             return this;
         }
 

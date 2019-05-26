@@ -16,6 +16,10 @@
 
 package com.github.peterbencze.serritor.api.web;
 
+import com.github.peterbencze.serritor.internal.web.http.auth.BCryptCredential;
+import java.util.Collections;
+import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -26,22 +30,41 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public final class User {
 
     private final String username;
-    private final String passwordHash;
+    private final String password;
+    private final Set<String> roles;
 
     /**
      * Creates a {@link User} instance.
      *
-     * @param username     the unique username of the user
-     * @param passwordHash the BCrypt hash of the user's password
+     * @param username the unique username of the user
+     * @param password the BCrypt hash of the user's password
+     * @param roles    the roles associated with the user
      */
-    public User(final String username, final String passwordHash) {
+    public User(final String username, final String password, final Set<String> roles) {
         Validate.notBlank(username, "The username parameter cannot be null or blank");
-        Validate.notBlank(passwordHash, "The passwordHash parameter cannot be null or blank");
-        Validate.isTrue(isSupportedSaltVersion(passwordHash),
-                "Unsupported BCrypt salt version (only $2$ or $2a$ are supported)");
+        Validate.notBlank(password, "The password parameter cannot be null or blank");
+
+        if (password.startsWith(BCryptCredential.PREFIX)) {
+            Validate.isTrue(isSupportedSaltVersion(password),
+                    "Unsupported BCrypt salt version (only $2$ or $2a$ are supported)");
+        }
+
+        Validate.noNullElements(roles,
+                "The roles parameter cannot be null or contain null elements");
 
         this.username = username;
-        this.passwordHash = passwordHash;
+        this.password = password;
+        this.roles = roles;
+    }
+
+    /**
+     * Creates a {@link User} instance.
+     *
+     * @param username the unique username of the user
+     * @param password the BCrypt hash of the user's password
+     */
+    public User(final String username, final String password) {
+        this(username, password, Collections.emptySet());
     }
 
     /**
@@ -58,8 +81,17 @@ public final class User {
      *
      * @return the BCrypt hash of the user's password
      */
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Returns the roles of the user.
+     *
+     * @return the roles of the user
+     */
+    public Set<String> getRoles() {
+        return roles;
     }
 
     /**
@@ -71,17 +103,19 @@ public final class User {
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
                 .append("username", username)
+                .append("roles", roles)
                 .toString();
     }
 
     /**
      * Determines if the version of the BCrypt algorithm used to create the hash is supported.
      *
-     * @param passwordHash the BCrypt hash
+     * @param password the BCrypt hash
      *
      * @return <code>true</code> if the version is supported, <code>false</code> otherwise
      */
-    private static boolean isSupportedSaltVersion(final String passwordHash) {
-        return passwordHash.startsWith("$2$") || passwordHash.startsWith("$2a$");
+    private static boolean isSupportedSaltVersion(final String password) {
+        String passwordWithoutPrefix = StringUtils.removeStart(password, BCryptCredential.PREFIX);
+        return StringUtils.startsWithAny(passwordWithoutPrefix, "$2$", "$2a$");
     }
 }

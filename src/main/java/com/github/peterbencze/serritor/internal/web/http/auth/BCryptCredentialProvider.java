@@ -14,15 +14,29 @@
  * limitations under the License.
  */
 
-package com.github.peterbencze.serritor.internal.web;
+package com.github.peterbencze.serritor.internal.web.http.auth;
 
-import io.javalin.security.Role;
+import org.eclipse.jetty.util.security.Credential;
+import org.eclipse.jetty.util.security.CredentialProvider;
 
 /**
- * Represents a user's role.
+ * Provider of BCrypt credentials.
  */
-public enum UserRole implements Role {
+public final class BCryptCredentialProvider implements CredentialProvider {
 
-    UNAUTHENTICATED,
-    AUTHENTICATED
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Credential getCredential(final String credential) {
+        return new BCryptCredential(credential);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPrefix() {
+        return BCryptCredential.PREFIX;
+    }
 }

@@ -16,7 +16,7 @@
 
 package com.github.peterbencze.serritor.it;
 
-import com.github.peterbencze.serritor.api.BaseCrawler;
+import com.github.peterbencze.serritor.api.Crawler;
 import com.github.peterbencze.serritor.api.Browser;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
@@ -47,7 +47,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 /**
  * Integration test cases for Serritor.
  */
-public class SerritorIT {
+public final class CrawlingIT {
 
     private static WireMockServer mockServer;
     private static BrowserMobProxyServer proxyServer;
@@ -80,7 +80,7 @@ public class SerritorIT {
                 .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
                 .build();
 
-        BaseCrawler crawler = new BaseCrawler(config) {
+        Crawler crawler = new Crawler(config) {
             @Override
             protected void onNonHtmlResponse(final NonHtmlResponseEvent event) {
                 super.onNonHtmlResponse(event);
@@ -122,7 +122,7 @@ public class SerritorIT {
                 .addCrawlSeed(CrawlRequest.createDefault("http://te.st/bar"))
                 .build();
 
-        BaseCrawler crawler = new BaseCrawler(config) {
+        Crawler crawler = new Crawler(config) {
             @Override
             protected void onResponseSuccess(final ResponseSuccessEvent event) {
                 super.onResponseSuccess(event);
@@ -133,7 +133,7 @@ public class SerritorIT {
         };
         crawler.start(Browser.HTML_UNIT, capabilities);
 
-        crawler = new BaseCrawler(crawler.getState()) {
+        crawler = new Crawler(crawler.getState()) {
         };
         crawler.resume(Browser.HTML_UNIT, capabilities);
 
@@ -164,7 +164,7 @@ public class SerritorIT {
                 .addCrawlSeed(CrawlRequest.createDefault("http://te.st/bar"))
                 .build();
 
-        BaseCrawler crawler = new BaseCrawler(config) {
+        Crawler crawler = new Crawler(config) {
         };
         crawler.start(Browser.HTML_UNIT, capabilities);
 
@@ -190,7 +190,7 @@ public class SerritorIT {
                 .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
                 .build();
 
-        BaseCrawler crawler = new BaseCrawler(config) {
+        Crawler crawler = new Crawler(config) {
         };
         crawler.start(Browser.HTML_UNIT, capabilities);
 

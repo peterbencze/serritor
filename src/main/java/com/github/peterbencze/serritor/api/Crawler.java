@@ -77,9 +77,9 @@ import org.slf4j.LoggerFactory;
  * Provides a skeletal implementation of a crawler to minimize the effort for users to implement
  * their own.
  */
-public abstract class BaseCrawler {
+public abstract class Crawler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BaseCrawler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Crawler.class);
 
     private final CrawlerConfiguration config;
     private final Stopwatch runTimeStopwatch;
@@ -100,7 +100,7 @@ public abstract class BaseCrawler {
      *
      * @param config the configuration of the crawler
      */
-    protected BaseCrawler(final CrawlerConfiguration config) {
+    protected Crawler(final CrawlerConfiguration config) {
         this(new CrawlerState(Validate.notNull(config, "The config parameter cannot be null")));
     }
 
@@ -109,7 +109,7 @@ public abstract class BaseCrawler {
      *
      * @param state the state to restore the crawler to
      */
-    protected BaseCrawler(final CrawlerState state) {
+    protected Crawler(final CrawlerState state) {
         Validate.notNull(state, "The state parameter cannot be null");
 
         config = state.getStateObject(CrawlerConfiguration.class)
