@@ -126,7 +126,7 @@ public abstract class Crawler {
     }
 
     /**
-     * Returns the configuration of the crawler.
+     * Returns the configuration of the crawler. This method is thread-safe.
      *
      * @return the configuration of the crawler
      */
@@ -135,7 +135,7 @@ public abstract class Crawler {
     }
 
     /**
-     * Returns summary statistics about the crawl progress.
+     * Returns summary statistics about the crawl progress. This method is thread-safe.
      *
      * @return summary statistics about the crawl progress
      */
@@ -331,7 +331,7 @@ public abstract class Crawler {
     }
 
     /**
-     * Gracefully stops the crawler.
+     * Gracefully stops the crawler. This method is thread-safe.
      */
     protected final void stop() {
         Validate.validState(!isStopped.get(), "The crawler is not started.");
