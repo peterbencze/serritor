@@ -18,6 +18,7 @@ package com.github.peterbencze.serritor.api.helper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.Future;
@@ -32,7 +33,8 @@ import org.eclipse.jetty.websocket.api.Session;
  */
 public final class JsonReaderWriter {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new Jdk8Module());
 
     /**
      * Private constructor to hide the implicit public one.
