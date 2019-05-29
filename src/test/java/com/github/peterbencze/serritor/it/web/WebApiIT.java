@@ -21,6 +21,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.peterbencze.serritor.api.helper.JsonReaderWriter;
 import com.github.peterbencze.serritor.api.web.AccessControlConfiguration;
 import com.github.peterbencze.serritor.api.web.AccessControlConfiguration.AccessControlConfigurationBuilder;
 import com.github.peterbencze.serritor.api.web.ServerConfiguration;
@@ -57,6 +58,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.Cookie;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -68,7 +70,6 @@ import org.apache.http.util.EntityUtils;
 import org.awaitility.Awaitility;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.http.MimeTypes.Type;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -99,7 +100,7 @@ public final class WebApiIT {
 
     private static final CookieStore COOKIE_STORE = new BasicCookieStore();
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonReaderWriter.getObjectMapper();
 
     private static CloseableHttpClient HTTP_CLIENT;
 
@@ -156,7 +157,8 @@ public final class WebApiIT {
             HttpGet request = new HttpGet("http://localhost:8080/http/nonexistent");
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.NOT_FOUND_404,
                         response.getStatusLine().getStatusCode());
@@ -211,7 +213,8 @@ public final class WebApiIT {
             HttpGet request = new HttpGet("http://localhost:8080/api/http/test");
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.UNAUTHORIZED_401,
                         response.getStatusLine().getStatusCode());
@@ -242,7 +245,8 @@ public final class WebApiIT {
             request.setHeader(HttpHeader.AUTHORIZATION.asString(), "Bearer invalid");
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.UNAUTHORIZED_401,
                         response.getStatusLine().getStatusCode());
@@ -278,7 +282,8 @@ public final class WebApiIT {
 
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.UNAUTHORIZED_401,
                         response.getStatusLine().getStatusCode());
@@ -310,13 +315,13 @@ public final class WebApiIT {
 
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost request = new HttpPost("http://localhost:8080/api/auth");
-            request.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            request.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            request.setEntity(entity);
 
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                JwtDto jwtDto = MAPPER.readValue(content, JwtDto.class);
+                JwtDto jwtDto = JsonReaderWriter.getObjectMapper().readValue(content, JwtDto.class);
                 DecodedJWT decodedJwt = JWT_VERIFIER.verify(jwtDto.getJwt());
 
                 Assert.assertEquals(HttpStatus.OK_200, response.getStatusLine().getStatusCode());
@@ -351,13 +356,13 @@ public final class WebApiIT {
 
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost request = new HttpPost("http://localhost:8080/api/auth");
-            request.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            request.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            request.setEntity(entity);
 
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                JwtDto jwtDto = MAPPER.readValue(content, JwtDto.class);
+                JwtDto jwtDto = JsonReaderWriter.getObjectMapper().readValue(content, JwtDto.class);
                 DecodedJWT decodedJwt = JWT_VERIFIER.verify(jwtDto.getJwt());
 
                 Optional<Cookie> jwtCookieOpt = COOKIE_STORE.getCookies()
@@ -412,13 +417,14 @@ public final class WebApiIT {
 
             LoginDto loginDto = new LoginDto(USERNAME, "wrong-password");
             HttpPost request = new HttpPost("http://localhost:8080/api/auth");
-            request.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            request.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            request.setEntity(entity);
 
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.UNAUTHORIZED_401,
                         response.getStatusLine().getStatusCode());
@@ -450,9 +456,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 EntityUtils.consumeQuietly(response.getEntity());
 
@@ -463,7 +469,8 @@ public final class WebApiIT {
             HttpGet endpointRequest = new HttpGet("http://localhost:8080/api/http/test-with-role");
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(endpointRequest)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.FORBIDDEN_403,
                         response.getStatusLine().getStatusCode());
@@ -497,9 +504,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 EntityUtils.consumeQuietly(response.getEntity());
 
@@ -539,9 +546,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 EntityUtils.consumeQuietly(response.getEntity());
 
@@ -552,7 +559,8 @@ public final class WebApiIT {
             HttpPost endpointRequest = new HttpPost("http://localhost:8080/api/http/test-csrf");
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(endpointRequest)) {
                 String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ErrorDto errorDto = MAPPER.readValue(content, ErrorDto.class);
+                ErrorDto errorDto = JsonReaderWriter.getObjectMapper()
+                        .readValue(content, ErrorDto.class);
 
                 Assert.assertEquals(HttpStatus.UNAUTHORIZED_401,
                         response.getStatusLine().getStatusCode());
@@ -584,9 +592,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 EntityUtils.consumeQuietly(response.getEntity());
 
@@ -791,9 +799,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 EntityUtils.consumeQuietly(response.getEntity());
 
@@ -840,9 +848,9 @@ public final class WebApiIT {
             // Log in
             LoginDto loginDto = new LoginDto(USERNAME, PASSWORD);
             HttpPost loginRequest = new HttpPost("http://localhost:8080/api/auth");
-            loginRequest.addHeader(HttpHeader.CONTENT_TYPE.asString(),
-                    Type.APPLICATION_JSON_UTF_8.asString());
-            loginRequest.setEntity(new StringEntity(MAPPER.writeValueAsString(loginDto)));
+            StringEntity entity = new StringEntity(OBJECT_MAPPER.writeValueAsString(loginDto),
+                    ContentType.APPLICATION_JSON);
+            loginRequest.setEntity(entity);
             try (CloseableHttpResponse response = HTTP_CLIENT.execute(loginRequest)) {
                 Assert.assertEquals(HttpStatus.OK_200, response.getStatusLine().getStatusCode());
 

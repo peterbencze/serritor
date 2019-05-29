@@ -23,7 +23,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.peterbencze.serritor.api.helper.JsonReaderWriter;
 import com.github.peterbencze.serritor.api.web.AccessControlConfiguration;
 import com.github.peterbencze.serritor.internal.util.KeyFactory;
 import com.github.peterbencze.serritor.internal.web.http.CsrfFilter;
@@ -193,10 +193,8 @@ public final class JwtAuthenticator implements Authenticator {
     private Authentication authenticateWithCredentials(
             final HttpServletRequest request,
             final HttpServletResponse response) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
         try {
-            LoginDto loginDto = mapper.readValue(request.getInputStream(), LoginDto.class);
+            LoginDto loginDto = JsonReaderWriter.readJsonRequest(request, LoginDto.class);
 
             String username = loginDto.getUsername();
 
@@ -248,7 +246,7 @@ public final class JwtAuthenticator implements Authenticator {
             response.setContentType(Type.APPLICATION_JSON.asString());
 
             JwtDto jwtDto = new JwtDto(username, userRoles, expiryDate, jwt);
-            mapper.writeValue(response.getOutputStream(), jwtDto);
+            JsonReaderWriter.writeJsonResponse(response, jwtDto);
 
             return new UserAuthentication(getAuthMethod(), userIdentity);
         } catch (JsonParseException | JsonMappingException e) {

@@ -16,7 +16,7 @@
 
 package com.github.peterbencze.serritor.internal.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.peterbencze.serritor.api.helper.JsonReaderWriter;
 import com.github.peterbencze.serritor.internal.web.http.dto.ErrorDto;
 import java.io.IOException;
 import java.io.Writer;
@@ -68,9 +68,6 @@ public final class JsonErrorHandler extends ErrorHandler {
             final int code,
             final String message,
             final boolean showStacks) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ErrorDto errorDto = new ErrorDto(code, message);
-
-        mapper.writeValue(writer, errorDto);
+        JsonReaderWriter.getObjectMapper().writeValue(writer, new ErrorDto(code, message));
     }
 }
