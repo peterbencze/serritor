@@ -1,6 +1,16 @@
 com.github.peterbencze.serritor.api
 com.github.peterbencze.serritor.api.event
 com.github.peterbencze.serritor.api.helper
+com.github.peterbencze.serritor.api.web
+com.github.peterbencze.serritor.api.web.http
+com.github.peterbencze.serritor.api.web.socket
 com.github.peterbencze.serritor.internal
 com.github.peterbencze.serritor.internal.crawldelaymechanism
-com.github.peterbencze.serritor.internal.event
+com.github.peterbencze.serritor.internal.stats
+com.github.peterbencze.serritor.internal.util
+com.github.peterbencze.serritor.internal.util.stopwatch
+com.github.peterbencze.serritor.internal.web
+com.github.peterbencze.serritor.internal.web.http
+com.github.peterbencze.serritor.internal.web.http.auth
+com.github.peterbencze.serritor.internal.web.http.dto
+com.github.peterbencze.serritor.internal.web.socket
