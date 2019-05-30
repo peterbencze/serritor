@@ -20,11 +20,11 @@ import com.google.common.net.InternetDomainName;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Optional;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * Represents a candidate for crawling.
- *
- * @author Peter Bencze
  */
 public final class CrawlCandidate implements Serializable {
 
@@ -90,6 +90,22 @@ public final class CrawlCandidate implements Serializable {
      */
     public Optional<Serializable> getMetadata() {
         return crawlRequest.getMetadata();
+    }
+
+    /**
+     * Returns a string representation of this crawl candidate.
+     *
+     * @return a string representation of this crawl candidate
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("refererUrl", refererUrl)
+                .append("requestUrl", getRequestUrl())
+                .append("domain", getDomain())
+                .append("crawlDepth", crawlDepth)
+                .append("priority", getPriority())
+                .toString();
     }
 
     /**

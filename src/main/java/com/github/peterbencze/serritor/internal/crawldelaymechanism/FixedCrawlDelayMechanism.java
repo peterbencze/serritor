@@ -21,8 +21,6 @@ import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 /**
  * A crawl delay mechanism, in which case the delay is constant and equals to the duration specified
  * in the configuration.
- *
- * @author Peter Bencze
  */
 public final class FixedCrawlDelayMechanism implements CrawlDelayMechanism {
 

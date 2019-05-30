@@ -18,8 +18,6 @@ package com.github.peterbencze.serritor.internal.crawldelaymechanism;
 
 /**
  * An interface which should be implemented by every crawl delay mechanism.
- *
- * @author Peter Bencze
  */
 public interface CrawlDelayMechanism {
 

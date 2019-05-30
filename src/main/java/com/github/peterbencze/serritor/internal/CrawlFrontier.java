@@ -20,9 +20,9 @@ import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlCandidate.CrawlCandidateBuilder;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
+import com.github.peterbencze.serritor.internal.stats.StatsCounter;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -31,15 +31,20 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages crawl requests and provides crawl candidates to the crawler.
- *
- * @author Peter Bencze
  */
 public final class CrawlFrontier implements Serializable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlFrontier.class);
+
     private final CrawlerConfiguration config;
+    private final StatsCounter statsCounter;
     private final Set<String> urlFingerprints;
     private final Queue<CrawlCandidate> candidates;
 
@@ -48,17 +53,17 @@ public final class CrawlFrontier implements Serializable {
     /**
      * Creates a {@link CrawlFrontier} instance.
      *
-     * @param config the crawler configuration
+     * @param config       the crawler configuration
+     * @param statsCounter the stats counter which accumulates statistics during the operation of
+     *                     the crawler
      */
-    public CrawlFrontier(final CrawlerConfiguration config) {
+    public CrawlFrontier(final CrawlerConfiguration config, final StatsCounter statsCounter) {
         this.config = config;
+        this.statsCounter = statsCounter;
         urlFingerprints = new HashSet<>();
         candidates = createPriorityQueue();
 
-        config.getCrawlSeeds()
-                .forEach((CrawlRequest request) -> {
-                    feedRequest(request, true);
-                });
+        feedCrawlSeeds();
     }
 
     /**
@@ -68,25 +73,27 @@ public final class CrawlFrontier implements Serializable {
      * @param isCrawlSeed indicates if the request is a crawl seed
      */
     public void feedRequest(final CrawlRequest request, final boolean isCrawlSeed) {
-        if (config.isOffsiteRequestFilteringEnabled()) {
-            boolean inCrawlDomain = false;
+        LOGGER.debug("Feeding request: {}", request);
 
-            for (CrawlDomain allowedCrawlDomain : config.getAllowedCrawlDomains()) {
-                if (allowedCrawlDomain.contains(request.getDomain())) {
-                    inCrawlDomain = true;
-                    break;
-                }
-            }
+        if (config.isOffsiteRequestFilterEnabled()) {
+            boolean inCrawlDomain = config.getAllowedCrawlDomains()
+                    .stream()
+                    .anyMatch(crawlDomain -> crawlDomain.contains(request.getDomain()));
 
             if (!inCrawlDomain) {
+                LOGGER.debug("Filtering offsite request");
+
+                statsCounter.recordOffsiteRequest();
                 return;
             }
         }
 
-        if (config.isDuplicateRequestFilteringEnabled()) {
+        if (config.isDuplicateRequestFilterEnabled()) {
             String urlFingerprint = createFingerprintForUrl(request.getRequestUrl());
-
             if (urlFingerprints.contains(urlFingerprint)) {
+                LOGGER.debug("Filtering duplicate request");
+
+                statsCounter.recordDuplicateRequest();
                 return;
             }
 
@@ -100,15 +107,19 @@ public final class CrawlFrontier implements Serializable {
             int nextCrawlDepth = currentCandidate.getCrawlDepth() + 1;
 
             if (crawlDepthLimit != 0 && nextCrawlDepth > crawlDepthLimit) {
+                LOGGER.debug("Filtering crawl depth limit exceeding request");
+
+                statsCounter.recordCrawlDepthLimitExceedingRequest();
                 return;
             }
 
-            builder = builder
-                    .setRefererUrl(currentCandidate.getRequestUrl())
+            builder.setRefererUrl(currentCandidate.getRequestUrl())
                     .setCrawlDepth(nextCrawlDepth);
         }
 
+        LOGGER.debug("Adding request to the list of crawl candidates");
         candidates.add(builder.build());
+        statsCounter.recordRemainingCrawlCandidate();
     }
 
     /**
@@ -131,34 +142,53 @@ public final class CrawlFrontier implements Serializable {
     }
 
     /**
-     * Creates the fingerprint of the given URL. If the URL contains query parameters, it sorts
-     * them. This way URLs with different order of query parameters get the same fingerprint.
+     * Resets the crawl frontier to its initial state.
+     */
+    public void reset() {
+        LOGGER.debug("Setting crawl frontier to its initial state");
+
+        urlFingerprints.clear();
+        candidates.clear();
+
+        feedCrawlSeeds();
+    }
+
+    /**
+     * Feeds all the crawl seeds to the crawl frontier.
+     */
+    private void feedCrawlSeeds() {
+        LOGGER.debug("Feeding crawl seeds");
+
+        config.getCrawlSeeds().forEach((CrawlRequest request) -> feedRequest(request, true));
+    }
+
+    /**
+     * Creates the fingerprint of the given URL. If the URL contains query params, it sorts them by
+     * key and value. This way URLs that have the same query params but in different order will have
+     * the same fingerprint. Fragments are ignored.
      *
      * @param url the URL for which the fingerprint is created
      *
      * @return the fingerprint of the URL
      */
     private static String createFingerprintForUrl(final URI url) {
-        StringBuilder truncatedUrl = new StringBuilder(url.getHost());
+        URIBuilder builder = new URIBuilder(url);
 
-        String path = url.getPath();
-        if (path != null) {
-            truncatedUrl.append(path);
-        }
+        // Change scheme and host to lowercase
+        builder.setScheme(builder.getScheme().toLowerCase())
+                .setHost(builder.getHost().toLowerCase());
 
-        String query = url.getQuery();
-        if (query != null) {
-            truncatedUrl.append("?");
+        // Sort query params by key and value
+        List<NameValuePair> queryParams = builder.getQueryParams();
+        queryParams.sort(Comparator.comparing(NameValuePair::getName)
+                .thenComparing(NameValuePair::getValue));
 
-            String[] queryParams = url.getQuery().split("&");
+        builder.setParameters(queryParams);
 
-            List<String> queryParamList = Arrays.asList(queryParams);
-            queryParamList.stream()
-                    .sorted(String::compareToIgnoreCase)
-                    .forEachOrdered(truncatedUrl::append);
-        }
+        // Remove fragment
+        builder.setFragment(null);
 
-        return DigestUtils.sha256Hex(truncatedUrl.toString());
+        return DigestUtils.sha256Hex(builder.toString());
     }
 
     /**
@@ -166,27 +196,27 @@ public final class CrawlFrontier implements Serializable {
      *
      * @return the priority queue using the strategy specified in the configuration
      */
-    @SuppressWarnings("checkstyle:MissingSwitchDefault")
     private PriorityQueue<CrawlCandidate> createPriorityQueue() {
-        Function crawlDepthGetter
-                = (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth;
-        Function priorityGetter
-                = (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority;
+        Function<CrawlCandidate, Integer> crawlDepthGetter =
+                (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getCrawlDepth;
+        Function<CrawlCandidate, Integer> priorityGetter =
+                (Function<CrawlCandidate, Integer> & Serializable) CrawlCandidate::getPriority;
 
         switch (config.getCrawlStrategy()) {
             case BREADTH_FIRST:
-                Comparator breadthFirstComparator = Comparator.comparing(crawlDepthGetter)
-                        .thenComparing(priorityGetter, Comparator.reverseOrder());
+                Comparator<CrawlCandidate> breadthFirstComparator =
+                        Comparator.comparing(crawlDepthGetter)
+                                .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(breadthFirstComparator);
             case DEPTH_FIRST:
-                Comparator depthFirstComparator
-                        = Comparator.comparing(crawlDepthGetter, Comparator.reverseOrder())
+                Comparator<CrawlCandidate> depthFirstComparator =
+                        Comparator.comparing(crawlDepthGetter, Comparator.reverseOrder())
                                 .thenComparing(priorityGetter, Comparator.reverseOrder());
 
                 return new PriorityQueue<>(depthFirstComparator);
+            default:
+                throw new IllegalArgumentException("Unsupported crawl strategy");
         }
-
-        throw new IllegalArgumentException("Unsupported crawl strategy.");
     }
 }

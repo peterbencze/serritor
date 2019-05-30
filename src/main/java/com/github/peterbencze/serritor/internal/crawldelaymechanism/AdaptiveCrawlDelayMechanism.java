@@ -23,8 +23,6 @@ import org.openqa.selenium.JavascriptExecutor;
 /**
  * A crawl delay mechanism, in which case the delay corresponds to the page loading time, if it is
  * between the specified range, otherwise the minimum or maximum duration is used.
- *
- * @author Peter Bencze
  */
 public final class AdaptiveCrawlDelayMechanism implements CrawlDelayMechanism {
 

@@ -16,26 +16,33 @@
 
 package com.github.peterbencze.serritor.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.net.InternetDomainName;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.http.client.utils.URIBuilder;
 
 /**
- * Represents a crawl request that may be completed by the crawler. If request filtering is enabled,
- * it could get filtered out.
- *
- * @author Peter Bencze
+ * Represents a crawl request that may be completed by the crawler in the future. If request
+ * filtering is enabled, it could be filtered out.
  */
 public final class CrawlRequest implements Serializable {
 
     private final URI requestUrl;
     private final int priority;
+
+    @JsonIgnore
     private final Serializable metadata;
 
+    @JsonIgnore
     private transient InternetDomainName domain;
 
     private CrawlRequest(final CrawlRequestBuilder builder) {
@@ -104,6 +111,20 @@ public final class CrawlRequest implements Serializable {
     }
 
     /**
+     * Returns a string representation of this crawl request.
+     *
+     * @return a string representation of this crawl request
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("requestUrl", requestUrl)
+                .append("domain", domain)
+                .append("priority", priority)
+                .toString();
+    }
+
+    /**
      * Builds {@link CrawlRequest} instances.
      */
     public static final class CrawlRequestBuilder {
@@ -122,7 +143,18 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final URI requestUrl) {
-            this.requestUrl = requestUrl;
+            Validate.notNull(requestUrl, "The requestUrl parameter cannot be null.");
+
+            if (StringUtils.isEmpty(requestUrl.getPath())) {
+                try {
+                    // Define a non-empty path for the URI
+                    this.requestUrl = new URIBuilder(requestUrl).setPath("/").build();
+                } catch (URISyntaxException e) {
+                    throw new IllegalArgumentException(e.getMessage(), e);
+                }
+            } else {
+                this.requestUrl = requestUrl;
+            }
 
             // Extract the domain from the request URL
             domain = InternetDomainName.from(requestUrl.getHost());
@@ -137,7 +169,8 @@ public final class CrawlRequest implements Serializable {
          * @param requestUrl the request URL
          */
         public CrawlRequestBuilder(final String requestUrl) {
-            this(URI.create(requestUrl));
+            this(URI.create(Validate.notNull(requestUrl,
+                    "The requestUrl parameter cannot be null")));
         }
 
         /**
@@ -160,7 +193,7 @@ public final class CrawlRequest implements Serializable {
          * @return the <code>CrawlRequestBuilder</code> instance
          */
         public CrawlRequestBuilder setMetadata(final Serializable metadata) {
-            this.metadata = Validate.notNull(metadata, "The metadata cannot be null.");
+            this.metadata = Validate.notNull(metadata, "The metadata parameter cannot be null.");
             return this;
         }
 

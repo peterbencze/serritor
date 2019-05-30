@@ -22,8 +22,6 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * A crawl delay mechanism in which case the duration is randomized between the specified minimum
  * and maximum range.
- *
- * @author Peter Bencze
  */
 public final class RandomCrawlDelayMechanism implements CrawlDelayMechanism {
 
