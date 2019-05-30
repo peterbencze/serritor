@@ -41,7 +41,7 @@ public final class WebSocketSessionManager {
      * Returns a set of open WebSocket sessions that represent connections to the specific
      * endpoint.
      *
-     * @param socketHandlerClass the class of the WebSocket endpoint handler
+     * @param socketHandlerClass the runtime class of the WebSocket endpoint handler
      *
      * @return a set of open WebSocket sessions that represent connections to the specific endpoint
      */
@@ -57,7 +57,7 @@ public final class WebSocketSessionManager {
      * Adds a WebSocket session to the set of open sessions. This method is called when a client
      * connects to a WebSocket endpoint.
      *
-     * @param socketHandlerClass the class of the WebSocket endpoint handler
+     * @param socketHandlerClass the runtime class of the WebSocket endpoint handler
      * @param session            the open WebSocket session
      */
     public void addSession(
@@ -71,7 +71,7 @@ public final class WebSocketSessionManager {
      * Removes a WebSocket session from the set of open sessions. This method is called when a
      * client disconnects from a WebSocket endpoint.
      *
-     * @param socketHandlerClass the class of the WebSocket endpoint handler
+     * @param socketHandlerClass the runtime class of the WebSocket endpoint handler
      * @param session            the no longer open WebSocket session
      */
     public void removeSession(

@@ -116,7 +116,7 @@ public abstract class CrawlerWithSecuredWebApi extends Crawler {
      * Returns a set of open WebSocket sessions that represent connections to the specific
      * endpoint.
      *
-     * @param socketHandlerClass the class of the WebSocket endpoint handler
+     * @param socketHandlerClass the runtime class of the WebSocket endpoint handler
      *
      * @return a set of open WebSocket sessions that represent connections to the specific endpoint
      */
