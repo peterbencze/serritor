@@ -16,7 +16,7 @@
 
 package com.github.peterbencze.serritor.api;
 
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
@@ -27,7 +27,7 @@ import org.apache.commons.lang3.Validate;
  *
  * @param <T> the type of the input to the operation
  */
-public final class PatternMatchingCallback<T extends EventObject> {
+public final class PatternMatchingCallback<T extends CrawlEvent> {
 
     private final Pattern urlPattern;
     private final Consumer<T> callback;

@@ -26,7 +26,7 @@ import com.github.peterbencze.serritor.api.event.ResponseErrorEvent;
 import com.github.peterbencze.serritor.api.event.ResponseSuccessEvent;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CustomCallbackManager;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
@@ -321,7 +321,7 @@ public abstract class Crawler {
      * @param eventClass the runtime class of the event for which the callback should be invoked
      * @param callback   the pattern matching callback to invoke
      */
-    protected final <T extends EventObject> void registerCustomCallback(
+    protected final <T extends CrawlEvent> void registerCustomCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
         Validate.notNull(eventClass, "The eventClass parameter cannot be null.");

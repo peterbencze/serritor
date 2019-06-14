@@ -19,12 +19,12 @@ package com.github.peterbencze.serritor.api.event;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.CrawlRequest;
 import com.github.peterbencze.serritor.api.PartialCrawlResponse;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 
 /**
  * Event which gets delivered when a request is redirected.
  */
-public final class RequestRedirectEvent extends EventObject {
+public final class RequestRedirectEvent extends CrawlEvent {
 
     private final PartialCrawlResponse partialCrawlResponse;
     private final CrawlRequest redirectedCrawlRequest;

@@ -18,13 +18,13 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 
 /**
  * Event which gets delivered when the browser loads the page and the HTTP status code indicates
  * error (4xx or 5xx).
  */
-public final class ResponseErrorEvent extends EventObject {
+public final class ResponseErrorEvent extends CrawlEvent {
 
     private final CompleteCrawlResponse completeCrawlResponse;
 

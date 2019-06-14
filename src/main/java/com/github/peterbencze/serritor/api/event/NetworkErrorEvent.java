@@ -17,12 +17,12 @@
 package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 
 /**
  * Event which gets delivered when a network error occurs.
  */
-public final class NetworkErrorEvent extends EventObject {
+public final class NetworkErrorEvent extends CrawlEvent {
 
     private final String errorMessage;
 

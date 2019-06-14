@@ -18,12 +18,12 @@ package com.github.peterbencze.serritor.api.event;
 
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 import com.github.peterbencze.serritor.api.PartialCrawlResponse;
-import com.github.peterbencze.serritor.internal.EventObject;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 
 /**
  * Event which gets delivered when the content type of the response is not text/html.
  */
-public final class NonHtmlResponseEvent extends EventObject {
+public final class NonHtmlResponseEvent extends CrawlEvent {
 
     private final PartialCrawlResponse partialCrawlResponse;
 

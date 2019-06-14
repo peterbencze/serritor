@@ -19,18 +19,18 @@ package com.github.peterbencze.serritor.internal;
 import com.github.peterbencze.serritor.api.CrawlCandidate;
 
 /**
- * Base class from which all event objects shall be derived.
+ * Base class from which all crawl event classes shall be derived.
  */
-public abstract class EventObject {
+public abstract class CrawlEvent {
 
     private final CrawlCandidate crawlCandidate;
 
     /**
-     * Base constructor of all event objects.
+     * Base constructor of all crawl event classes.
      *
      * @param crawlCandidate the current crawl candidate
      */
-    protected EventObject(final CrawlCandidate crawlCandidate) {
+    protected CrawlEvent(final CrawlCandidate crawlCandidate) {
         this.crawlCandidate = crawlCandidate;
     }
 
