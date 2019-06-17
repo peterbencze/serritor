@@ -65,6 +65,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.eclipse.jetty.http.HttpStatus;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -168,7 +169,7 @@ public abstract class Crawler {
      * @param browser      the type of the browser to use for crawling
      * @param capabilities the browser properties
      */
-    public final void start(final Browser browser, final DesiredCapabilities capabilities) {
+    public final void start(final Browser browser, final MutableCapabilities capabilities) {
         Validate.notNull(browser, "The browser parameter cannot be null.");
         Validate.notNull(capabilities, "The capabilities parameter cannot be null.");
 
@@ -180,9 +181,10 @@ public abstract class Crawler {
      *
      * @param isResuming indicates if a previously saved state is to be resumed
      */
-    private void start(final Browser browser,
-                       final DesiredCapabilities capabilities,
-                       final boolean isResuming) {
+    private void start(
+            final Browser browser,
+            final MutableCapabilities capabilities,
+            final boolean isResuming) {
         try {
             Validate.validState(isStopped.get(), "The crawler is already running.");
 
@@ -203,7 +205,7 @@ public abstract class Crawler {
 
             // Create a copy of the original capabilities before we make changes to it (we don't
             // want to cause any unwanted side effects)
-            DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
+            MutableCapabilities capabilitiesClone = new MutableCapabilities(capabilities);
 
             proxyServer = new BrowserMobProxyServer();
 
