@@ -57,7 +57,7 @@ public final class UrlFinder {
      * @return a <code>UrlFinder</code> instance with the default configuration
      */
     public static UrlFinder createDefault() {
-        return new UrlFinderBuilder(Pattern.compile("https?://\\S+")).build();
+        return new UrlFinderBuilder().build();
     }
 
     /**
@@ -171,28 +171,38 @@ public final class UrlFinder {
      */
     public static final class UrlFinderBuilder {
 
+        private static final Pattern DEFAULT_PATTERN = Pattern.compile("https?://\\S+");
         private static final By DEFAULT_LOCATING_MECHANISM = By.tagName("a");
         private static final String DEFAULT_ATTRIBUTE_NAME = "href";
         private static final Predicate<String> DEFAULT_VALIDATOR = UrlFinderBuilder::isValidUrl;
 
-        private final Pattern urlPattern;
-
+        private Pattern urlPattern;
         private Set<By> locatingMechanisms;
         private String attributeName;
         private Predicate<String> validator;
 
         /**
          * Creates a {@link UrlFinderBuilder} instance.
-         *
-         * @param urlPattern the pattern to use for matching
          */
-        public UrlFinderBuilder(final Pattern urlPattern) {
-            Validate.notNull(urlPattern, "The urlPattern parameter cannot be null");
-
-            this.urlPattern = urlPattern;
+        public UrlFinderBuilder() {
+            urlPattern = DEFAULT_PATTERN;
             locatingMechanisms = Collections.singleton(DEFAULT_LOCATING_MECHANISM);
             attributeName = DEFAULT_ATTRIBUTE_NAME;
             validator = DEFAULT_VALIDATOR;
+        }
+
+        /**
+         * Sets the pattern to use for matching.
+         *
+         * @param urlPattern the pattern to use for matching
+         *
+         * @return the <code>UrlFinderBuilder</code> instance
+         */
+        public UrlFinderBuilder setPattern(final Pattern urlPattern) {
+            Validate.notNull(urlPattern, "The urlPattern parameter cannot be null");
+
+            this.urlPattern = urlPattern;
+            return this;
         }
 
         /**
