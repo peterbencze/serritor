@@ -17,10 +17,8 @@
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
-import com.github.peterbencze.serritor.api.helper.UrlFinder.UrlFinderBuilder;
 import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,46 +32,116 @@ import org.openqa.selenium.WebElement;
  */
 public final class UrlFinderTest {
 
-    private static final Pattern URL_PATTERN = Pattern.compile(".+valid-url.+");
-    private static final String ATTRIBUTE = "href";
-    private static final String TAG_NAME = "a";
-    private static final String VALID_URL = "http://valid-url.com";
-    private static final String INVALID_URL = "invalid-url";
-    private static final String URL_WITH_INVALID_DOMAIN = "http://invalid.domain";
+    private WebDriver webDriverMock;
+    private CompleteCrawlResponse crawlResponseMock;
 
-    private CompleteCrawlResponse mockedCrawlResponse;
     private UrlFinder urlFinder;
 
     @Before
-    public void initialize() {
-        WebDriver mockedDriver = Mockito.mock(WebDriver.class);
+    public void before() {
+        webDriverMock = Mockito.mock(WebDriver.class);
 
-        WebElement mockedElementWithValidUrl = Mockito.mock(WebElement.class);
-        Mockito.when(mockedElementWithValidUrl.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(VALID_URL);
+        crawlResponseMock = Mockito.mock(CompleteCrawlResponse.class);
+        Mockito.when(crawlResponseMock.getWebDriver()).thenReturn(webDriverMock);
 
-        WebElement mockedElementWithInvalidUrlFormat = Mockito.mock(WebElement.class);
-        Mockito.when(mockedElementWithInvalidUrlFormat.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(INVALID_URL);
-
-        WebElement mockedElementWithInvalidDomain = Mockito.mock(WebElement.class);
-        Mockito.when(mockedElementWithInvalidDomain.getAttribute(Mockito.eq(ATTRIBUTE)))
-                .thenReturn(URL_WITH_INVALID_DOMAIN);
-
-        List<WebElement> elementList = Arrays.asList(mockedElementWithValidUrl,
-                mockedElementWithInvalidUrlFormat, mockedElementWithInvalidDomain);
-        Mockito.when(mockedDriver.findElements(By.tagName(TAG_NAME)))
-                .thenReturn(elementList);
-
-        mockedCrawlResponse = Mockito.mock(CompleteCrawlResponse.class);
-        Mockito.when(mockedCrawlResponse.getWebDriver()).thenReturn(mockedDriver);
-
-        urlFinder = new UrlFinderBuilder(URL_PATTERN).build();
+        urlFinder = UrlFinder.createDefault();
     }
 
     @Test
-    public void testFindUrlsInPage() {
-        Assert.assertEquals(Arrays.asList(VALID_URL),
-                urlFinder.findUrlsInPage(mockedCrawlResponse));
+    public void testFindAllInResponseWhenNoWebElementMatchesTheLocator() {
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.emptyList());
+
+        Assert.assertTrue(urlFinder.findAllInResponse(crawlResponseMock).isEmpty());
+    }
+
+    @Test
+    public void testFindAllInResponseWhenNoUrlMatchesThePattern() {
+        WebElement webElementMock = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("Should not match");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.singletonList(webElementMock));
+
+        Assert.assertTrue(urlFinder.findAllInResponse(crawlResponseMock).isEmpty());
+    }
+
+    @Test
+    public void testFindAllInResponseWhenUrlMatchesThePatternButIsInvalid() {
+        WebElement webElementMock = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("http://invalid..url");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.singletonList(webElementMock));
+
+        Assert.assertTrue(urlFinder.findAllInResponse(crawlResponseMock).isEmpty());
+    }
+
+    @Test
+    public void testFindAllInResponseWhenUrlsMatchThePatternAndAreValid() {
+        WebElement webElementMock1 = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock1.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("http://example.com");
+        WebElement webElementMock2 = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock2.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("https://example.com");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Arrays.asList(webElementMock1, webElementMock2));
+
+        Assert.assertEquals(2, urlFinder.findAllInResponse(crawlResponseMock).size());
+    }
+
+    @Test
+    public void testFindFirstInResponseWhenNoWebElementMatchesTheLocator() {
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.emptyList());
+
+        Assert.assertFalse(urlFinder.findFirstInResponse(crawlResponseMock).isPresent());
+    }
+
+    @Test
+    public void testFindFirstInResponseWhenNoUrlMatchesThePattern() {
+        WebElement webElementMock = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("Should not match");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.singletonList(webElementMock));
+
+        Assert.assertFalse(urlFinder.findFirstInResponse(crawlResponseMock).isPresent());
+    }
+
+    @Test
+    public void testFindFirstInResponseWhenUrlMatchesThePatternButIsInvalid() {
+        WebElement webElementMock = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("http://invalid..url");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Collections.singletonList(webElementMock));
+
+        Assert.assertFalse(urlFinder.findFirstInResponse(crawlResponseMock).isPresent());
+    }
+
+    @Test
+    public void testFindFirstInResponseWhenUrlsMatchThePatternAndAreValid() {
+        WebElement webElementMock1 = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock1.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("http://example.com");
+        WebElement webElementMock2 = Mockito.mock(WebElement.class);
+        Mockito.when(webElementMock2.getAttribute(urlFinder.getAttributeName()))
+                .thenReturn("https://example.com");
+
+        Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
+                .thenReturn(Arrays.asList(webElementMock1, webElementMock2));
+
+        Assert.assertTrue(urlFinder.findFirstInResponse(crawlResponseMock).isPresent());
+
+        // The function returns immediately on the first match, thus the second element should
+        // never be accessed
+        Mockito.verify(webElementMock2, Mockito.never()).getAttribute(urlFinder.getAttributeName());
     }
 }

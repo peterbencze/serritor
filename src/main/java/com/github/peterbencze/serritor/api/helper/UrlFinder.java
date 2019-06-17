@@ -17,13 +17,11 @@
 package com.github.peterbencze.serritor.api.helper;
 
 import com.github.peterbencze.serritor.api.CompleteCrawlResponse;
-import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -35,85 +33,137 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
 /**
- * Finds URLs in HTML page sources using regular expressions.
+ * Finds URLs in web element attributes located by the locating mechanisms, that match the given
+ * pattern. By default, the <code>By.tagName("a")</code> locating mechanism is used and the
+ * element's <code>href</code> attribute is searched for URLs.
  */
 public final class UrlFinder {
 
-    private final Set<Pattern> urlPatterns;
+    private final Pattern urlPattern;
     private final Set<By> locatingMechanisms;
-    private final Set<String> attributes;
+    private final String attributeName;
     private final Predicate<String> validator;
 
     private UrlFinder(final UrlFinderBuilder builder) {
-        urlPatterns = builder.urlPatterns;
+        urlPattern = builder.urlPattern;
         locatingMechanisms = builder.locatingMechanisms;
-        attributes = builder.attributes;
+        attributeName = builder.attributeName;
         validator = builder.validator;
     }
 
     /**
-     * Creates a <code>UrlFinder</code> instance with default configuration which matches anything
-     * in the <code>href</code> attribute of the HTML anchor tags.
+     * Creates a <code>UrlFinder</code> instance with the default configuration.
      *
-     * @return a <code>UrlFinder</code> instance with default configuration
+     * @return a <code>UrlFinder</code> instance with the default configuration
      */
     public static UrlFinder createDefault() {
-        return new UrlFinderBuilder(Pattern.compile(".+")).build();
+        return new UrlFinderBuilder(Pattern.compile("^https?://.+$")).build();
     }
 
     /**
-     * Returns a list of validated URLs found in the page's HTML source.
+     * Returns the pattern used for matching.
      *
-     * @param completeCrawlResponse the complete crawl response
-     *
-     * @return the list of found URLs
+     * @return the pattern used for matching
      */
-    public List<String> findUrlsInPage(final CompleteCrawlResponse completeCrawlResponse) {
-        Validate.notNull(completeCrawlResponse,
-                "The completeCrawlResponse parameter cannot be null.");
+    public Pattern getPattern() {
+        return urlPattern;
+    }
 
-        Set<String> foundUrls = new HashSet<>();
+    /**
+     * Returns the locating mechanisms used for locating web elements.
+     *
+     * @return the locating mechanisms used for locating web elements
+     */
+    public Set<By> getLocatingMechanisms() {
+        return locatingMechanisms;
+    }
 
-        // Find elements using the specified locating mechanisms
-        List<WebElement> extractedElements = locatingMechanisms.stream()
-                .map(completeCrawlResponse.getWebDriver()::findElements)
-                .flatMap(List::stream)
+    /**
+     * Returns the name of the web element attribute that is searched for a URL.
+     *
+     * @return the name of the web element attribute that is searched for a URL
+     */
+    public String getAttributeName() {
+        return attributeName;
+    }
+
+    /**
+     * Returns the predicate used for validating URLs.
+     *
+     * @return the predicate used for validating URLs
+     */
+    public Predicate<String> getValidator() {
+        return validator;
+    }
+
+    /**
+     * Finds all the URLs that match the pattern in the response content.
+     *
+     * @param response the complete crawl response
+     *
+     * @return all the URLs that match the pattern in the response content
+     */
+    public List<String> findAllInResponse(final CompleteCrawlResponse response) {
+        Validate.notNull(response, "The response parameter cannot be null");
+
+        return locatingMechanisms.stream()
+                .flatMap(locatingMechanism ->
+                        response.getWebDriver().findElements(locatingMechanism).stream())
+                .map(element -> element.getAttribute(attributeName))
+                .map(this::findInAttributeValue)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Finds the URL that first matches the pattern in the response content.
+     *
+     * @param response the complete crawl response
+     *
+     * @return the URL that first matches the pattern in the response content
+     */
+    public Optional<String> findFirstInResponse(final CompleteCrawlResponse response) {
+        Validate.notNull(response, "The response parameter cannot be null");
+
+        List<WebElement> matchedElements = locatingMechanisms.stream()
+                .flatMap(locatingMechanism ->
+                        response.getWebDriver().findElements(locatingMechanism).stream())
                 .collect(Collectors.toList());
 
-        // Find URLs in the attribute values of the found elements
-        extractedElements.forEach((WebElement element) -> attributes.stream()
-                .map(element::getAttribute)
-                .filter(StringUtils::isNotBlank)
-                .map(this::findUrlsInAttributeValue)
-                .flatMap(List::stream)
-                .forEach(foundUrls::add));
+        // Return on first match (not possible with Java 8 Stream API)
+        for (WebElement element : matchedElements) {
+            String attributeValue = element.getAttribute(attributeName);
 
-        return new ArrayList<>(foundUrls);
+            Optional<String> matchedUrlOpt = findInAttributeValue(attributeValue);
+            if (matchedUrlOpt.isPresent()) {
+                return matchedUrlOpt;
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**
-     * Returns a list of validated URLs found in the attribute's value.
+     * Finds a valid URL in the given attribute value.
      *
      * @param attributeValue the value of the attribute
      *
-     * @return the list of found URLs
+     * @return a valid URL in the given attribute value
      */
-    private List<String> findUrlsInAttributeValue(final String attributeValue) {
-        List<String> foundUrls = new ArrayList<>();
+    private Optional<String> findInAttributeValue(final String attributeValue) {
+        if (StringUtils.isNotBlank(attributeValue)) {
+            Matcher matcher = urlPattern.matcher(attributeValue);
+            if (matcher.find()) {
+                String foundUrl = matcher.group().trim();
 
-        urlPatterns.stream()
-                .map((Pattern urlPattern) -> urlPattern.matcher(attributeValue))
-                .forEach((Matcher urlPatternMatcher) -> {
-                    while (urlPatternMatcher.find()) {
-                        String foundUrl = urlPatternMatcher.group().trim();
+                if (validator.test(foundUrl)) {
+                    return Optional.of(foundUrl);
+                }
+            }
+        }
 
-                        if (validator.test(foundUrl)) {
-                            foundUrls.add(foundUrl);
-                        }
-                    }
-                });
-
-        return foundUrls;
+        return Optional.empty();
     }
 
     /**
@@ -121,37 +171,27 @@ public final class UrlFinder {
      */
     public static final class UrlFinderBuilder {
 
-        private static final Set<By> DEFAULT_LOCATING_MECHANISMS = Sets.newHashSet(By.tagName("a"));
-        private static final Set<String> DEFAULT_ATTRIBUTES = Sets.newHashSet("href");
+        private static final By DEFAULT_LOCATING_MECHANISM = By.tagName("a");
+        private static final String DEFAULT_ATTRIBUTE_NAME = "href";
         private static final Predicate<String> DEFAULT_VALIDATOR = UrlFinderBuilder::isValidUrl;
 
-        private final Set<Pattern> urlPatterns;
+        private final Pattern urlPattern;
 
         private Set<By> locatingMechanisms;
-        private Set<String> attributes;
+        private String attributeName;
         private Predicate<String> validator;
 
         /**
          * Creates a {@link UrlFinderBuilder} instance.
          *
-         * @param urlPattern the pattern to use to find URLs
+         * @param urlPattern the pattern to use for matching
          */
         public UrlFinderBuilder(final Pattern urlPattern) {
-            this(Collections.singletonList(urlPattern));
-        }
+            Validate.notNull(urlPattern, "The urlPattern parameter cannot be null");
 
-        /**
-         * Creates a {@link UrlFinderBuilder} instance.
-         *
-         * @param urlPatterns the list of patterns to use to find URLs
-         */
-        public UrlFinderBuilder(final List<Pattern> urlPatterns) {
-            Validate.noNullElements(urlPatterns,
-                    "The urlPatterns parameter cannot be null or contain null elements.");
-
-            this.urlPatterns = Sets.newHashSet(urlPatterns);
-            locatingMechanisms = DEFAULT_LOCATING_MECHANISMS;
-            attributes = DEFAULT_ATTRIBUTES;
+            this.urlPattern = urlPattern;
+            locatingMechanisms = Collections.singleton(DEFAULT_LOCATING_MECHANISM);
+            attributeName = DEFAULT_ATTRIBUTE_NAME;
             validator = DEFAULT_VALIDATOR;
         }
 
@@ -159,65 +199,55 @@ public final class UrlFinder {
          * Sets the locating mechanism used by the finder. Only elements matched by the locator will
          * be considered when searching for URLs.
          *
-         * @param locatingMechanism the <code>By</code> locating mechanism instance
+         * @param locatingMechanism the mechanism to use for locating web elements
          *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setLocatingMechanism(final By locatingMechanism) {
-            return setLocatingMechanisms(Collections.singletonList(locatingMechanism));
+            return setLocatingMechanisms(Collections.singleton(locatingMechanism));
         }
 
         /**
          * Sets the locating mechanisms used by the finder. Only elements matched by the locators
          * will be considered when searching for URLs.
          *
-         * @param locatingMechanisms the list of <code>By</code> locating mechanism instances
+         * @param locatingMechanisms the mechanisms to use for locating web elements
          *
          * @return the <code>UrlFinderBuilder</code> instance
          */
-        public UrlFinderBuilder setLocatingMechanisms(final List<By> locatingMechanisms) {
+        public UrlFinderBuilder setLocatingMechanisms(final Set<By> locatingMechanisms) {
+            Validate.notEmpty(locatingMechanisms,
+                    "The locatingMechanisms parameter cannot be null or empty");
             Validate.noNullElements(locatingMechanisms,
-                    "The locatingMechanisms parameter cannot be null or contain null elements.");
+                    "The locatingMechanisms parameter cannot contain null elements");
 
-            this.locatingMechanisms = Sets.newHashSet(locatingMechanisms);
+            this.locatingMechanisms = locatingMechanisms;
             return this;
         }
 
         /**
-         * Sets the list of attribute names to search for URLs.
+         * Sets the name of the web element attribute to search for a URL.
          *
-         * @param attributes the list of attribute names
+         * @param attributeName the name of the web element attribute
          *
          * @return the <code>UrlFinderBuilder</code> instance
          */
-        public UrlFinderBuilder setAttributes(final List<String> attributes) {
-            Validate.noNullElements(attributes,
-                    "The attributes parameter cannot be null or contain null elements.");
+        public UrlFinderBuilder setAttributeName(final String attributeName) {
+            Validate.notBlank(attributeName, "The attributeName cannot be null or blank");
 
-            this.attributes = Sets.newHashSet(attributes);
+            this.attributeName = attributeName;
             return this;
         }
 
         /**
-         * Sets the attribute name to search for URLs.
-         *
-         * @param attribute the attribute name
-         *
-         * @return the <code>UrlFinderBuilder</code> instance
-         */
-        public UrlFinderBuilder setAttribute(final String attribute) {
-            return setAttributes(Collections.singletonList(attribute));
-        }
-
-        /**
-         * Sets a predicate to be used for validating found URLs.
+         * Sets the predicate to use for validating URLs.
          *
          * @param validator the validator predicate
          *
          * @return the <code>UrlFinderBuilder</code> instance
          */
         public UrlFinderBuilder setValidator(final Predicate<String> validator) {
-            Validate.notNull(validator, "The validator parameter cannot be null.");
+            Validate.notNull(validator, "The validator parameter cannot be null");
 
             this.validator = validator;
             return this;
