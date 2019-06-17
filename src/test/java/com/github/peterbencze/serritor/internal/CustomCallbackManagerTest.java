@@ -135,7 +135,7 @@ public final class CustomCallbackManagerTest {
 
     private static Pattern createPatternMock(final boolean shouldMatch) {
         Matcher matcherMock = Mockito.mock(Matcher.class);
-        Mockito.when(matcherMock.matches()).thenReturn(shouldMatch);
+        Mockito.when(matcherMock.find()).thenReturn(shouldMatch);
 
         Pattern patternMock = Mockito.mock(Pattern.class);
         Mockito.when(patternMock.matcher(Mockito.anyString())).thenReturn(matcherMock);
