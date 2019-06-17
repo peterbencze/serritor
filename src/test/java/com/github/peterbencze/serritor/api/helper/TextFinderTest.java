@@ -51,7 +51,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindAllWhenNoWebElementMatchesTheLocator() {
+    public void testFindAllInResponseWhenNoWebElementMatchesTheLocator() {
         Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
                 .thenReturn(Collections.emptyList());
 
@@ -59,7 +59,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindAllWhenNoTextMatchesThePattern() {
+    public void testFindAllInResponseWhenNoTextMatchesThePattern() {
         WebElement webElementMock = Mockito.mock(WebElement.class);
         Mockito.when(webElementMock.getText()).thenReturn("Should not match");
 
@@ -70,7 +70,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindAllWhenTextMatchesThePattern() {
+    public void testFindAllInResponseWhenTextMatchesThePattern() {
         WebElement webElementMock1 = Mockito.mock(WebElement.class);
         Mockito.when(webElementMock1.getText()).thenReturn("Should match");
         WebElement webElementMock2 = Mockito.mock(WebElement.class);
@@ -83,7 +83,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindFirstWhenNoWebElementMatchesTheLocator() {
+    public void testFindFirstInResponseWhenNoWebElementMatchesTheLocator() {
         Mockito.when(webDriverMock.findElements(Mockito.any(By.class)))
                 .thenReturn(Collections.emptyList());
 
@@ -91,7 +91,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindFirstWhenNoTextMatchesThePattern() {
+    public void testFindFirstInResponseWhenNoTextMatchesThePattern() {
         WebElement webElementMock = Mockito.mock(WebElement.class);
         Mockito.when(webElementMock.getText()).thenReturn("Should not match");
 
@@ -102,7 +102,7 @@ public final class TextFinderTest {
     }
 
     @Test
-    public void testFindFirstWhenTextMatchesThePattern() {
+    public void testFindFirstInResponseWhenTextMatchesThePattern() {
         WebElement webElementMock1 = Mockito.mock(WebElement.class);
         Mockito.when(webElementMock1.getText()).thenReturn("Should match");
         WebElement webElementMock2 = Mockito.mock(WebElement.class);
