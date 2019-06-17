@@ -146,7 +146,8 @@ public final class JwtAuthenticator implements Authenticator {
                 return authenticateWithCredentials(httpServletRequest, httpServletResponse);
             }
 
-            Optional<String> jwtOpt = extractJwtFromRequest(httpServletRequest);
+            Optional<String> jwtOpt = extractJwtFromRequest(httpServletRequest,
+                    accessControlConfig.isCookieAuthenticationEnabled());
             if (jwtOpt.isPresent()) {
                 try {
                     return authenticateWithJwt(jwtOpt.get());
@@ -297,13 +298,16 @@ public final class JwtAuthenticator implements Authenticator {
     /**
      * Extracts the JWT from the request, if present. If the request is a WebSocket upgrade request,
      * it extracts the token from the query parameters. Otherwise, it looks for the token in the
-     * Authorization header and if not found it also checks the cookies.
+     * Authorization header. If the token is still not found, it also checks the cookies, if cookie
+     * authentication is enabled.
      *
      * @param request the request
      *
      * @return the JWT from the request
      */
-    private static Optional<String> extractJwtFromRequest(final HttpServletRequest request) {
+    private static Optional<String> extractJwtFromRequest(
+            final HttpServletRequest request,
+            final boolean isCookieAuthenticationEnabled) {
         Optional<String> jwtOpt;
         if (isWebSocketUpgradeRequest(request)) {
             jwtOpt = Optional.ofNullable(request.getParameter(AUTH_QUERY_PARAM_NAME));
@@ -311,7 +315,11 @@ public final class JwtAuthenticator implements Authenticator {
             jwtOpt = extractJwtFromHeader(request);
         }
 
-        return jwtOpt.map(Optional::of).orElseGet(() -> extractJwtFromCookie(request));
+        if (!jwtOpt.isPresent() && isCookieAuthenticationEnabled) {
+            jwtOpt = extractJwtFromCookie(request);
+        }
+
+        return jwtOpt;
     }
 
     /**

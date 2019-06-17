@@ -70,7 +70,10 @@ public final class SecuredWebApi extends WebApi {
         securityHandler.setHandler(getContextHandler());
         getServer().setHandler(securityHandler);
 
-        getContextHandler().addFilter(CsrfFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+        if (accessControlConfig.isCookieAuthenticationEnabled()) {
+            getContextHandler()
+                    .addFilter(CsrfFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+        }
     }
 
     /**
