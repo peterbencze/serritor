@@ -80,7 +80,7 @@ public final class CustomCallbackManager {
         List<PatternMatchingCallback<? extends CrawlEvent>> applicableCustomCallbacks =
                 customCallbacks.getOrDefault(eventClass, Collections.emptyList())
                         .stream()
-                        .filter(callback -> callback.getUrlPattern().matcher(requestUrl).matches())
+                        .filter(callback -> callback.getUrlPattern().matcher(requestUrl).find())
                         .collect(Collectors.toList());
 
         if (!applicableCustomCallbacks.isEmpty()) {
