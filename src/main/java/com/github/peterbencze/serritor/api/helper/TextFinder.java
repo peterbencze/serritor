@@ -103,6 +103,8 @@ public final class TextFinder {
      * @return all the text that match the pattern in the text content of the response
      */
     public List<MatchResult> findAllInResponse(final CompleteCrawlResponse response) {
+        Validate.notNull(response, "The response parameter cannot be null");
+
         return locatingMechanisms.stream()
                 .flatMap(locatingMechanism ->
                         response.getWebDriver().findElements(locatingMechanism).stream())
@@ -118,6 +120,8 @@ public final class TextFinder {
      * @return the text that first matches the pattern in the text content of the response
      */
     public Optional<MatchResult> findFirstInResponse(final CompleteCrawlResponse response) {
+        Validate.notNull(response, "The response parameter cannot be null");
+
         List<WebElement> matchedElements = locatingMechanisms.stream()
                 .flatMap(locatingMechanism ->
                         response.getWebDriver().findElements(locatingMechanism).stream())
