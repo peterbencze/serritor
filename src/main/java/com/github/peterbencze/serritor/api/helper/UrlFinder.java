@@ -57,7 +57,7 @@ public final class UrlFinder {
      * @return a <code>UrlFinder</code> instance with the default configuration
      */
     public static UrlFinder createDefault() {
-        return new UrlFinderBuilder(Pattern.compile("^https?://.+$")).build();
+        return new UrlFinderBuilder(Pattern.compile("https?://\\S+")).build();
     }
 
     /**
