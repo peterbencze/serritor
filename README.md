@@ -13,7 +13,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -21,7 +21,7 @@ Add the following dependency to your pom.xml:
 
 Add the following dependency to your build.gradle:
 ```groovy
-compile group: 'com.github.peterbencze', name: 'serritor', version: '2.0.0'
+compile group: 'com.github.peterbencze', name: 'serritor', version: '2.1.0'
 ```
 
 ### Manual dependencies
@@ -53,7 +53,7 @@ public class MyCrawler extends Crawler {
     @Override
     protected void onResponseSuccess(final ResponseSuccessEvent event) {
         // Crawl every URL found on the page
-        urlFinder.findUrlsInPage(event.getCompleteCrawlResponse())
+        urlFinder.findAllInResponse(event.getCompleteCrawlResponse())
                 .stream()
                 .map(CrawlRequest::createDefault)
                 .forEach(this::crawl);
