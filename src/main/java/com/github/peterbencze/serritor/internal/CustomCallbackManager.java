@@ -34,8 +34,8 @@ public final class CustomCallbackManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomCallbackManager.class);
 
-    private final Map<Class<? extends EventObject>,
-            List<PatternMatchingCallback<? extends EventObject>>> customCallbacks;
+    private final Map<Class<? extends CrawlEvent>,
+            List<PatternMatchingCallback<? extends CrawlEvent>>> customCallbacks;
 
     /**
      * Creates a {@link CustomCallbackManager} instance.
@@ -51,7 +51,7 @@ public final class CustomCallbackManager {
      * @param eventClass the runtime class of the event for which the callback should be invoked
      * @param callback   the pattern matching callback to invoke
      */
-    public <T extends EventObject> void addCustomCallback(
+    public <T extends CrawlEvent> void addCustomCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
         LOGGER.debug("Adding custom callback for event {} with URL pattern {}",
@@ -72,15 +72,15 @@ public final class CustomCallbackManager {
      * @param defaultCallback the default callback for the event
      */
     @SuppressWarnings("unchecked")
-    public <T extends EventObject> void callCustomOrDefault(
+    public <T extends CrawlEvent> void callCustomOrDefault(
             final Class<T> eventClass,
             final T eventObject,
             final Consumer<T> defaultCallback) {
         String requestUrl = eventObject.getCrawlCandidate().getRequestUrl().toString();
-        List<PatternMatchingCallback<? extends EventObject>> applicableCustomCallbacks =
+        List<PatternMatchingCallback<? extends CrawlEvent>> applicableCustomCallbacks =
                 customCallbacks.getOrDefault(eventClass, Collections.emptyList())
                         .stream()
-                        .filter(callback -> callback.getUrlPattern().matcher(requestUrl).matches())
+                        .filter(callback -> callback.getUrlPattern().matcher(requestUrl).find())
                         .collect(Collectors.toList());
 
         if (!applicableCustomCallbacks.isEmpty()) {

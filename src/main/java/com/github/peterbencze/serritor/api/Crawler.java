@@ -24,9 +24,9 @@ import com.github.peterbencze.serritor.api.event.PageLoadTimeoutEvent;
 import com.github.peterbencze.serritor.api.event.RequestRedirectEvent;
 import com.github.peterbencze.serritor.api.event.ResponseErrorEvent;
 import com.github.peterbencze.serritor.api.event.ResponseSuccessEvent;
+import com.github.peterbencze.serritor.internal.CrawlEvent;
 import com.github.peterbencze.serritor.internal.CrawlFrontier;
 import com.github.peterbencze.serritor.internal.CustomCallbackManager;
-import com.github.peterbencze.serritor.internal.EventObject;
 import com.github.peterbencze.serritor.internal.WebDriverFactory;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.AdaptiveCrawlDelayMechanism;
 import com.github.peterbencze.serritor.internal.crawldelaymechanism.CrawlDelayMechanism;
@@ -52,6 +52,7 @@ import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -64,6 +65,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.eclipse.jetty.http.HttpStatus;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -167,7 +169,7 @@ public abstract class Crawler {
      * @param browser      the type of the browser to use for crawling
      * @param capabilities the browser properties
      */
-    public final void start(final Browser browser, final DesiredCapabilities capabilities) {
+    public final void start(final Browser browser, final MutableCapabilities capabilities) {
         Validate.notNull(browser, "The browser parameter cannot be null.");
         Validate.notNull(capabilities, "The capabilities parameter cannot be null.");
 
@@ -179,9 +181,10 @@ public abstract class Crawler {
      *
      * @param isResuming indicates if a previously saved state is to be resumed
      */
-    private void start(final Browser browser,
-                       final DesiredCapabilities capabilities,
-                       final boolean isResuming) {
+    private void start(
+            final Browser browser,
+            final MutableCapabilities capabilities,
+            final boolean isResuming) {
         try {
             Validate.validState(isStopped.get(), "The crawler is already running.");
 
@@ -189,48 +192,52 @@ public abstract class Crawler {
             LOGGER.debug("Using configuration: {}", config);
 
             isStopped.set(false);
-
             runTimeStopwatch.start();
 
-            cookieStore = new BasicCookieStore();
-            httpClient = HttpClientBuilder.create()
-                    .disableRedirectHandling()
-                    .setDefaultCookieStore(cookieStore)
-                    .useSystemProperties()
-                    .build();
+            if (!isResuming) {
+                crawlFrontier.reset();
+            }
 
-            proxyServer = new BrowserMobProxyServer();
+            cookieStore = new BasicCookieStore();
+            HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
+                    .disableRedirectHandling()
+                    .setDefaultCookieStore(cookieStore);
 
             // Create a copy of the original capabilities before we make changes to it (we don't
             // want to cause any unwanted side effects)
-            DesiredCapabilities capabilitiesClone = new DesiredCapabilities(capabilities);
+            MutableCapabilities capabilitiesClone = new MutableCapabilities(capabilities);
 
-            Proxy chainedProxy = (Proxy) capabilitiesClone.getCapability(CapabilityType.PROXY);
-            if (chainedProxy != null && chainedProxy.getHttpProxy() != null) {
-                String[] urlComponents = chainedProxy.getHttpProxy().split(":");
-                String host = urlComponents[0];
-                int port = Integer.parseInt(urlComponents[1]);
+            proxyServer = new BrowserMobProxyServer();
 
-                LOGGER.debug("Using chained proxy on address {}:{}", host, port);
+            // If a user-defined proxy is set, chain it to our internal one
+            Proxy proxyCapability = (Proxy) capabilitiesClone.getCapability(CapabilityType.PROXY);
+            if (proxyCapability != null && proxyCapability.getHttpProxy() != null) {
+                HttpHost proxyHost = HttpHost.create(proxyCapability.getHttpProxy());
+                String hostname = proxyHost.getHostName();
+                int port = proxyHost.getPort();
 
-                proxyServer.setChainedProxy(new InetSocketAddress(host, port));
+                LOGGER.debug("Using chained HTTP proxy with address {}:{}", hostname, port);
+
+                httpClientBuilder.setProxy(proxyHost);
+                proxyServer.setChainedProxy(new InetSocketAddress(hostname, port));
             }
 
+            // The internal proxy server must be started before creating the Selenium proxy
+            // because the port is dynamically chosen by the server when it starts
             proxyServer.start();
-            LOGGER.debug("Proxy server started on port {}", proxyServer.getPort());
+            LOGGER.debug("Internal proxy server started on port {}", proxyServer.getPort());
 
+            // Set our internal proxy
             capabilitiesClone.setCapability(CapabilityType.PROXY,
                     ClientUtil.createSeleniumProxy(proxyServer));
+
+            httpClient = httpClientBuilder.build();
 
             LOGGER.debug("Starting {} browser", browser);
             webDriver = WebDriverFactory.createWebDriver(browser, capabilitiesClone);
 
             LOGGER.debug("Calling onBrowserInit callback");
             onBrowserInit(webDriver.manage());
-
-            if (!isResuming) {
-                crawlFrontier.reset();
-            }
 
             // If the crawl delay strategy is set to adaptive, we check if the browser supports the
             // Navigation Timing API or not. However HtmlUnit requires a page to be loaded first
@@ -321,7 +328,7 @@ public abstract class Crawler {
      * @param eventClass the runtime class of the event for which the callback should be invoked
      * @param callback   the pattern matching callback to invoke
      */
-    protected final <T extends EventObject> void registerCustomCallback(
+    protected final <T extends CrawlEvent> void registerCustomCallback(
             final Class<T> eventClass,
             final PatternMatchingCallback<T> callback) {
         Validate.notNull(eventClass, "The eventClass parameter cannot be null.");

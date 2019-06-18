@@ -59,8 +59,6 @@ public final class CrawlingIT {
         mockServer = createMockWebServer();
 
         proxyServer = createProxyServer(mockServer.port());
-        System.setProperty("http.proxyHost", "localhost");
-        System.setProperty("http.proxyPort", String.valueOf(proxyServer.getPort()));
 
         capabilities = new DesiredCapabilities();
         capabilities.setCapability(CapabilityType.PROXY,
