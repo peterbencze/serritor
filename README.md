@@ -1,7 +1,10 @@
-[![Gitter](https://badges.gitter.im/serritor/community.svg)](https://gitter.im/serritor/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 
 Serritor
 ========
+
+[![GitHub release](https://img.shields.io/github/release/peterbencze/serritor.svg)](https://github.com/peterbencze/serritor/releases/latest)
+[![Gitter](https://badges.gitter.im/serritor/community.svg)](https://gitter.im/serritor/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) 
 and written in Java. It can be used to crawl dynamic web pages that require JavaScript to render 
