@@ -1,3 +1,5 @@
+[![Gitter](https://badges.gitter.im/serritor/community.svg)](https://gitter.im/serritor/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 Serritor
 ========
 
