@@ -4,6 +4,7 @@ Serritor
 ========
 
 [![GitHub release](https://img.shields.io/github/release/peterbencze/serritor.svg)](https://github.com/peterbencze/serritor/releases/latest)
+[![GitHub Release Date](https://img.shields.io/github/release-date/peterbencze/serritor.svg)](https://github.com/peterbencze/serritor/releases/latest)
 [![Gitter](https://badges.gitter.im/serritor/community.svg)](https://gitter.im/serritor/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Serritor is an open source web crawler framework built upon [Selenium](http://www.seleniumhq.org/) 
