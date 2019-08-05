@@ -103,6 +103,11 @@ That's it! In just a few lines you can create a crawler that crawls every link i
 filtering duplicate and offsite requests. You also get access to the `WebDriver`, so you can use 
 all the features that are provided by Selenium.
 
+## Special thanks
+[<img src="https://user-images.githubusercontent.com/1896287/62488023-8f2b5c00-b7c3-11e9-9108-82034819c462.png" width="100" height="100">](https://www.jetbrains.com/?from=Serritor)
+
+For providing a free JetBrains Open Source license to support the development of this project.
+
 ## Support
 If this framework helped you in any way, or you would like to support the development:
 
