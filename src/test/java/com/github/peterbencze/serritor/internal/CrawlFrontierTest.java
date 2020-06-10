@@ -23,11 +23,10 @@ import com.github.peterbencze.serritor.api.CrawlStrategy;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration.CrawlerConfigurationBuilder;
 import com.github.peterbencze.serritor.internal.stats.StatsCounter;
-import com.google.common.collect.Sets;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,10 +39,10 @@ import org.mockito.Mockito;
 public final class CrawlFrontierTest {
 
     // Allowed crawl domains
-    private static final String ALLOWED_CRAWL_DOMAIN_0 = "root-url-0.com";
-    private static final String ALLOWED_CRAWL_DOMAIN_1 = "root-url-1.com";
+    private static final String ROOT_URL_0_DOMAIN = "root-url-0.com";
+    private static final String ROOT_URL_1_DOMAIN = "root-url-1.com";
     private static final List<String> ALLOWED_CRAWL_DOMAINS
-            = Arrays.asList(ALLOWED_CRAWL_DOMAIN_0, ALLOWED_CRAWL_DOMAIN_1);
+            = Arrays.asList(ROOT_URL_0_DOMAIN, ROOT_URL_1_DOMAIN);
 
     // Root URLs
     private static final URI ROOT_URL_0
@@ -124,196 +123,189 @@ public final class CrawlFrontierTest {
     }
 
     @Test
+    public void testFeedRequestWhenOffsiteRequestFilterIsDisabledAndRequestIsOffsite() {
+        Mockito.when(configMock.isOffsiteRequestFilterEnabled()).thenReturn(false);
+
+        crawlFrontier.feedRequest(OFFSITE_URL_CRAWL_REQUEST, true);
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(true));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.notNullValue());
+        Mockito.verify(statsCounterMock).recordRemainingCrawlCandidate();
+    }
+
+    @Test
+    public void testFeedRequestWhenOffsiteRequestFilterIsEnabledAndRequestDomainIsNotAllowed() {
+        crawlFrontier.feedRequest(OFFSITE_URL_CRAWL_REQUEST, true);
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
+        Mockito.verify(statsCounterMock).recordOffsiteRequest();
+    }
+
+    @Test
+    public void testFeedRequestWhenDuplicateRequestFilterIsDisabledAndRequestIsADuplicate() {
+        Mockito.when(configMock.isDuplicateRequestFilterEnabled()).thenReturn(false);
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
+        crawlFrontier.getNextCandidate();
+
+        crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, false);
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(true));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.notNullValue());
+        Mockito.verify(statsCounterMock, Mockito.times(2)).recordRemainingCrawlCandidate();
+    }
+
+    @Test
+    public void testFeedRequestWhenDuplicateRequestFilterIsEnabledAndRequestIsADuplicate() {
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
+        crawlFrontier.getNextCandidate();
+
+        crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, false);
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
+        Mockito.verify(statsCounterMock).recordDuplicateRequest();
+    }
+
+    @Test
     public void testFeedRequestWhenCrawlDepthLimitIsSetAndRequestExceedsLimit() {
         Mockito.when(configMock.getMaximumCrawlDepth()).thenReturn(1);
-        crawlFrontier.getNextCandidate();
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
         crawlFrontier.getNextCandidate();
 
         crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
 
         Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
         Mockito.verify(statsCounterMock).recordCrawlDepthLimitExceedingRequest();
     }
 
     @Test
-    public void testHasNextCandidateWithNonEmptyQueue() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+    public void testFeedRequestWhenRequestIsNotDuplicateAndIsNotOffsiteAndIsInCrawlDepthLimit() {
+        Mockito.when(configMock.getMaximumCrawlDepth()).thenReturn(1);
 
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
 
-        crawlFrontier.getNextCandidate();
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-
-        crawlFrontier.getNextCandidate();
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
-
-        crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
-        crawlFrontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-
-        crawlFrontier.getNextCandidate();
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-
-        crawlFrontier.getNextCandidate();
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(true));
+        CrawlCandidate candidate = crawlFrontier.getNextCandidate();
+        Assert.assertThat(candidate.getRequestUrl(), Matchers.is(ROOT_URL_0));
+        Assert.assertThat(candidate.getCrawlDepth(), Matchers.is(ROOT_URL_CRAWL_DEPTH));
+        Assert.assertThat(candidate.getPriority(), Matchers.is(ROOT_URL_0_PRIORITY));
+        Assert.assertThat(candidate.getDomain().toString(), Matchers.is(ROOT_URL_0_DOMAIN));
+        Assert.assertThat(candidate.getRefererUrl(), Matchers.nullValue());
+        Assert.assertThat(candidate.getMetadata(), Matchers.is(Optional.empty()));
+        Mockito.verify(statsCounterMock).recordRemainingCrawlCandidate();
     }
 
     @Test
-    public void testHasNextCandidateWithEmptyQueue() {
-        Mockito.when(configMock.getCrawlSeeds()).thenReturn(Collections.emptySet());
-
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
+    public void testHasNextCandidateWhenCandidateQueueIsEmpty() {
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
     }
 
     @Test
-    public void testEnabledDuplicateRequestFiltering() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+    public void testHashNextCandidateWhenCandidateQueueIsNotEmpty() {
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
 
-        clearCrawlCandidateQueue(crawlFrontier);
-        crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, false);
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(true));
     }
 
     @Test
-    public void testDisabledDuplicateRequestFiltering() {
-        Mockito.when(configMock.isDuplicateRequestFilterEnabled()).thenReturn(false);
-
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
-
-        clearCrawlCandidateQueue(crawlFrontier);
-        crawlFrontier.feedRequest(DUPLICATE_ROOT_URL_0_CRAWL_REQUEST, true);
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-        Assert.assertEquals(DUPLICATE_ROOT_URL_0, crawlFrontier.getNextCandidate().getRequestUrl());
-    }
-
-    @Test
-    public void testEnabledOffsiteRequestFiltering() {
-        Mockito.when(configMock.getCrawlSeeds())
-                .thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
-
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
-    }
-
-    @Test
-    public void testDisabledOffsiteRequestFiltering() {
-        Mockito.when(configMock.isOffsiteRequestFilterEnabled()).thenReturn(false);
-        Mockito.when(configMock.getCrawlSeeds())
-                .thenReturn(Sets.newHashSet(OFFSITE_URL_CRAWL_REQUEST));
-
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-        Assert.assertEquals(OFFSITE_URL,
-                crawlFrontier.getNextCandidate().getRequestUrl());
+    public void testGetNextCandidateWhenCandidateQueueIsEmpty() {
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
     }
 
     @Test
     public void testGetNextCandidateWhenUsingBreadthFirstCrawlStrategy() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
+        crawlFrontier.feedRequest(ROOT_URL_1_CRAWL_REQUEST, true);
 
         CrawlCandidate nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
-        Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(ROOT_URL_1_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(ROOT_URL_1));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(ROOT_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(ROOT_URL_1_PRIORITY));
 
         crawlFrontier.feedRequest(CHILD_URL_2_CRAWL_REQUEST, false);
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(ROOT_URL_0, nextCandidate.getRequestUrl());
-        Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(ROOT_URL_0_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(ROOT_URL_0));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(ROOT_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(ROOT_URL_0_PRIORITY));
 
         crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
         crawlFrontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(CHILD_URL_2, nextCandidate.getRequestUrl());
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(CHILD_URL_2_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(CHILD_URL_2));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(CHILD_URL_2_PRIORITY));
 
         // A priority queue doesn't ensure FIFO order when elements have the same depth and priority
         nextCandidate = crawlFrontier.getNextCandidate();
         int previousChildCandidatePriority = nextCandidate.getPriority();
-        Assert.assertTrue(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH));
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
+        Assert.assertThat(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH),
+                Matchers.is(true));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertTrue(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH));
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(previousChildCandidatePriority, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH),
+                Matchers.is(true));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
+        Assert.assertThat(previousChildCandidatePriority, Matchers.is(nextCandidate.getPriority()));
 
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
     }
 
     @Test
     public void testGetNextCandidateWhenUsingDepthFirstCrawlStrategy() {
         Mockito.when(configMock.getCrawlStrategy()).thenReturn(CrawlStrategy.DEPTH_FIRST);
-
         CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
+        crawlFrontier.feedRequest(ROOT_URL_1_CRAWL_REQUEST, true);
 
         CrawlCandidate nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(ROOT_URL_1, nextCandidate.getRequestUrl());
-        Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(ROOT_URL_1_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(ROOT_URL_1));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(ROOT_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(ROOT_URL_1_PRIORITY));
 
         crawlFrontier.feedRequest(CHILD_URL_2_CRAWL_REQUEST, false);
 
         // A priority queue doesn't ensure FIFO order when elements have the same depth and priority
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertTrue(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH));
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(CHILD_URL_2_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl().getPath().contains(CHILD_URL_PATH),
+                Matchers.is(true));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(CHILD_URL_2_PRIORITY));
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(ROOT_URL_0, nextCandidate.getRequestUrl());
-        Assert.assertEquals(ROOT_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(ROOT_URL_0_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(ROOT_URL_0));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(ROOT_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(ROOT_URL_0_PRIORITY));
 
         crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
         crawlFrontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(CHILD_URL_0, nextCandidate.getRequestUrl());
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(CHILD_URL_0_PRIORITY, nextCandidate.getPriority());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(CHILD_URL_0));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(CHILD_URL_0_PRIORITY));
 
         nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertEquals(CHILD_URL_1, nextCandidate.getRequestUrl());
-        Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
-        Assert.assertEquals(CHILD_URL_1_PRIORITY, nextCandidate.getPriority());
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
+        Assert.assertThat(nextCandidate.getRequestUrl(), Matchers.is(CHILD_URL_1));
+        Assert.assertThat(nextCandidate.getCrawlDepth(), Matchers.is(CHILD_URL_CRAWL_DEPTH));
+        Assert.assertThat(nextCandidate.getPriority(), Matchers.is(CHILD_URL_1_PRIORITY));
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
     }
 
     @Test
-    public void testReset() {
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+    public void testResetWhenCandidateQueueIsNotEmpty() {
+        crawlFrontier.feedRequest(ROOT_URL_0_CRAWL_REQUEST, true);
 
         crawlFrontier.reset();
 
-        // Check if only the crawl seeds are present after the reset
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-        Assert.assertEquals(ROOT_URL_1, crawlFrontier.getNextCandidate().getRequestUrl());
-
-        Assert.assertTrue(crawlFrontier.hasNextCandidate());
-        Assert.assertEquals(ROOT_URL_0, crawlFrontier.getNextCandidate().getRequestUrl());
-
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
-    }
-
-    private static void clearCrawlCandidateQueue(final CrawlFrontier crawlFrontier) {
-        while (crawlFrontier.hasNextCandidate()) {
-            crawlFrontier.getNextCandidate();
-        }
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Assert.assertThat(crawlFrontier.getNextCandidate(), Matchers.nullValue());
     }
 }
