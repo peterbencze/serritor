@@ -16,9 +16,11 @@
 
 package com.github.peterbencze.serritor.it;
 
-import com.github.peterbencze.serritor.api.Crawler;
 import com.github.peterbencze.serritor.api.Browser;
 import com.github.peterbencze.serritor.api.CrawlRequest;
+import com.github.peterbencze.serritor.api.CrawlRequest.CrawlRequestBuilder;
+import com.github.peterbencze.serritor.api.CrawlStats;
+import com.github.peterbencze.serritor.api.Crawler;
 import com.github.peterbencze.serritor.api.CrawlerConfiguration;
 import com.github.peterbencze.serritor.api.event.NonHtmlResponseEvent;
 import com.github.peterbencze.serritor.api.event.ResponseSuccessEvent;
@@ -34,13 +36,12 @@ import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.entity.ContentType;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
-import org.openqa.selenium.remote.BrowserType;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
@@ -104,7 +105,7 @@ public final class CrawlingIT {
     }
 
     @Test
-    public void testResumeState() throws IOException {
+    public void testResumeState() {
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
                 .willReturn(WireMock.ok()
                         .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
@@ -112,8 +113,6 @@ public final class CrawlingIT {
         WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/bar"))
                 .willReturn(WireMock.ok()
                         .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
-
-        File destinationFile = createTempFile();
 
         CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
                 .addCrawlSeed(CrawlRequest.createDefault("http://te.st/foo"))
@@ -142,6 +141,73 @@ public final class CrawlingIT {
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/bar")));
 
         Assert.assertEquals(0, WireMock.findUnmatchedRequests().size());
+    }
+
+    @Test
+    public void testCrawlerRestartWhenStateWasRestored() {
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/foo"))
+                .willReturn(WireMock.ok()
+                        .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
+        WireMock.givenThat(WireMock.any(WireMock.urlEqualTo("/bar"))
+                .willReturn(WireMock.ok()
+                        .withHeader("Content-Type", ContentType.TEXT_HTML.toString())));
+
+        CrawlerConfiguration config = new CrawlerConfiguration.CrawlerConfigurationBuilder()
+                .addCrawlSeed(new CrawlRequestBuilder("http://te.st/foo").setPriority(1).build())
+                .addCrawlSeed(CrawlRequest.createDefault("http://te.st/bar"))
+                .build();
+        Crawler crawler = new Crawler(config) {
+            @Override
+            protected void onResponseSuccess(final ResponseSuccessEvent event) {
+                super.onResponseSuccess(event);
+
+                stop();
+            }
+
+        };
+        crawler.start(Browser.HTML_UNIT, capabilities);
+
+        CrawlStats stats = crawler.getCrawlStats();
+        Assert.assertThat(stats.getRemainingCrawlCandidateCount(), Matchers.is(1));
+        Assert.assertThat(stats.getProcessedCrawlCandidateCount(), Matchers.is(1));
+        Assert.assertThat(stats.getResponseSuccessCount(), Matchers.is(1));
+        Assert.assertThat(stats.getPageLoadTimeoutCount(), Matchers.is(0));
+        Assert.assertThat(stats.getRequestRedirectCount(), Matchers.is(0));
+        Assert.assertThat(stats.getNonHtmlResponseCount(), Matchers.is(0));
+        Assert.assertThat(stats.getResponseErrorCount(), Matchers.is(0));
+        Assert.assertThat(stats.getNetworkErrorCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredDuplicateRequestCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredOffsiteRequestCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredCrawlDepthLimitExceedingRequestCount(), Matchers.is(0));
+
+        WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
+        WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
+        WireMock.verify(0, WireMock.headRequestedFor(WireMock.urlEqualTo("/bar")));
+        WireMock.verify(0, WireMock.getRequestedFor(WireMock.urlEqualTo("/bar")));
+
+        crawler = new Crawler(crawler.getState()) {
+        };
+        crawler.start(Browser.HTML_UNIT, capabilities);
+
+        stats = crawler.getCrawlStats();
+        Assert.assertThat(stats.getRemainingCrawlCandidateCount(), Matchers.is(0));
+        Assert.assertThat(stats.getProcessedCrawlCandidateCount(), Matchers.is(2));
+        Assert.assertThat(stats.getResponseSuccessCount(), Matchers.is(2));
+        Assert.assertThat(stats.getPageLoadTimeoutCount(), Matchers.is(0));
+        Assert.assertThat(stats.getRequestRedirectCount(), Matchers.is(0));
+        Assert.assertThat(stats.getNonHtmlResponseCount(), Matchers.is(0));
+        Assert.assertThat(stats.getResponseErrorCount(), Matchers.is(0));
+        Assert.assertThat(stats.getNetworkErrorCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredDuplicateRequestCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredOffsiteRequestCount(), Matchers.is(0));
+        Assert.assertThat(stats.getFilteredCrawlDepthLimitExceedingRequestCount(), Matchers.is(0));
+
+        WireMock.verify(2, WireMock.headRequestedFor(WireMock.urlEqualTo("/foo")));
+        WireMock.verify(2, WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")));
+        WireMock.verify(1, WireMock.headRequestedFor(WireMock.urlEqualTo("/bar")));
+        WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/bar")));
+
+        Assert.assertThat(WireMock.findUnmatchedRequests().size(), Matchers.is(0));
     }
 
     @Test
@@ -233,15 +299,6 @@ public final class CrawlingIT {
         server.start();
 
         return server;
-    }
-
-    private static HtmlUnitDriver createHtmlUnitDriver(final BrowserMobProxyServer server) {
-        DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setBrowserName(BrowserType.HTMLUNIT);
-        capabilities.setJavascriptEnabled(true);
-        capabilities.setCapability(CapabilityType.PROXY, ClientUtil.createSeleniumProxy(server));
-
-        return new HtmlUnitDriver(capabilities);
     }
 
     private static File createTempFile() throws IOException {

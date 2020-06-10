@@ -264,6 +264,25 @@ public final class StatsCounter implements Serializable {
     }
 
     /**
+     * Resets stats counter to its initial state.
+     */
+    public void reset() {
+        lock.writeWithLock(() -> {
+            remainingCrawlCandidateCount = 0;
+            processedCrawlCandidateCount = 0;
+            responseSuccessCount = 0;
+            pageLoadTimeoutCount = 0;
+            requestRedirectCount = 0;
+            nonHtmlResponseCount = 0;
+            responseErrorCount = 0;
+            networkErrorCount = 0;
+            filteredDuplicateRequestCount = 0;
+            filteredOffsiteRequestCount = 0;
+            filteredCrawlDepthLimitExceedingRequestCount = 0;
+        });
+    }
+
+    /**
      * Increments the number of processed crawl candidates.
      */
     private void incrementProcessedCrawlCandidateCount() {

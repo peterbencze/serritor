@@ -196,6 +196,7 @@ public abstract class Crawler {
 
             if (!isResuming) {
                 crawlFrontier.reset();
+                statsCounter.reset();
                 config.getCrawlSeeds().forEach(request -> crawlFrontier.feedRequest(request, true));
             }
 
