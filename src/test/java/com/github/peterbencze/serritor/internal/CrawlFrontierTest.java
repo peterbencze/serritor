@@ -28,6 +28,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public final class CrawlFrontierTest {
     private static final URI ROOT_URL_1 = URI.create("http://root-url-1.com/");
 
     // Root URL crawl depth
-    private static final int ROOT_URL_CRAWL_DEPTH = 0;
+    private static final int ROOT_URL_CRAWL_DEPTH = 1;
 
     // Root URL priorities
     private static final int ROOT_URL_0_PRIORITY = 0;
@@ -80,7 +81,7 @@ public final class CrawlFrontierTest {
             = URI.create(String.format("http://root-url-1.com%s-0", CHILD_URL_PATH));
 
     // Child URL crawl depth
-    private static final int CHILD_URL_CRAWL_DEPTH = 1;
+    private static final int CHILD_URL_CRAWL_DEPTH = 2;
 
     // Child URL priorities
     private static final int CHILD_URL_0_PRIORITY = 0;
@@ -105,11 +106,9 @@ public final class CrawlFrontierTest {
     private static final CrawlRequest OFFSITE_URL_CRAWL_REQUEST
             = new CrawlRequestBuilder(OFFSITE_URL).setPriority(OFFSITE_URL_PRIORITY).build();
 
-    // Max crawl depth
-    private static final int MAX_CRAWL_DEPTH = 1;
-
     private CrawlerConfiguration configMock;
     private StatsCounter statsCounterMock;
+    private CrawlFrontier crawlFrontier;
 
     @Before
     public void before() {
@@ -120,6 +119,20 @@ public final class CrawlFrontierTest {
                 .build());
 
         statsCounterMock = Mockito.mock(StatsCounter.class);
+
+        crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
+    }
+
+    @Test
+    public void testFeedRequestWhenCrawlDepthLimitIsSetAndRequestExceedsLimit() {
+        Mockito.when(configMock.getMaximumCrawlDepth()).thenReturn(1);
+        crawlFrontier.getNextCandidate();
+        crawlFrontier.getNextCandidate();
+
+        crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
+
+        Assert.assertThat(crawlFrontier.hasNextCandidate(), Matchers.is(false));
+        Mockito.verify(statsCounterMock).recordCrawlDepthLimitExceedingRequest();
     }
 
     @Test
@@ -152,7 +165,7 @@ public final class CrawlFrontierTest {
 
     @Test
     public void testHasNextCandidateWithEmptyQueue() {
-        Mockito.when(configMock.getCrawlSeeds()).thenReturn(Collections.EMPTY_SET);
+        Mockito.when(configMock.getCrawlSeeds()).thenReturn(Collections.emptySet());
 
         CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
 
@@ -279,23 +292,6 @@ public final class CrawlFrontierTest {
         Assert.assertEquals(CHILD_URL_1, nextCandidate.getRequestUrl());
         Assert.assertEquals(CHILD_URL_CRAWL_DEPTH, nextCandidate.getCrawlDepth());
         Assert.assertEquals(CHILD_URL_1_PRIORITY, nextCandidate.getPriority());
-        Assert.assertFalse(crawlFrontier.hasNextCandidate());
-    }
-
-    @Test
-    public void testCrawlDepthLimitation() {
-        Mockito.when(configMock.getMaximumCrawlDepth()).thenReturn(MAX_CRAWL_DEPTH);
-
-        CrawlFrontier crawlFrontier = new CrawlFrontier(configMock, statsCounterMock);
-
-        clearCrawlCandidateQueue(crawlFrontier);
-        crawlFrontier.feedRequest(CHILD_URL_0_CRAWL_REQUEST, false);
-
-        CrawlCandidate nextCandidate = crawlFrontier.getNextCandidate();
-        Assert.assertTrue(nextCandidate.getCrawlDepth() <= MAX_CRAWL_DEPTH);
-
-        crawlFrontier.feedRequest(CHILD_URL_1_CRAWL_REQUEST, false);
-
         Assert.assertFalse(crawlFrontier.hasNextCandidate());
     }
 

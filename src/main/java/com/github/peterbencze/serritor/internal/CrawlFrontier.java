@@ -115,6 +115,8 @@ public final class CrawlFrontier implements Serializable {
 
             builder.setRefererUrl(currentCandidate.getRequestUrl())
                     .setCrawlDepth(nextCrawlDepth);
+        } else {
+            builder.setCrawlDepth(1);
         }
 
         LOGGER.debug("Adding request to the list of crawl candidates");
