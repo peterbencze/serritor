@@ -16,6 +16,7 @@
 
 package com.github.peterbencze.serritor.internal.stats;
 
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -132,5 +133,40 @@ public final class StatsCounterTest {
         Assert.assertEquals(networkErrorCount + 1, statsCounter.getResponseSuccessCount());
         Assert.assertEquals(processedCrawlCandidateCountBefore + 1,
                 statsCounter.getProcessedCrawlCandidateCount());
+    }
+
+    @Test
+    public void testReset() {
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordRemainingCrawlCandidate();
+        statsCounter.recordResponseSuccess();
+        statsCounter.recordPageLoadTimeout();
+        statsCounter.recordRequestRedirect();
+        statsCounter.recordNonHtmlResponse();
+        statsCounter.recordResponseError();
+        statsCounter.recordNetworkError();
+        statsCounter.recordDuplicateRequest();
+        statsCounter.recordOffsiteRequest();
+        statsCounter.recordCrawlDepthLimitExceedingRequest();
+
+        statsCounter.reset();
+
+        Assert.assertThat(statsCounter.getRemainingCrawlCandidateCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getProcessedCrawlCandidateCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getResponseSuccessCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getPageLoadTimeoutCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getRequestRedirectCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getNonHtmlResponseCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getResponseErrorCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getNetworkErrorCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getFilteredDuplicateRequestCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getFilteredOffsiteRequestCount(), Matchers.is(0));
+        Assert.assertThat(statsCounter.getFilteredCrawlDepthLimitExceedingRequestCount(),
+                Matchers.is(0));
     }
 }

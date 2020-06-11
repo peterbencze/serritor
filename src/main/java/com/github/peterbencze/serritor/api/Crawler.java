@@ -88,14 +88,14 @@ public abstract class Crawler {
     private final StatsCounter statsCounter;
     private final CrawlFrontier crawlFrontier;
     private final CustomCallbackManager callbackManager;
+    private final AtomicBoolean isStopped;
+    private final AtomicBoolean isStopInitiated;
 
     private BasicCookieStore cookieStore;
     private CloseableHttpClient httpClient;
     private BrowserMobProxyServer proxyServer;
     private WebDriver webDriver;
     private CrawlDelayMechanism crawlDelayMechanism;
-    private AtomicBoolean isStopped;
-    private AtomicBoolean isStopInitiated;
 
     /**
      * Base constructor which sets up the crawler with the provided configuration.
@@ -196,6 +196,8 @@ public abstract class Crawler {
 
             if (!isResuming) {
                 crawlFrontier.reset();
+                statsCounter.reset();
+                config.getCrawlSeeds().forEach(request -> crawlFrontier.feedRequest(request, true));
             }
 
             cookieStore = new BasicCookieStore();

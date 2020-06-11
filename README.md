@@ -19,7 +19,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>com.github.peterbencze</groupId>
     <artifactId>serritor</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
@@ -27,7 +27,7 @@ Add the following dependency to your pom.xml:
 
 Add the following dependency to your build.gradle:
 ```groovy
-compile group: 'com.github.peterbencze', name: 'serritor', version: '2.1.0'
+compile group: 'com.github.peterbencze', name: 'serritor', version: '2.1.1'
 ```
 
 ### Manual dependencies

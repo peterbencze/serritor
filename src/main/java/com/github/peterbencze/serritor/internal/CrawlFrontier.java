@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public final class CrawlFrontier implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlFrontier.class);
+    private static final int INITIAL_CRAWL_DEPTH = 1;
 
     private final CrawlerConfiguration config;
     private final StatsCounter statsCounter;
@@ -62,8 +63,6 @@ public final class CrawlFrontier implements Serializable {
         this.statsCounter = statsCounter;
         urlFingerprints = new HashSet<>();
         candidates = createPriorityQueue();
-
-        feedCrawlSeeds();
     }
 
     /**
@@ -115,6 +114,8 @@ public final class CrawlFrontier implements Serializable {
 
             builder.setRefererUrl(currentCandidate.getRequestUrl())
                     .setCrawlDepth(nextCrawlDepth);
+        } else {
+            builder.setCrawlDepth(INITIAL_CRAWL_DEPTH);
         }
 
         LOGGER.debug("Adding request to the list of crawl candidates");
@@ -149,17 +150,6 @@ public final class CrawlFrontier implements Serializable {
 
         urlFingerprints.clear();
         candidates.clear();
-
-        feedCrawlSeeds();
-    }
-
-    /**
-     * Feeds all the crawl seeds to the crawl frontier.
-     */
-    private void feedCrawlSeeds() {
-        LOGGER.debug("Feeding crawl seeds");
-
-        config.getCrawlSeeds().forEach((CrawlRequest request) -> feedRequest(request, true));
     }
 
     /**
